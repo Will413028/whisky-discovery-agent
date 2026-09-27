@@ -1,6 +1,6 @@
 # Whisky Discovery Agent 技術架構
 
-更新：2026-09-28。**已確定採 Agent framework＋Temporal**：使用者在三條路線比較後選擇第三條。Temporal 管理研究任務生命週期；具體 Agent framework、部署及配套仍是建議，尚未建立應用。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
+更新：2026-09-28。**已確定採 PydanticAI＋Python 後端＋Temporal**：使用者先選第三條執行路線，再確認 PydanticAI。Temporal 管理研究任務生命週期；部署、身分及其他配套仍是建議，尚未建立應用。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
 
 ## 已確定與待選項
 
@@ -9,7 +9,7 @@
 | Agent framework＋持久化 workflow | 第一版需求；已選 Temporal 路線。 |
 | 執行權威 | Temporal 管工作派送、等待、重試及恢復；Agent framework 管模型與工具協調。 |
 | 產品範圍 | 個人探索計畫、可交辦研究，沿用雙入口、六項基礎能力、小型 reviewed catalog、台灣參考價格及可靠記憶。 |
-| Agent framework | 優先建議 PydanticAI；Mastra TypeScript 是替代，尚未核定。 |
+| Agent framework | 已選 PydanticAI＋Python 後端，使用官方 Temporal 整合；Mastra TypeScript 留作替代紀錄。 |
 | Web／產品保存 | 建議 Next.js＋TypeScript、帳號＋PostgreSQL；身分、ORM 及部署須配合框架確認。 |
 | 既有技術 | ADK、AG-UI、LangGraph、Agent Server 及全 TypeScript 都不是限制；舊版只有文件，沒有應用歷史要相容遷移。 |
 | 後續功能 | 定期追蹤、通知及自動發布仍未納入 MVP。 |
@@ -30,7 +30,7 @@
 
 | 選項 | 整合方式與取捨 | 建議 |
 |---|---|---|
-| **PydanticAI＋Temporal** | 官方把 Agent 協調放在 workflow，模型／工具 I/O 放在 activities；代價是 Python 後端與 TypeScript Web 的契約及工具鏈。 | **優先建議**，符合逐次模型／工具呼叫的恢復需求。 |
+| **PydanticAI＋Temporal** | 官方把 Agent 協調放在 workflow，模型／工具 I/O 放在 activities；代價是 Python 後端與 TypeScript Web 的契約及工具鏈。 | **已選定**，符合逐次模型／工具呼叫的恢復需求。 |
 | Mastra＋Temporal | 官方將 workflow／step 映射為 Temporal workflow／activity；能維持全 TypeScript。 | 若語言統一優先則選；需驗證 step 內 Agent I/O、等待與取消的實際恢復粒度。 |
 | LangGraph＋Temporal | 可使用圖建模，但必須明確安排 replay、等待及重試的權威，避免兩套狀態機各自恢復同一任務。 | 沒有必須沿用既有 graph 的限制，目前不優先。 |
 
@@ -40,7 +40,7 @@
 
 ## 建議配套與專案結構
 
-以下是 **PydanticAI 路線的配套草案**，未將使用者選 Temporal 解讀成已接受整套 Python stack。
+以下是 **已選 PydanticAI 路線的配套草案**。Python 後端已確定，Next.js、FastAPI、DB 工具與身分實作尚待具體核定，未將框架選擇解讀成已接受全部套件。
 
 | 層 | 建議 | 責任 |
 |---|---|---|
@@ -53,7 +53,7 @@
 | 驗證 | pytest、Temporal test environment／replay、真 PostgreSQL、Playwright、固定 eval | 分開驗 domain、持久工作、產品資料及使用者旅程。 |
 | 部署 | Web、API、worker 分開程序；Temporal service 與產品 DB 分開責任 | API／worker 可由同一後端映像啟動不同 entrypoint；不按品牌、價格或會員再拆微服務。 |
 
-框架文件：[FastAPI](https://fastapi.tiangolo.com/features/)、[SQLAlchemy](https://docs.sqlalchemy.org/en/20/intro.html)、[Alembic](https://alembic.sqlalchemy.org/en/latest/)。若最後選 Mastra，重新確認 TypeScript backend／契約／DB 工具，保留以下產品與 Temporal 契約，不並存兩套 domain。
+配套文件：[FastAPI](https://fastapi.tiangolo.com/features/)、[SQLAlchemy](https://docs.sqlalchemy.org/en/20/intro.html)、[Alembic](https://alembic.sqlalchemy.org/en/latest/)。產品 domain 由 Python 後端擁有，Web 使用公開契約；未來若改 Agent framework 須另行重評，不並存兩套 domain。
 
 ```mermaid
 flowchart LR

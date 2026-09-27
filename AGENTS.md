@@ -2,7 +2,7 @@
 
 威士忌探索互動 LLM Agent 展示作品。產品方向與目前狀態見 [README.md](README.md)。
 
-- 第一版採 Agent framework＋Temporal，規劃個人探索計畫及可交辦研究任務。Temporal 是任務等待、重試與恢復的唯一執行權威；Agent framework 管模型與工具協調。[ARCHITECTURE.md](ARCHITECTURE.md) 優先建議 PydanticAI，具體框架及配套尚未核定或實作。不自建通用 Agent engine、queue 或 checkpoint 系統。
+- 第一版採 PydanticAI＋Python 後端＋Temporal，規劃個人探索計畫及可交辦研究任務。Temporal 是任務等待、重試與恢復的唯一執行權威；PydanticAI 管模型與工具協調。配套建議見 [ARCHITECTURE.md](ARCHITECTURE.md)，尚未實作。不自建通用 Agent engine、queue 或 checkpoint 系統。
 - 尚無 package manifest、原始碼、測試或可執行命令。建立第一個可執行骨架後，再依實際檔案補上開發及驗證命令。
 - 產品互動流程與資料契約須先明確，再實作功能；不要將規劃中的行為寫成已完成。
 - 雙入口、六項基礎能力、小型真實酒款庫與台灣價格篩選納入探索計畫；記憶以可靠、可長期使用優先，帳號保存仍為具體建議。新增研究、等待補充與恢復的產品契約見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。
