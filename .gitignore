@@ -1,0 +1,21 @@
+# Local-only context and credentials
+AGENTS.local.md
+.env*
+!.env.example
+secrets/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and generated output
+node_modules/
+.next/
+dist/
+coverage/
+playwright-report/
+test-results/
+.artifacts/
+*.log
+*.tsbuildinfo
+.DS_Store
