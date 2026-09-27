@@ -1,195 +1,189 @@
 # Whisky Discovery Agent 技術架構提案
 
-更新：2026-09-28。狀態：供開發前評估的建議方案，尚未核定整套技術、安裝依賴或實作。產品需求以 [PRODUCT_SPEC.md](PRODUCT_SPEC.md) 為準，本文件負責技術選型、責任邊界與工程驗收，不另存開發進度。
+更新：2026-09-28。狀態：使用者已要求第一版使用 Agent framework 與持久化 workflow，並同意以個人探索計畫、可交辦研究任務繼續選型。**本文是更新後的技術建議，尚未核定具體供應商、開通服務或實作。** 產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責選型、責任與驗證，不另存進度。
 
 ## 建議結論與前提
 
-建議採 **Next.js App Router＋TypeScript、AI SDK、PostgreSQL 的模組化單體**。一個 Node 應用提供 UI、API 與受控的 LLM workflow；資料庫保存使用者與探索資料。以成熟 SDK 呼叫模型及傳輸串流，業務規則維持獨立，無須建立通用 Agent 執行框架。
+建議 **Next.js＋TypeScript、LangGraph TypeScript＋LangSmith Deployment（Agent Server）、PostgreSQL**。單一產品與 repository，共用 domain modules；Web 與 Agent runtime 分開部署。LangGraph 建模研究步驟、工具選擇及人機交接，Agent Server 提供持久化與背景執行；產品資料由自己的 PostgreSQL 保存。
 
-「最好」在此指能驗證正確性、恢復資料、控制成本並容易修改；無法承諾永遠沒有技術債。下列選擇是目前需求下的工程判斷，不是宣稱所有業界產品都採同一套 stack。
+這取代先前「AI SDK 控制單次流程、HTTP 中斷後重做」的提案。新的需求已包含跨時間等待和工作恢復，不能只把原流程加上聊天紀錄就稱為 durable workflow。可靠性仍須以實際重啟、重送與跨版本恢復驗證，套件名稱不能代替證據。
 
-| 前提 | 性質與本次處理 |
+| 前提 | 本輪判斷 |
 |---|---|
-| 雙入口、六項功能、真實小型 catalog、台灣參考價格 | 已確認需求；維持產品範圍。 |
-| 能記得過去探索，以紀錄可靠、可長期使用優先 | 已確認的新優先序；使用者允許重新評估原本的本機保存。 |
-| 還未上線 | 可重新選型。以 `git ls-files` 核對現況只有文件與 `.gitignore`，沒有應用程式或既有使用者資料需要相容遷移。 |
-| ADK TypeScript、AG-UI、Vite、localStorage | 舊方向，均不是本次必須保留的限制。 |
-| 展示 Agent 能力 | 必須呈現需求理解、能力呼叫、狀態修正與證據；不等同必須多 Agent 或自主規劃。 |
-| 大流量、原生手機 App、離線編輯、長時間背景任務 | 尚無這些需求；不據此增加基礎設施。 |
+| 新手／熟手、六項基礎能力、真實小型 catalog、台灣價格 | 保留，成為探索計畫中的操作能力。 |
+| Agent framework＋持久化 workflow | 使用者明確要求；現在是設計前提。 |
+| 個人探索計畫＋可交辦研究任務 | 本輪規劃主軸；等待補充、背景研究、跨重啟恢復納入驗收。 |
+| 紀錄可靠、可長期使用 | 已確認優先序；帳號＋伺服器保存仍是具體建議。 |
+| ADK、AG-UI、全 TypeScript、單一服務、特定雲 | 沒有強制限制；逐項重評，不能因前稿出現過就沿用。 |
+| 定期追蹤、通知、資料庫自動發布 | 後續候選；沒有因採用 workflow engine 而一併納入 MVP。 |
+| 上線相容性 | repo 仍是文件骨架；用 `git ls-files` 核對追蹤內容，無須維持既有應用 API。 |
 
-若維持舊限制，可用 ADK＋AG-UI 配合獨立推薦規則，但仍須補持久化、授權與整合驗證；localStorage 單獨無法提供清除瀏覽器後的帳號恢復。解除限制後，建議縮小執行抽象、改用伺服器保存，將工程投入放在資料與行為保證。
+## 執行架構的選擇
 
-## 選型的範圍與取捨
+以下是官方能力查證後的本案判斷，不是以普及率排名：
 
-### LLM 執行方式
-
-| 選項 | 適用情境與代價 | 本案判斷 |
+| 路線 | 能力與代價 | 判斷 |
 |---|---|---|
-| 純規則與表單 | 可預測、易測試；自然語言理解與互動彈性有限。 | 作為推薦核心與模型失敗時的可用操作，不足以獨自完成展示目標。 |
-| 應用控制流程＋LLM SDK | 程式決定步驟，模型處理理解、釐清與表達；應用仍須負責狀態、保存與失敗處理。 | **建議**。本案主要流程已知，採 AI SDK 的結構化輸出與 UI 串流能力。 |
-| Agent framework，如 ADK、PydanticAI、LangGraph | 提供工具、執行或狀態抽象，適合需要較複雜編排的產品；須理解框架生命週期與除錯方式。各框架能力不同，並非都要求自主執行。 | 保留為候選；目前沒有需求足以抵銷新增抽象與整合成本。 |
-| 可持久恢復的 workflow | 適合跨重啟繼續工作、長時間等待或人工審批；須處理 checkpoint、重試與外部副作用。 | 本輪不需要。保存探索紀錄與恢復一個正在執行的任務是兩種需求。 |
+| LangGraph library＋PostgreSQL checkpointer | 可保存圖狀態、interrupt／resume；自行部署時還要處理背景派送、worker 生命週期及恢復觸發。 | 單靠這個組合不算本案完整執行方案；不自建通用 queue／runner 補齊。 |
+| **LangGraph＋LangSmith Deployment Agent Server** | 同一體系提供圖、持久狀態、run API、背景佇列與串流；代價是平台費用、供應商依賴及 checkpoint 與版本管理。 | **建議**。本案核心是研究 Agent 的分支、等待與恢復，原生 runtime 可完整承接。 |
+| Agent framework＋Temporal | 可持久處理跨時間工作、訊息及活動重試；需維護 worker、workflow 相容性與另一個執行系統。 | 當明確要獨立的通用 workflow 平台時選。若選此路，讓 Temporal 擁有整體工作生命週期。 |
+| Mastra＋Temporal／Inngest | TypeScript Agent 與 workflow 有官方 durable engine 整合；各種 adapter 的恢復粒度與功能必須實測。 | 合理替代。不能把一個 workflow step 的 checkpoint 推論成該 step 內每個 model／tool call 都不會重跑。 |
+| PydanticAI＋Temporal | Python 型別及 Agent 能力，官方整合會將模型／工具 I/O 放進 Temporal activities。 | 若選 Temporal，我偏向優先驗證這個原生整合；代價是 Python backend、跨語言契約與工具鏈。 |
 
-Anthropic 的 [Building effective agents](https://www.anthropic.com/engineering/building-effective-agents) 區分程式指定路徑的 workflow 與模型決定路徑的 agent，建議從能解決問題的簡單組合開始。該文發表於 2024 年，這裡引用架構原則，不用它判定今日套件排名。[AI SDK workflows](https://ai-sdk.dev/docs/agents/workflows) 支援應用控制的組合；[LangGraph](https://docs.langchain.com/oss/javascript/langgraph/overview) 則明確聚焦有狀態、長時間執行與持久化編排。
+官方 [Agent Server](https://docs.langchain.com/langsmith/agent-server) 明列 persistence、task queue 與背景執行；[LangGraph persistence](https://docs.langchain.com/oss/javascript/langgraph/persistence) 說明 checkpointer 和跨 thread store 的區別。[Temporal timers](https://docs.temporal.io/develop/typescript/workflows/timers) 與 [訊息機制](https://docs.temporal.io/develop/typescript/workflows/message-passing) 支援長時間等待及外部事件；這些能力沒有要求本案同時放兩個任務管理者。
 
-### Web、身分與儲存
+替代方案依 [Mastra Temporal 部署文件](https://mastra.ai/integrations/deploy/temporal)、[Mastra durable agents](https://mastra.ai/blog/introducing-durable-agents) 與 [PydanticAI Temporal 整合](https://pydantic.dev/docs/ai/capabilities/durable_execution/temporal/) 查證。PydanticAI 現行文件推薦 `TemporalDurability`，舊 `TemporalAgent` wrapper 已標 deprecated；若採用需依當時版本驗證，不能照舊範例起手。
 
-| 決策 | 主要選項與代價 | 本案建議 |
+### 為什麼目前建議 LangGraph 原生 runtime
+
+研究任務需要在「查庫、查來源、版本消歧、等待補充、比較、產出報告」間動態選擇，而 domain 同時要控制價格與證據規則。LangGraph 適合將確定性節點與有界 Agent 子圖組合；使用 LangChain 的標準 agent／tool primitives，不另寫通用模型工具迴圈。[官方 workflows／agents 指引](https://docs.langchain.com/oss/javascript/langgraph/workflows-agents)
+
+原生 Agent Server 承接 run 的派送、checkpoint 與串流，可以少維護一組跨框架執行邊界。**LangGraph＋Temporal 並非不可行**，但本案還沒有跨多個非 Agent 系統的長交易需求，兩者共同掌握相同等待／重試容易產生重疊責任。
+
+託管 runtime 是明示的選型代價。2026-09-28 的 [Cloud 部署指引](https://docs.langchain.com/langsmith/deploy-to-cloud) 列 Plus 以上為前提；[價格頁](https://www.langchain.com/pricing) 列 Plus US$39／seat／月，另須按實際方案核對部署、儲存、模型及產品 Web／DB 用量費用，不把席位費當總成本。目前沒有付費或登入操作。
+
+自架 Agent Server 也不是把 OSS library 包成 Docker 就等價：官方 [standalone 指引](https://docs.langchain.com/langsmith/deploy-standalone-server) 列 PostgreSQL、Redis、license 等條件，並區分開發 Compose 與其生產部署建議。本案優先託管，不為展示作品自行營運 Kubernetes。若拒絕平台依賴，重新選擇完整替代路線，不留下「自行補一套 runtime」的隱藏工作。
+
+## 完整 stack 與沿用理由
+
+| 部分 | 從目前需求重新選擇 | 邊界與代價 |
 |---|---|---|
-| Web 應用 | Next.js 整合頁面、API、伺服器邊界，但要理解其快取與部署語意；React＋Vite＋Hono 組合較顯式，但路由、API 與整合約定需自行決定；React Router framework 也是合理選項。 | Next.js App Router。理由是統一這個有帳號、歷史與 API 的 Web 產品，不是為了本案尚未要求的 SEO。 |
-| 語言與服務邊界 | 全 TypeScript 共用型別與開發工具；Python＋FastAPI／PydanticAI 適合 Python 資料、ML 或既有 Python 團隊，但前後端契約與部署分工更多。 | 全 TypeScript、單一 repo、單一可部署應用；不先拆 Python 服務。 |
-| 長期保存 | 瀏覽器保存簡單且可離線，但身分、跨裝置恢復與備份弱；伺服器資料庫增加營運成本，能集中處理權限、交易與備份。 | PostgreSQL 為使用者資料的權威來源；瀏覽器只保存可丟棄的草稿與畫面狀態。 |
-| 身分管理 | Clerk／Supabase Auth 等託管服務減少維護負擔，增加外部服務與費用依賴；Better Auth 以套件整合自有應用及資料庫，需自行維護更新、設定與監控。 | Better Auth＋PostgreSQL，先採單一 Google OAuth 登入；使用穩定內部 user ID，不以 email 當擁有者鍵。這是完整建議，尚未配置 OAuth。 |
-| DB 存取 | 直接 SQL 控制明確但需自行維護型別；Prisma 提供較多高階抽象；Drizzle 保留接近 SQL 的模型並提供 TypeScript schema。 | Drizzle＋可審閱、提交到 Git 的 SQL migrations；資料正確性仍靠交易與 DB constraints。 |
-| 前後端串流 | 同一應用可用 AI SDK UI 的 typed data stream；AG-UI 適合需要跨 framework／backend 互通的場合，但多一層協定適配。 | AI SDK UI stream；本輪不加 AG-UI、不自訂通用串流協定。業務資料仍定義自己的 schema。 |
+| Web／BFF | Next.js App Router＋React＋TypeScript | 帳號、探索畫面與薄 API；長任務移出 HTTP request。Vite＋Hono 同樣可行，Next 的優點是整合 Web 約定。 |
+| Agent／workflow | LangGraph TypeScript，Agent Server 託管執行 | research graph＋明確 domain tools；不再以 AI SDK Core 當第二個 Agent 執行核心。 |
+| UI 傳輸 | Agent Server 官方 SDK／stream API，經 BFF 授權 | 不加 AI SDK UI 或 AG-UI 轉譯層。前端只看允許公開的進度與已驗證結果。 |
+| 產品 DB | 託管 PostgreSQL＋Drizzle SQL migrations | 身分、偏好、計畫、證據與歷史；獨立於 runtime 內部資料表，不直接操作其 checkpoint schema。 |
+| 身分 | Better Auth＋Google OAuth | server session 轉為 app actor；身分資料在產品 DB，維護套件與設定由應用負責。 |
+| Runtime／工具 | Node.js 24 LTS、TypeScript strict、pnpm workspace | 同語言共用 domain／契約；Web 與 Agent 是真實部署邊界，因此這次有拆 workspace 的理由。先不加 Turborepo 等工具。 |
+| 資料取得 | 指定來源 registry＋受限 HTTP reader | Agent 可選來源與補查順序；第一版不開任意瀏覽器操作或任意 URL 工具，搜尋 provider 待實際覆蓋缺口才選。 |
+| 驗證／觀測 | Vitest、PostgreSQL integration、Playwright、固定 eval 語料；runtime trace＋應用 logs | 觀測工具不成為偏好或歷史的權威來源；對話內容設定刪除與遮罩政策。 |
 
-[React 官方文件](https://react.dev/learn/creating-a-react-app) 將 Next.js 與 React Router 列為 framework 選項；沒有「Vite 一定要兩次部署」的限制，[Hono 可提供靜態檔案](https://hono.dev/docs/getting-started/nodejs)，因此也能同服務提供 SPA。Next.js 可 [自行部署到 Node／Docker](https://nextjs.org/docs/app/guides/self-hosting)，不必綁定 Vercel。
+保留 TypeScript 是因 Web、graph、domain 與 schema 可共用且沒有 Python 特有需求；不是沿用原 ADK 的語言限制。Next.js 可 [自行部署到 Node／Docker](https://nextjs.org/docs/app/guides/self-hosting)。身分與 migrations 分別依 [Better Auth Next.js](https://better-auth.com/docs/integrations/next)、[Drizzle migrations](https://orm.drizzle.team/docs/migrations)；具體相容套件版本在第一個骨架鎖定。
 
-身分整合依 [Better Auth Next.js](https://better-auth.com/docs/integrations/next) 與 [Drizzle adapter](https://better-auth.com/docs/adapters/drizzle)。選它是讓身分與產品資料維持在同一套應用／DB、方便移轉，代價是承擔 auth 套件與設定維護；若以減少這項維護為首要目標，託管身分服務是合理替代。不重寫自己的密碼或 token 系統。SQL 變更採 [Drizzle migrations](https://orm.drizzle.team/docs/migrations) 的 schema→SQL→執行路徑；[AG-UI](https://docs.ag-ui.com/introduction) 的跨 Agent／UI 協定能力保留給實際互通需求。
+模型先要求繁體中文、可靠 tool calling／結構化輸出及用量回報，以同一組版本消歧、來源衝突、追問、局部偏好修改案例比較品質、延遲與成本。先選一個通過門檻的模型，不建立多模型投票系統；換模型要重跑 eval。
 
-## 建議 stack 與部署單位
-
-| 用途 | 選擇及邊界 |
-|---|---|
-| Runtime／工具 | Node.js 24 LTS、TypeScript strict、pnpm；在骨架實作時固定當時相容的 stable 套件版本、lockfile 與 runtime patch。 |
-| UI／HTTP | Next.js App Router＋React；互動區為 Client Components，Route Handlers 是薄 HTTP adapter；讀寫都呼叫同一批 application use cases。 |
-| 模型與串流 | AI SDK Core／UI＋Zod runtime schemas；由模型 adapter 集中設定 provider、prompt 與呼叫預算。 |
-| 身分／DB | Better Auth、Drizzle、託管 PostgreSQL；單一應用資料庫，正式資料不與其他專案共用可寫 schema。 |
-| 驗證 | Vitest 驗證 domain／application；真 PostgreSQL 驗證交易與權限；Playwright 驗證主要旅程；固定語料評估模型行為。 |
-| 部署／觀測 | 可攜的 Node container＋託管 PostgreSQL；結構化 logs，必要時接 OpenTelemetry。先一個應用服務，不建微服務平台。 |
-
-Node 版本依 [官方 release 狀態](https://nodejs.org/en/about/previous-releases) 選 LTS；這不是已安裝版本。模型不先按品牌指定：用同一批繁體中文需求、版本消歧、局部修改、證據解釋案例比較正確率、延遲與成本，選一個通過門檻的 provider／model。AI SDK 降低 API 差異，無法保證不同模型行為相同；換模型仍須重新 eval。
-
-## 系統與模組邊界
+## 部署與專案架構
 
 ```mermaid
 flowchart TD
-  UI[探索 UI／歷史／偏好卡] --> HTTP[Next.js Route Handlers]
-  HTTP --> AUTH[驗證 session 與資料擁有者]
-  AUTH --> APP[Application use cases]
-  APP --> AI[AI SDK：理解與解釋]
-  APP --> DOMAIN[Domain：版本／限制／候選／比較]
-  APP --> STORE[Repository adapters]
-  STORE --> DB[(PostgreSQL)]
-  DATA[人工查核 catalog] --> PUBLISH[驗證並發布不可變版本]
-  PUBLISH --> DB
-  APP --> STREAM[經驗證的結果＋真實進度事件]
+  UI[Next.js 探索畫面] --> BFF[Next.js BFF：session／owner／commands]
+  BFF --> RT[Agent Server：run API／queue／workers]
+  RT --> GRAPH[LangGraph：研究／等待／恢復]
+  GRAPH --> CORE[Domain tools：限制／比較／資料契約]
+  CORE --> DB[(產品 PostgreSQL)]
+  BFF --> DB
+  GRAPH --> SOURCES[指定來源：只讀研究]
+  RT --> CP[(平台管理的 checkpoints)]
+  RT --> STREAM[授權後的狀態與結果串流]
   STREAM --> UI
 ```
 
-- **Domain** 決定資料資格、預算、候選與比較，不 import Next.js、AI SDK 或 ORM。純函式可直接驗證日期、未知值與條件邊界。
-- **Application** 執行探索、修正、收藏、回饋、保存與重開；決定交易、權限檢查與執行順序。自然語言及 UI 點選最後都進相同 command。
-- **Adapters** 對接 DB、模型、HTTP、auth；只有這些外部邊界需要可替換契約。不為每個函式建立 interface／factory／通用 repository。
-- **UI** 呈現 server view model，不從生成文字解析 ABV、價格或卡片。Next.js server/client import 邊界要有靜態檢查，domain 的禁用依賴也納入 CI。
-
-建議目錄如下；這是待建立的結構，不是目前磁碟現況：
+這是單一產品的 Web／Agent 執行分工，沒有拆品牌、價格或使用者等微服務。平台自己的 PostgreSQL／Redis 不等於應用要再建一套 cache；產品 DB 與 runtime persistence 是兩個不同責任與生命週期。
 
 ```text
-src/
-  app/                      # 頁面、薄 Route Handlers、auth endpoints
-  features/                 # exploration、comparison、history 的 UI
-  contracts/                # command、view、stream payload 的 runtime schemas
-  modules/
-    catalog/                # 版本、證據、價格；domain + application + repository
-    discovery/              # 偏好修正、限制、候選、比較與探索 use cases
-    memory/                 # 長期偏好、收藏、回饋與保存結果
-  server/
-    ai/                     # prompts、context、模型 adapter
-    auth/                   # Better Auth 設定、server actor
-    db/                     # connection、schema、transaction wiring
-    composition/            # 將各 module 與外部 adapters 組起來
-data/catalog/               # 人工整理的來源檔及查核狀態
-drizzle/                    # 已提交的 SQL migrations
-tests/                      # integration、e2e、evals；純規則測試可 colocate
+apps/
+  web/                     # Next.js UI、Better Auth、薄 BFF
+  agent/                   # LangGraph graphs、nodes、受限 tools、runtime 設定
+packages/
+  core/                    # catalog／discovery／plans／memory 的 domain 與 use cases
+  contracts/               # Zod commands、views、研究與補充資料契約
+  data/                    # 產品 DB schema、模組各自的 repositories、transactions
+data/catalog/              # 已查核的編輯來源與發布資料
+drizzle/                   # 可審閱的產品 DB migrations
+tests/                     # integration、recovery、e2e、evals
 ```
 
-每個 module 的查詢由自己的 repository 管理；`server/db` 不集中全部業務 SQL。跨模組走公開 use case／查詢介面，不直接存取另一模組的表；不建立跨專案共用的 Agent 平台。初期一個 package 足夠，尚無獨立發布單位需要 monorepo 工具。
+Domain 不 import Next.js、LangGraph、ORM。Agent nodes 與 BFF 都呼叫相同 use cases；資料庫 adapter 不混入 prompt。各模組 owns 自己的查詢與修改，跨模組走明確介面，不為每個小函式建立抽象層。
 
-## 一輪探索的執行契約
+## 三種狀態各有一個權威來源
 
-1. Server 從 session 取得 actor，驗證探索擁有者；接收 `explorationId`、`expectedRevision`、`idempotencyKey` 與本次操作，不接受 client 指定有效的 owner。
-2. 以短交易登記本輪 run，保存要求及其預期版本。idempotency key 以 owner／操作範圍唯一，附 payload hash；相同 key、相同 payload 回傳既有狀態，相同 key、不同 payload 拒絕。
-3. 自然語言透過 LLM 產生具 schema 的 intent／局部修改提案；點選直接產生同一 command。歧義先釐清，不以推測取代明確偏好，不將整份舊偏好覆蓋回去。
-4. 應用驗證提案，只允許本次指定的欄位；以 `expectedRevision` 比對後，在同一交易提交新偏好版本與 run 的 `appliedRevision`。若基準已變，回報衝突並重新取得狀態，不悄悄套用過時提案。
-5. Domain 使用指定 catalog release、價格政策版本與評估時間找候選；硬限制、來源資格與候選選取不由 LLM 自由改寫。
-6. 將已驗證的 facts、reason codes 與 evidence IDs 交給模型組織說明。服務再驗證 schema、ID 關係與本輪版本；版本、價格和關鍵理由直接由結構資料呈現。
-7. 以短交易再次檢查目前 revision、有效 run ID、run 仍在執行中且未超過 deadline，才保存推薦與終態；資料已刪除、run 已取消／中斷／被取代時不能晚到提交。新需求取代的 run 標為 superseded，不能成為目前結果。**DB commit 成功後**才送出完成結果或顯示已保存。
+| 狀態 | 權威來源 | 規則 |
+|---|---|---|
+| 使用者與產品資料 | 產品 PostgreSQL | 帳號、明確偏好、收藏、品飲回饋、探索計畫、來源證據與報告；可匯出及刪除。 |
+| 執行位置與等待 | Agent Server／LangGraph checkpoints | thread、run、node 狀態、interrupt、工具進度；由 runtime 管理，不另做一套 competing runner。 |
+| 瀏覽器呈現 | Server 資料的投影 | 草稿、選取項、串流進度可暫存；重連後重新取 authoritative task／result，不以 token stream 重建唯一結果。 |
 
-LLM 網路等待期間不保持 DB transaction 或長時間資料鎖。單輪呼叫次數、時間與 token 設上限；schema 失敗可做有界修正，不能無限重試。修改價格、資料或提示都能追到版本。
+計畫具有 `planId` 與研究條件 revision；更改目標、偏好或限制才推進此 revision，新增進度與報告不會使自己的任務失效。研究任務有獨立 `taskId`／thread，保存起始條件快照與 revision。一次探索計畫可產生多次研究任務，不能讓所有人的工作共用 thread，也不把終身偏好塞進無限增長的 graph state。
 
-### 串流與故障語意
+產品保存任務與 thread／run 的映射、取消 fence 及已完成 artifact；即時執行狀態從 runtime 取得，若有顯示快取需標示更新時間。Runtime Store 不另存一份可互相衝突的長期偏好；每次從產品 use case 取得需要的上下文。
 
-- 使用 [AI SDK typed data streaming](https://ai-sdk.dev/docs/ai-sdk-ui/streaming-data) 傳實際進度與具型別資料；`runId`、revision 與狀態屬應用 payload。SDK 解決傳輸，不代替權限與資料交易。
-- 先送釐清／搜尋等進度；完整卡片的 facts 與引用驗證後才公開。第一版不逐 token 展示尚未驗證的酒款敘述。形式正確的引用也不保證解釋語意正確，仍須模型 eval 與人工抽查；失敗時退回已驗證的結構理由。
-- 連線中斷後重新讀取 server run／結果。若結果已 commit，直接取回；若程序中止而未完成，依 run deadline 判定中斷，保留已存偏好，允許重試。相同 key 的傳輸重送讀回原 run；重做失敗工作則建立新 key／run 並引用前次 run。若已有 `appliedRevision`，從該版本重新生成，不能再次解讀並套用原 intent；目前偏好若已改變，明示改用新版本。偏好尚未提交才可重新處理修改。第一版不承諾原模型生成能自動從中間續跑。
-- DB 寫入失敗不送成功；模型失敗不抹去已保存狀態。UI 可繼續瀏覽既有結果、用結構化偏好修改重試；服務故障時清楚標示哪些新操作尚未保存。
-- API／UI 都比對 revision。清除或刪除資料也要處理正在執行的 run，避免晚到結果重新寫回已刪除紀錄。
+## 研究與等待的執行契約
 
-## 記憶、身分與資料生命週期
+```mermaid
+flowchart LR
+  A[驗證任務與條件] --> B[Agent 決定下一個研究工具]
+  B --> C{需要補充}
+  C -->|是| D[持久 interrupt／釋放執行資源]
+  D -->|使用者回覆| E[驗 owner／等待版本／資料時效]
+  E --> B
+  C -->|否| F[規則驗證證據與候選]
+  F --> G[交易保存報告]
+  G --> H[完成／回到探索計畫]
+```
 
-### 保存什麼
+### 接受、派送與並行
 
-| 資料 | 權威來源與用途 |
+1. BFF 從 session 取得 owner，驗證 plan／task 所屬；client 只能送允許的 command，不可指定有效身分、任意 graph、model 或工具設定。
+2. command 帶 idempotency key、payload hash 與 expected revision。產品 DB 唯一約束處理同請求重送；不同 payload 使用同 key 時拒絕。
+3. 建立 task 映射後呼叫 runtime 的背景 run API。**只有 runtime 確認入列，或查回同 command 已入列，才顯示工作已接受**。網路結果不明時顯示待確認，使用既有 task／thread 對帳，不盲目建立新任務。
+4. 不假定 run API 支援任意 client 指定 run ID。啟動入口以 command key 對應唯一 logical task／thread；重送回傳原任務與接受紀錄，不另起昂貴工作。去重不能永久綁死某個 process／run ID，阻擋同一任務的正常恢復；SDK 原生去重及同 thread 並行控制須在骨架驗證。
+5. 補充有獨立 command，綁定 task、interrupt ID、等待版本與條件 revision；在實際中斷恢復入口原子選定並保存唯一答覆。同 command 重送回傳原接受紀錄，不再次注入補充；checkpoint 重播可重讀已保存答覆，繼續尚未完成的步驟，不能將「答覆已接受」誤作整段工作已完成。舊答覆不得送入下一個 interrupt；不能只靠第一個 graph 節點去重。
+6. 計畫研究條件變更時，交易內推進 revision，將舊條件的未完成任務標為「已被取代」並撤銷寫入資格，再要求 runtime 停止；舊待補問題關閉。已完成報告保留為歷史。使用者選「依新條件研究」才另建關聯新 task，不暗中改寫舊任務或自動增加研究。獨立 task 可並行，但有帳號及整體並行／用量上限。
+
+[背景 run API](https://docs.langchain.com/langsmith/agent-server-api/thread-runs/create-background-run) 提供非同步執行與 durability 選項。API 入列與產品 DB 不是分散式原子交易，因此接受語意、對帳與業務去重不能省略；這是應用整合責任，不是自建 Agent engine。
+
+### Agent 的權限與研究資料
+
+Agent 可選查庫、讀指定來源、比對版本、提出補充問題、整理帶引用的草稿。它不能自行放寬預算、捏造未知值、寫入已確認偏好或發布正式 catalog。
+
+Tool schema 只接收白名單欄位；server 取得 owner 與資源範圍。來源頁面視為資料，不作指令；HTTP reader 限定允許的 HTTPS 來源、重導向、回應大小及時間，阻擋私有網路目的地。不要把 user 任意 URL 直接交給具內網權限的 worker。
+
+查到的原始觀察、整理後主張、證據與覆核狀態分開保存。研究報告可展示標明「待覆核」的新資訊；正式推薦卡、嚴格預算與 catalog 更新仍只使用 reviewed 資料。使用者補充瓶身資料不是編輯者的來源覆核。
+
+### Checkpoint、重試與人機交接
+
+- 重要研究 runs 建議 `durability: sync`，在下一步前完成 checkpoint 寫入；接受其延遲代價。Agent Server 自動注入 persistence，graph 不再自行配置另一個 checkpointer。[API 契約](https://docs.langchain.com/langsmith/agent-server-api/thread-runs/create-background-run)
+- 一個 node 保持有界且可恢復；已取得的來源證據以 artifact ID 引用，不在單個巨大 node 內執行整份長研究。未完成或 checkpoint 前的工作可能重跑，不承諾所有外部呼叫 exactly-once。
+- 短暫網路／限流錯誤有界重試，輸入錯誤、權限拒絕與來源衝突有不同出口。LangGraph 的 node retries 要明確配置；各層 retry 次數與時間合計有總預算，不將 SDK 重試和 workflow 重試無限相乘。[Fault tolerance](https://docs.langchain.com/oss/javascript/langgraph/fault-tolerance)
+- interrupt 持久化待補問題、版本及狀態，等待期間沒有持續模型呼叫。恢復時重新驗 owner、interrupt ID、revision 與價格時效；條件未變才接續，已被取代則回傳終態與新條件研究入口。等待期限與 active execution timeout 分開。
+- 恢復會重新進入中斷 node；前置 side effects 必須拆到已完成節點或具冪等鍵，不能重送收藏、修改偏好或發布資料。[Interrupts](https://docs.langchain.com/oss/javascript/langgraph/interrupts)
+- 取消先在產品 DB 撤銷 task 的寫入資格，再請 runtime 取消。即使外部呼叫來不及停止，結果交易也不能繞過 fence。完成報告同時驗 owner 存在、task generation、plan revision 與取消狀態。
+- DB commit 成功後才公開完成報告。若 DB 已寫入而 checkpoint 尚未保存就中斷，重跑以同 artifact key 取得既有結果；不能新增第二份或再套一次「預算加 200」。
+
+## UI、存取與記憶
+
+使用者看見「等待執行／研究中／需要補充／完成／失敗／已取消／已被取代」，以及可補充、取消、重新研究的入口。重送失敗的 HTTP 要求沿用原 command；新的研究要求另建任務，兩者明確分開。
+
+串流走官方 run／stream API，BFF 逐項驗 owner；API key 只在 server。禁止建立讓 browser 任意代理 runtime 路徑的通用 proxy。原始 checkpoints、model messages、內部 tool output 和隱藏推理不直接公開；只提供公開進度和驗證後的 view model。斷線重連先讀 task snapshot，再接續可用串流；未收到的進度動畫不影響已保存結果。
+
+登入、匯出、刪除與私有 cache 邊界維持產品要求。刪除先取消工作及關閉寫入，再刪產品資料、runtime threads／checkpoints 和相關 trace；保留政策與備份還原流程也需涵蓋這些儲存處。清除產品 DB 不等於整個 Agent 的資料已刪除。
+
+catalog 仍由 Git 中人工覆核的資料發布成不可變版本，產品 DB 提供正式讀取。研究 evidence 與正式 catalog 分開；只有編輯者覆核後才進發布流程。歷史報告保留當時依據，新探索重新檢查目前版本和價格；不把歷史結論當新推薦。
+
+## 驗證與上線出口
+
+| 層次 | 必須提供的證據 |
 |---|---|
-| 長期偏好 | 帳號下的明確偏好與來源回饋；推測另列待確認。本次預算不自動變永久限制。 |
-| 探索狀態 | exploration、revision、當輪條件、run 狀態及候選；每次接續以 server 狀態為準。 |
-| 收藏與品飲回饋 | owner＋酒款 ID＋狀態／原因；收藏不等於喝過，也不直接推導整組風味喜好。 |
-| 探索歷史 | 當時的條件、選擇、取捨、替代項、catalog／政策版本與證據引用；與目前重新計算的結果分開。 |
-| 對話與呈現 | 可保存有版本的 UI messages 以回看；不以整段聊天作為唯一偏好資料或無限塞回模型。 |
-| 暫存與觀測 | 瀏覽器草稿可丟棄；logs／traces 用於診斷，不作使用者記憶資料庫。 |
+| Domain／catalog | 價格資格、版本、未知值、證據引用及限制測試；正式資料與 synthetic fixtures 隔離。 |
+| DB integration | owner 隔離、唯一性、revision、取消 fence、artifact 去重，以及 commit 成功／checkpoint 失敗的重放。 |
+| Agent 行為 | 固定繁中語料驗工具選擇、何時追問、來源衝突與證據解釋；模型失敗保持可用出口。 |
+| Runtime 恢復 | 正常 interrupt 後換程序恢復；執行中 worker 非正常停止後自動恢復；兩者是不同測試，不能互相代替。 |
+| 任務整合 | 入列回應遺失、補充已接受但回應遺失後重送、接受答覆後 checkpoint 前中止、舊答覆誤送下一個 interrupt；等待期間修改條件使舊任務被取代，新任務另建；刪除／取消與晚到結果。 |
+| UI／E2E | 關頁後背景任務仍完成，另一瀏覽器登入可找到任務與待補問題；跨帳號不可讀／resume。 |
+| Deployment 版本 | 舊版本建立的等待任務在新版本可正確恢復；不相容時先保留舊 executor 或受控遷移，不能只測新任務。 |
+| 營運與刪除 | 產品備份還原、runtime retention／恢復方式、刪除傳播與費用觀測都可驗證。 |
 
-新的模型請求只載入相關明確偏好、當次探索摘要與需要的證據。記得過往探索不需要保留舊 runner 或永不終止的 LLM session。AI SDK 的 [message persistence 文件](https://ai-sdk.dev/docs/ai-sdk-ui/chatbot-message-persistence) 提供訊息儲存機制，但帳號、業務狀態與可靠性仍由應用負責。
+所有 node／tool 名稱、state schema、prompt／model／policy／catalog 版本要可追溯。長期等待的 checkpoint schema 是需要相容性的正式資料；graph 升級不能隨意刪 rename node 後直接部署。
 
-### 登入與恢復
+本機 `MemorySaver`、開發 server 或 stub 通過，只證明其涵蓋的行為。正式 runtime 恢復在 staging 做中斷演練；若託管環境無法直接注入 worker crash，需使用供應商支援的測試方式取得等價證據，不能以重新整理瀏覽器冒充服務恢復。
 
-建議第一版先登入再建立持久探索；未登入可瀏覽公開酒款與產品示例。相同 Google 身分從另一瀏覽器登入後可找回紀錄；不把匿名 cookie 當成可恢復帳號。OAuth 帳號本身的恢復依其提供者處理，不承諾無身分憑據的找回。
+Logs 記 task／run／revision、階段、latency、tokens、錯誤分類；輸入輸出預設遮罩或不記。LangSmith trace 的內容與保留期要明確設定，不因使用部署平台就上傳不必要的完整對話。Runtime checkpoint 為執行所需資料，與可選 debug traces 分別治理。
 
-所有私有 read／write 都以 server actor 限定 owner，含讀取歷史、串流開始、匯出與刪除；不可只靠 UI 隱藏按鈕。auth library 處理 session 與 OAuth，應用負責資料授權。登出清除私有 client cache，私有頁面／API 不進共用快取。依框架及 auth library 的來源驗證機制防護寫入端點，保持同 origin；模型與 DB secrets 只留 server。
+產品 DB 建議維持自動備份＋PITR，初始 RPO ≤15 分鐘、RTO ≤4 小時為待成本與演練支持的目標，非已承諾 SLA；runtime 狀態有另一套服務保留／恢復條件，不能把產品 DB 的目標直接套給平台。Web、runtime 與 DB 的區域、延遲及總費用在部署前一起核對。
 
-提供資料匯出、單筆刪除與帳號資料刪除；備份內資料依保留政策到期，還原時需重放備份時間之後的刪除紀錄，避免已刪除資料復活。正式使用前需把帳號停用／刪除與還原流程一起演練。
+## 第一個技術驗證與後續選型
 
-### Database 模型與 catalog 發布
+第一個交付是一段完整的「委託研究 → 查一個真實來源 → 等待補充 → 關頁／中斷 → 恢復 → 驗證條件 → 保存報告」。用隔離 fixture 控制故障，同時保留真實資料路徑；模型／來源 stub 與真實連接的驗收分開記錄。
 
-使用一般 UUID 作實體 ID，revision 為遞增整數。ownership、外鍵、唯一性與查詢欄位採關聯欄位；具 schema 的不可變證據與歷史內容可使用 JSONB，不把全部產品狀態塞成一份自由 JSON。必要的 PK／FK／unique／check constraints 參考 [PostgreSQL 官方文件](https://www.postgresql.org/docs/current/ddl-constraints.html)。
+先通過持久化、背景入列、補充恢復、重送／取消、資料寫入與部署相容性，再擴展雙入口 UI 和酒款覆蓋。詳 [PRODUCT_SPEC 的交付相依](PRODUCT_SPEC.md#開發順序與完成界線)。
 
-概念資料群為 `users/accounts/sessions`、`catalog_releases/items/evidence/price_observations`、`explorations/revisions/runs/recommendations`、`preferences/favorites/tasting_feedback/saved_results`，實際表名在 schema 設計時確定。推薦紀錄保留 catalog release、policy version、evaluatedAt、偏好 revision、模型與 prompt 版本；可重算確定性篩選，但不宣稱能逐字重現模型輸出。
-
-catalog 由 Git 中人工查核的資料發布為不可變 DB release。發布先驗 schema、來源、版本和查核狀態，再以 transaction 切換 current release；runtime 只讀已發布版本，使用者不能改寫 catalog。Git 是編輯來源，DB 是已發布的讀取來源，沒有雙向同步。保留歷史 release／證據供舊結論解析；停用推薦的酒款仍能顯示歷史，重新探索則重新檢查目前價格資格。
-
-## 驗證、觀測與營運
-
-| 層次 | 要驗證的行為 |
-|---|---|
-| Domain／資料驗證 | 版本匹配、來源資格、未知值、30／31 天價格邊界、多來源取價、保留條件與不湊候選；合成 fixtures 與真實資料隔離。 |
-| PostgreSQL integration | owner 隔離、revision 競爭、同請求重送、刪除與晚到寫入、交易失敗；在真 PostgreSQL 測試，不能用另一種 DB 假定行為相同。 |
-| Workflow／UI integration | 使用有明示的 model stub，驗證實際 use case 到 UI 的成功、釐清、衝突、中斷與重新讀取。stub 成功不等於模型品質通過。 |
-| E2E | 新手／熟手旅程；登入、保存、關閉後重開及另一瀏覽器登入；舊結果不能冒充新條件，帳號間不可互讀。 |
-| 模型 eval | 固定繁中案例＋人工可理解性檢查，量測 intent／局部修改／消歧／證據一致性及延遲成本。硬限制仍由程式測試判定，不交給另一個 LLM 打分後放行。 |
-| CI | 型別、import 邊界、lint、相關 tests、catalog 驗證、正式 build；migrations 在空 DB 與前一版 schema 的代表資料各跑一次。 |
-
-Logs 記 run ID、revision、模型／prompt 版本、latency、tokens、錯誤類型；預設不記原始對話或完整模型輸入輸出。若啟用 [AI SDK telemetry](https://ai-sdk.dev/docs/ai-sdk-core/telemetry)，明確關閉 input／output recording，不假設套件預設符合隱私目標。對話保存於有權限及刪除機制的產品資料中，與 telemetry 分開。
-
-正式長期使用前選擇有自動備份與 PITR 的託管 DB，確認保留期間與還原權限；**還原到隔離資料庫並驗證紀錄可讀**才算恢復能力通過。建議初始目標為 RPO ≤15 分鐘（災難下最多損失的時間範圍）、RTO ≤4 小時（恢復服務時間），需由付費方案與演練支持，現階段不是承諾的 SLA。這是可靠性優先下的工程建議，部署選型需同時列出成本；不能因有每日備份就宣稱符合此目標。PITR 機制見 [PostgreSQL 文件](https://www.postgresql.org/docs/current/continuous-archiving.html)，匯出不能取代備份。
-
-部署選能承載 Node 與持續串流的 host，先驗代理 buffering、request timeout、DB connection pool 與 graceful shutdown；Next.js [BFF 文件](https://nextjs.org/docs/app/guides/backend-for-frontend) 提醒部署平台可能限制 request 執行時間，不能把 HTTP handler 當背景工作系統。公開使用前設定單帳號請求／token 配額及總成本上限，從少量實際流量調整，不先引入 Redis。
-
-部署同一版 application／catalog／policy 的對應關係要可追溯。程式與 catalog 可切回已驗證版本；DB 變更以可相容擴充或 forward fix 為主，不對已有使用者資料直接執行破壞性 down migration。
-
-## 何時才增加複雜度
-
-| 可觀察的新需求 | 到時重新評估 |
-|---|---|
-| 同一 backend 要服務不同 Agent UI／framework | AG-UI 或明確版本化的跨端協定。 |
-| 跨重啟繼續長任務、人工等待、外部副作用重試 | LangGraph／workflow engine／worker，依實際恢復語意選型。 |
-| catalog 與非結構化資料變大，現有搜尋品質不夠 | 先量測查詢，再評估全文或向量檢索；硬限制仍走結構化判定。 |
-| 確有 Python ML 需求或獨立團隊／擴縮需求 | Python 服務或模組拆分，不為語言偏好先承擔服務邊界。 |
-| DB 指標證明快取或跨 instance 配額是瓶頸 | 針對具體問題加 cache／Redis，不同時複製多份業務狀態。 |
-| 使用者確實需要離線修改後同步 | local-first、衝突解決與同步協定；不把瀏覽器 cache 宣稱已具備。 |
-
-## 第一個交付應證明什麼
-
-將 [PRODUCT_SPEC 開發順序](PRODUCT_SPEC.md#開發順序與完成界線) 的第一階段做成最小垂直流程：登入 → 載入一小批 reviewed 真實資料 → 理解並修改一個條件 → 規則找候選 → 保存 → 重開找回 → 依目前資料重新評估。離線 fixture 驗證完整程式路徑，配置模型與 OAuth 後再驗證真實連接，兩者結果分開記錄。
-
-骨架完成的證據應包含 migrations、owner 隔離、revision／重送處理、失敗後恢復與可重跑命令。第一階段只用最少 UI 證明架構，完整六功能、資料覆蓋與真人體驗在後續階段驗收；不以「SDK 能回一句話」宣告架構成立。
-
-尚待實測的選擇是具體模型、相容套件版本，以及符合預算和恢復目標的部署／DB 方案；這些有明確驗證出口，不保留「之後再補安全、資料所有權或保存契約」的缺口。
+尚待實測的是相容套件版本、模型選擇及託管方案的成本／恢復條件。若原生 runtime 無法通過上述核心恢復驗收，回到完整的 Temporal 路線比較，不在既有方案旁再自建 lease／scheduler／checkpoint 系統補洞。定期追蹤、通知與資料自動發布仍是後續產品決策。
