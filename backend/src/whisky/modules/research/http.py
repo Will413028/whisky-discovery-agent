@@ -18,8 +18,9 @@ from whisky.modules.research.observation import (
     ObserveInput,
     Observer,
 )
+from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.store import ResearchConflict, ResearchStore
-from whisky.modules.research.views import ResearchCommandView, TaskView
+from whisky.modules.research.views import ReportView, ResearchCommandView, TaskView
 from whisky.platform.http_errors import PublicAPIError
 
 
@@ -37,6 +38,13 @@ class AuthorizedSource:
             raise HTTPException(503, "OBSERVATION_UNAVAILABLE")
         return await self.source.read(request, owner)
 
+    async def report(self, report_id: UUID, owner: UUID) -> ReportView | None:
+        if not await run_in_threadpool(self.identity.is_active, owner):
+            return None
+        if self.source is None:
+            return None
+        return await self.source.report(report_id, owner)
+
 
 def observation_router(
     identity: IdentityAccess,
@@ -45,10 +53,11 @@ def observation_router(
     *,
     store: ResearchStore | None = None,
     acceptance: AcceptResearch | None = None,
+    reports: ReportStore | None = None,
 ) -> APIRouter:
     routes = APIRouter()
     if source is None and store is not None:
-        source = DBObservationSource(store)
+        source = DBObservationSource(store, reports)
     observer = Observer(AuthorizedSource(identity, source), policy)
     bearer = HTTPBearer(auto_error=False)
 
@@ -64,6 +73,17 @@ def observation_router(
         if store is None:
             raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
         view = store.task(task_id, session.actor_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
+
+    @routes.get("/api/v1/reports/{report_id}", response_model=ReportView)
+    def read_report(
+        report_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> ReportView:
+        if reports is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = reports.read(session.actor_id, report_id)
         if view is None:
             raise HTTPException(404, "NOT_FOUND")
         return view

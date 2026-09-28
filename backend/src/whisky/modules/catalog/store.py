@@ -14,12 +14,12 @@ from whisky.modules.catalog.domain import (
     CatalogRelease,
     Evidence,
     FlavorTag,
-    PriceObservation,
     PublishedPrice,
     fits_budget,
     qualified_prices,
     validate_release,
 )
+from whisky.modules.catalog.public import published_prices
 
 
 class CatalogStore:
@@ -61,36 +61,7 @@ class CatalogStore:
 
     def prices(self, release_id: UUID, item_id: UUID) -> tuple[PublishedPrice, ...]:
         with self.engine.connect() as connection:
-            rows = connection.execute(
-                text("""SELECT p.*,e.source_id,e.captured_at,
-                i.abv,i.volume_ml FROM catalog_prices p
-                JOIN catalog_releases r ON r.id=p.release_id
-                JOIN catalog_items i ON (i.release_id,i.id)=(p.release_id,p.item_id)
-                JOIN catalog_evidence e
-                    ON (e.release_id,e.id)=(p.release_id,p.evidence_id)
-                WHERE p.release_id=:release_id AND p.item_id=:item_id AND r.sealed
-                ORDER BY e.captured_at,p.id"""),
-                {"release_id": release_id, "item_id": item_id},
-            ).mappings()
-            return tuple(
-                PublishedPrice(
-                    row["id"],
-                    row["item_id"],
-                    row["evidence_id"],
-                    PriceObservation(
-                        row["source_id"],
-                        Bottle(row["bottle_version_id"], row["abv"], row["volume_ml"]),
-                        row["captured_at"],
-                        row["checked_on"],
-                        row["amount"],
-                        row["reviewed"],
-                        row["market"],
-                        row["currency"],
-                        row["unconditional"],
-                    ),
-                )
-                for row in rows
-            )
+            return published_prices(connection, release_id, item_id)
 
     def publish(self, release: CatalogRelease) -> None:
         validate_release(release)

@@ -40,13 +40,14 @@ async def test_time_skipping_executes_seven_day_timer():
 @pytest.mark.integration
 async def test_worker_process_executes_bootstrap_probe(tmp_path):
     async with await WorkflowEnvironment.start_local() as env:
-        queue = f"whisky-test-{uuid4()}"
+        queue = f"whisky-probe-{uuid4()}"
         process = await asyncio.create_subprocess_exec(
             str(Path(sys.executable).parent / "whisky-worker"),
             "--address",
             env.client.service_client.config.target_host,
             "--task-queue",
             queue,
+            "--probe-only",
             cwd=tmp_path,
         )
         try:

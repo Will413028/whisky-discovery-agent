@@ -4,13 +4,13 @@
 
 ## 目前狀態
 
-T00–T02 技術入口已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、token 到期與未讀 consumer 期限已驗證，入口回退演練通過。原 vinext SSR 因 Free CPU 門檻撤回。T03 已完成不可變 reviewed catalog、價格規則、真 PostgreSQL 驗證及三款人工覆核樣本；尚未部署 catalog。產品探索與持久研究依 T04–T12 接續，合成串流不代表研究服務已可用。
+T00–T02 技術入口已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、token 到期與未讀 consumer 期限已驗證，入口回退演練通過。原 vinext SSR 因 Free CPU 門檻撤回。T03 的不可變 reviewed catalog 與三款人工覆核樣本、T04 的可靠受理，以及 T05 的 durable Agent、來源報告與終態已通過本機與 CI 驗收；研究 worker、catalog 與 migrations 尚未正式部署，T06–T12 仍待完成。
 
 主軸是保留喜歡的特徵、探索剛剛好的差異，最後留下可回看的選擇與取捨。互動流程、資料契約、建議工程預設與驗收情境見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。目前有三款人工覆核起始樣本，完整探索功能仍待實作。
 
 ## 開發方向
 
-- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；下一階段為 T04 計畫與可靠接受研究。
+- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前接續 T06 等待補充與恢復。
 - [技術架構](ARCHITECTURE.md) 採 Oracle VM 上的 Next.js／Node、FastAPI／PostgreSQL／PydanticAI＋Temporal，AG-UI 管互動。`workers.dev` 薄 Worker 經 VPC／具名 Tunnel 連 VM Web，不執行 SSR；Web 固定轉送私有 API，Auth0 Free 管登入。完整新路徑、資源與備份還原仍須實測；目前 VM 帳單 US$0 不是未來保證。
 - 這是可獨立開發與部署的產品；不依賴其他作品的執行環境。
 - 專案採單一 repo：前端依功能組織，後端以業務模組為主、模組內按需分層，保留 Python `backend/src/whisky/`。目錄與責任見 [技術架構](ARCHITECTURE.md)，首個流程契約與驗證見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。目前有 bootstrap、identity、catalog、welcome 與 research 的契約／transport 基礎，按用例加入模組。
@@ -52,7 +52,7 @@ Catalog 人工發布：先設定此專案的 `WHISKY_DATABASE_URL`，執行
 發布檔是完整 release snapshot，須帶上仍保留的酒款與來源觀察；封存後不能覆寫。
 重複匯入同一 release ID 會拒絕；更新須另建 release ID 與發布時間，保留舊檔與歷史引用。
 
-`GET /health/live` 只代表 API 存活。worker 目前只註冊基礎設施用 `BootstrapProbe`，不代表研究功能；對自己的 Temporal server 可執行 `uv run --project backend whisky-worker --address <host:port> --namespace <namespace> --task-queue <isolated-queue>`。整合測試會建立短生命週期 Temporal server 與獨立 queue；首次執行可能下載 SDK 測試 server。Docker／Temporal 缺失會失敗，不會 skip。
+`GET /health/live` 只代表 API 存活。研究 worker 要求 `WHISKY_DATABASE_URL`、`WHISKY_CLOUDFLARE_ACCOUNT_ID`、`WHISKY_CLOUDFLARE_AI_TOKEN` 同時存在，啟動命令為 `uv run --project backend whisky-worker --address <host:port> --namespace <namespace> --task-queue <research-queue>`；缺設定會在 polling 前失敗。單一 worker process 僅綁一組模型／資料庫設定。基礎設施 probe 須明確加 `--probe-only`，並使用 `whisky-probe-` 前綴的獨立 queue；probe 不處理研究。整合測試會建立短生命週期 Temporal server 與獨立 queue；首次執行可能下載 SDK 測試 server。Docker／Temporal 缺失會失敗，不會 skip。
 
 邊界 gate 檢查直接、靜態可解析 imports：Python domain 只依賴同模組 domain 與非 framework 函式庫，跨模組經 `public.py`／`public/`；Web shared 不引用 features，feature 對外出口為 `index.ts(x)`。動態組合字串與執行時載入不在靜態 gate 的保證範圍，新增此類機制前須擴充檢查。CI 設定涵蓋 T00–T02 已實作的 deterministic checks；各提交遠端結果見實作計畫，不代表真 Auth0、恢復或 release gates 已通過。
 

@@ -818,6 +818,287 @@
         "title": "ReasoningMessage",
         "type": "object"
       },
+      "ReportCandidateView": {
+        "additionalProperties": false,
+        "properties": {
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaimView"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "itemId": {
+            "format": "uuid",
+            "title": "Itemid",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/ReportPriceView"
+            },
+            "title": "Prices",
+            "type": "array"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "releaseId": {
+            "format": "uuid",
+            "title": "Releaseid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "releaseId",
+          "itemId",
+          "bottleVersionId",
+          "name",
+          "reason",
+          "claims",
+          "prices"
+        ],
+        "title": "ReportCandidateView",
+        "type": "object"
+      },
+      "ReportClaimView": {
+        "additionalProperties": false,
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "fact",
+              "tag"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ReportSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "value",
+          "sources"
+        ],
+        "title": "ReportClaimView",
+        "type": "object"
+      },
+      "ReportPriceView": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "checkedOn": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkedon"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ReportSourceView"
+          },
+          "volumeMl": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volumeml"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "currency",
+          "market",
+          "volumeMl",
+          "checkedOn",
+          "source"
+        ],
+        "title": "ReportPriceView",
+        "type": "object"
+      },
+      "ReportSourceView": {
+        "additionalProperties": false,
+        "properties": {
+          "checkedOn": {
+            "format": "date",
+            "title": "Checkedon",
+            "type": "string"
+          },
+          "evidenceId": {
+            "format": "uuid",
+            "title": "Evidenceid",
+            "type": "string"
+          },
+          "publisher": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidenceId",
+          "url",
+          "publisher",
+          "checkedOn"
+        ],
+        "title": "ReportSourceView",
+        "type": "object"
+      },
+      "ReportView": {
+        "additionalProperties": false,
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/ReportCandidateView"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "catalogReleaseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalogreleaseid"
+          },
+          "conditionsRevision": {
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "evaluatedOn": {
+            "format": "date",
+            "title": "Evaluatedon",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "modelVersion": {
+            "title": "Modelversion",
+            "type": "string"
+          },
+          "policyVersion": {
+            "title": "Policyversion",
+            "type": "string"
+          },
+          "promptVersion": {
+            "title": "Promptversion",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          },
+          "unresolved": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unresolved",
+            "type": "array"
+          }
+        },
+        "required": [
+          "schemaVersion",
+          "id",
+          "taskId",
+          "conditionsRevision",
+          "catalogReleaseId",
+          "evaluatedOn",
+          "policyVersion",
+          "promptVersion",
+          "modelVersion",
+          "summary",
+          "unresolved",
+          "candidates"
+        ],
+        "title": "ReportView",
+        "type": "object"
+      },
       "ResearchCommandView": {
         "additionalProperties": false,
         "properties": {
@@ -2581,6 +2862,111 @@
           }
         ],
         "summary": "Read Plan"
+      }
+    },
+    "/api/v1/reports/{report_id}": {
+      "get": {
+        "operationId": "read_report_api_v1_reports__report_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Report"
       }
     },
     "/api/v1/tasks/{task_id}": {
