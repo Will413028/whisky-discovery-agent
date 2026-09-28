@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-29。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 已驗收本機可靠受理與對帳；T05 durable Agent 已驗收本機及 CI 出口。T03–T05 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-29。狀態：T00–T05 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；T03 catalog／人工覆核、T04 可靠受理及 T05 durable Agent 已通過各自本機與 CI 出口。T06 等待補充、跨程序恢復與 UI 已通過本機驗證，待 CI 對帳。T03–T06 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03–T05 已驗收本機出口，T05 CI 全綠；T06–T09 未完成 |
+| 持久研究骨架與樣本 | T03–T09 | T03–T05 已驗收；T06 本機 GREEN、待 CI；T07–T09 未完成 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -495,3 +495,11 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 真 HTTP／Temporal／PostgreSQL 驗首份 snapshot 後 SSE socket 關閉仍完成報告；保持串流時完成送已保存 `whisky.report`、`RUN_FINISHED success`，無效模型結果送安全 `RUN_ERROR`，turn outcome 交易保存。舊 probe 測試揭示缺設定 worker 仍可在研究 queue 接任務的風險；正式 worker 缺設定 fail fast，probe 改 `--probe-only` 與 `whisky-probe-` 隔離 queue。
 - fresh design-review 的五項初始發現已處理：claim／價格來源、政策／prompt 版本、fail-closed worker、完整 catalog 覆蓋；可變 process-local agent 註冊保留單 worker／process 前提，T06 長等待或正式升版前須補相容舊 history 的版本化 executor。複查新增「research 直接 JOIN catalog 表」已改為 `catalog.public` 查詢。獨立 correctness review 的失敗終態、跳過工具、AG-UI 完成終態三項均以可重現測試修復。兩名 reviewer 均唯讀；主 agent 核對 repo status/log 與 second-brain 專案路徑，未見 reviewer 越界寫入；second-brain HEAD 另由其他 session 前進，未改其內容。
 - 本機最終驗證：`uv run --project backend pytest backend/tests -q` → 316 passed（126.25 秒）；修正 catalog 公開讀取邊界後相關整合測試 21 passed，另新增的取消／終態 fence 案例 1 passed；wheel 4 passed（migration head 0008）。ruff check／format、mypy 45 files、Python 邊界與腳本 unittest 5 passed；Web 79 passed、typecheck、邊界與 Next build 通過；staged diff whitespace check 通過。commit `dad8445` 的 push run `36458432254` 與 PR run `36458465361` 各自 backend／web jobs 均 success，`gh pr checks 4` 全綠；T05 因此標為**本機與 CI 已驗收**。T06 補充等待、T08 真模型品質及 T09 正式部署／還原各有獨立 gate。
+
+### T06 — 補充版本、持久等待與跨瀏覽器恢復（2026-09-29）
+
+- 前提對帳：T05 的 V1 history 仍須由同名 workflow／activity 執行；T06 新工作改走 V2。`0009_clarifications` 保存 owner／generation／revision、等待版本、期限與 answer receipt，問題發布和 task `needs_input`／AG-UI turn interrupt 同交易。V1／V2 工具各捕捉自己的 DB engine；worker 以固定 `ResearchActivities` 實例註冊舊 activity 名稱，避免 V2 借用 V1 的程序全域 DB。真 Temporal server／PostgreSQL 測同程序重啟及 `spawn` 新 worker process，補答後查最新 sealed release 並存報告。
+- RED→GREEN：問題 publish stub、答覆 reserve／expire stub、V2 原 final-only workflow、Observer interrupt、REST answer、AG-UI resume、Web answer proxy／UI 均先驗到行為 RED；真資料的版本選項及 owner-scoped 未完成 task 清單亦先驗無綁定／404，再改到 GREEN。測試以 barrier 證明 publish commit 與 wait 之間的答覆不遺失，以 time-skipping 驗 7 日過期；同 key 重送、不同答案競爭、過期 receipt 拒絕、已保存問題跨 catalog release／期限重送由真 DB／Temporal 分層驗證。合成瀏覽器 fixture 只驗 UI／傳輸，不冒充真 Auth0／live 模型。
+- 版本選項只能引用目前 reviewed catalog 的穩定 `bottle_version_id`，顯示名稱由資料庫產生；報告 commit 須匹配已接受的 clarification／版本，並重新解析當前 release。若版本已撤出，報告明示無法確認、候選為空，不讓模型以別款替代。Web 從 `GET /api/v1/tasks` 找回自己的未完成委託，對仍開啟的 run 使用 AG-UI observe 重連，REST GET 保留為 cold start／補答後恢復；關頁後重新登入、從清單進入、答覆與報告的 Playwright 旅程已通過。
+- fresh design-review 的四項發現均「改」：V2 對 V1 全域 DB 的隱性依賴、版本文字未綁 reviewed ID、產品頁未接 AG-UI observe、跨瀏覽器只靠舊 deep link。版本消失與重試跨 catalog release 另加回歸；沒有留下待定項。設計審查者唯讀，主 agent 已核對本 worktree 與 second-brain 的 status／log，未見越界寫入。
+- 本機驗證：`uv run --project backend pytest backend/tests -q` → 343 passed（177.72 秒）；後續問題 replay 期限加固的定向案例 1 passed。wheel 4 passed（migration head 0009），ruff check／format、mypy 50 files、Python 邊界、腳本 unittest 5 passed；Web Vitest 88 passed、typecheck、邊界、Next build，Playwright 6 passed；`git diff --cached --check` 通過。T06 CI／PR 尚待對帳，正式 VM／VPC 研究 worker、真模型品質與備份還原分屬 T08–T09。
