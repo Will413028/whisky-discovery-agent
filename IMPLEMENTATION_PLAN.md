@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03 價格純規則進行中；T04–T09 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -332,3 +332,9 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 真 token expiry：此專案 Auth0 API 暫設 90 秒 lifetime，harness 在記憶體固定 token，跨重連取得 200→200→401，UI AUTH_REQUIRED／disconnected 且 task 仍 researching；重新取 token 恢復 200。API lifetime 已 CLI read-back 恢復 900 秒。尚待第二個真身份與 live slow-consumer；首次嘗試核對仍為原 actor，沒有冒稱跨帳號成功，已新增明確 Google account chooser。
 - 最終驗收：第二個真 Google 身份確認不同 actor，自身資料 200、原帳號資料與 task 404/no-store，沒有 snapshot。兩條真瀏覽器未讀 response 為 200／200、第三條 429，未取消前在 66,136 ms 新連線成功 200；這是目前 compact snapshot 的有界期限驗證，搭配本機 stalled-send 測試，不外推高流量 TCP 壓力。Probe URL 恢復 404、臨時 callback 移除、正常 API／Web healthy；舊 SSR rollback 與 thin Worker restore 各實測首頁 200／私人 API 401。
 - `3e012f4` CI run `36410967590` 的 backend／web jobs 各自 success；Web 55 tests、typecheck 與 probe build 通過。獨立唯讀 T00–T02 requirement/evidence audit 無阻擋 gate 缺口，兩項紀錄對帳已補齊。T00–T02 已驗收，容量／持久研究／模型／還原仍依 T03–T12，不把入口驗收當產品完成。
+
+### T03 價格純規則 — 2026-09-28 進行中
+
+- 前提沿用 PRODUCT_SPEC 的 TW／TWD 單瓶可比版本、每來源最新觀察、合格報價上緣與集中配置 30 日政策；不把來源撤價當作沒有新資料。Domain 採 Python dataclass／Decimal，沒有 ORM／Agent framework 依賴。
+- `test_catalog_prices.py`：精確價格先 RED（None≠1500.50）→GREEN；draft 排除先 RED→GREEN；version／ABV／容量三個反例各 RED→GREEN；市場／幣別／條件價三個反例各 RED→GREEN；day 31／未來／缺日期各 RED→GREEN，day 0／30 保持可用；最新撤價及每來源最新→跨來源上緣各 RED→GREEN。
+- `uv run --project backend pytest backend/tests/test_catalog_prices.py -q`：15 passed；affected ruff／mypy 與 Python boundary 通過。尚未建立 catalog persistence／migration／publication／真實資料，不把純規則視為 T03 完成；預算相等、台灣時區、缺資料與其他邊界、mutation、真 PostgreSQL 及人工覆核仍待依序完成。
