@@ -1,16 +1,23 @@
 """Transactional PostgreSQL catalog publication and immutable-reference reads."""
 
+from datetime import date
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy import Engine, text
 
 from whisky.modules.catalog.domain import (
     Bottle,
+    CatalogCandidate,
     CatalogFact,
     CatalogItem,
     CatalogRelease,
     Evidence,
     FlavorTag,
+    PriceObservation,
+    PublishedPrice,
+    fits_budget,
+    qualified_prices,
     validate_release,
 )
 
@@ -18,6 +25,72 @@ from whisky.modules.catalog.domain import (
 class CatalogStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def candidates(
+        self, as_of: date, budget: Decimal | None
+    ) -> tuple[CatalogCandidate, ...]:
+        with self.engine.connect() as connection:
+            release_id = connection.scalar(
+                text("""SELECT id FROM catalog_releases
+                WHERE sealed ORDER BY published_at DESC LIMIT 1""")
+            )
+            if release_id is None:
+                return ()
+            identifiers = connection.scalars(
+                text("""SELECT id FROM catalog_items
+                WHERE release_id=:release_id AND reviewed ORDER BY id"""),
+                {"release_id": release_id},
+            ).all()
+        candidates = []
+        for identifier in identifiers:
+            item = self.item(release_id, identifier)
+            if item is None:
+                continue
+            prices = self.prices(release_id, identifier)
+            qualified = qualified_prices(
+                item.bottle, [price.observation for price in prices], as_of
+            )
+            candidate = CatalogCandidate(
+                release_id,
+                item,
+                tuple(price for price in prices if price.observation in qualified),
+            )
+            if fits_budget(candidate.price_upper_bound, budget):
+                candidates.append(candidate)
+        return tuple(candidates)
+
+    def prices(self, release_id: UUID, item_id: UUID) -> tuple[PublishedPrice, ...]:
+        with self.engine.connect() as connection:
+            rows = connection.execute(
+                text("""SELECT p.*,e.source_id,e.captured_at,
+                i.abv,i.volume_ml FROM catalog_prices p
+                JOIN catalog_releases r ON r.id=p.release_id
+                JOIN catalog_items i ON (i.release_id,i.id)=(p.release_id,p.item_id)
+                JOIN catalog_evidence e
+                    ON (e.release_id,e.id)=(p.release_id,p.evidence_id)
+                WHERE p.release_id=:release_id AND p.item_id=:item_id AND r.sealed
+                ORDER BY e.captured_at,p.id"""),
+                {"release_id": release_id, "item_id": item_id},
+            ).mappings()
+            return tuple(
+                PublishedPrice(
+                    row["id"],
+                    row["item_id"],
+                    row["evidence_id"],
+                    PriceObservation(
+                        row["source_id"],
+                        Bottle(row["bottle_version_id"], row["abv"], row["volume_ml"]),
+                        row["captured_at"],
+                        row["checked_on"],
+                        row["amount"],
+                        row["reviewed"],
+                        row["market"],
+                        row["currency"],
+                        row["unconditional"],
+                    ),
+                )
+                for row in rows
+            )
 
     def publish(self, release: CatalogRelease) -> None:
         validate_release(release)
@@ -96,6 +169,29 @@ class CatalogStore:
                                 "bottle_version_id": item.bottle.version_id,
                             },
                         )
+            for price in release.prices:
+                observation = price.observation
+                connection.execute(
+                    text("""INSERT INTO catalog_prices
+                    (release_id,id,item_id,evidence_id,bottle_version_id,amount,
+                     checked_on,reviewed,market,currency,unconditional)
+                    VALUES (:release_id,:id,:item_id,:evidence_id,:bottle_version_id,
+                            :amount,:checked_on,:reviewed,:market,:currency,:unconditional)
+                    """),
+                    {
+                        "release_id": release.id,
+                        "id": price.id,
+                        "item_id": price.item_id,
+                        "evidence_id": price.evidence_id,
+                        "bottle_version_id": observation.bottle.version_id,
+                        "amount": observation.amount,
+                        "checked_on": observation.checked_on,
+                        "reviewed": observation.reviewed,
+                        "market": observation.market,
+                        "currency": observation.currency,
+                        "unconditional": observation.unconditional,
+                    },
+                )
             connection.execute(
                 text("UPDATE catalog_releases SET sealed=true WHERE id=:id"),
                 {"id": release.id},

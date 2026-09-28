@@ -32,9 +32,9 @@ class PriceObservation:
     checked_on: date | None
     amount: Decimal | None
     reviewed: bool
-    market: str = "TW"
-    currency: str = "TWD"
-    unconditional: bool = True
+    market: str
+    currency: str
+    unconditional: bool
 
     def __post_init__(self) -> None:
         if self.observed_at.utcoffset() is None:
@@ -85,11 +85,20 @@ class CatalogItem:
 
 
 @dataclass(frozen=True)
+class PublishedPrice:
+    id: UUID
+    item_id: UUID
+    evidence_id: UUID
+    observation: PriceObservation
+
+
+@dataclass(frozen=True)
 class CatalogRelease:
     id: UUID
     published_at: datetime
     items: tuple[CatalogItem, ...]
     evidence: tuple[Evidence, ...]
+    prices: tuple[PublishedPrice, ...] = ()
 
 
 def validate_release(release: CatalogRelease) -> None:
@@ -128,6 +137,28 @@ def validate_release(release: CatalogRelease) -> None:
     if any(not item.reviewed for item in release.items):
         raise ValueError("Only reviewed items can be published")
     evidence_by_id = {evidence.id: evidence for evidence in release.evidence}
+    items_by_id = {item.id: item for item in release.items}
+    if len({price.id for price in release.prices}) != len(release.prices):
+        raise ValueError("Duplicate price identifiers")
+    for price in release.prices:
+        item = items_by_id.get(price.item_id)
+        source = evidence_by_id.get(price.evidence_id)
+        observation = price.observation
+        if (
+            item is None
+            or source is None
+            or not source.reviewed
+            or not observation.reviewed
+            or observation.bottle != item.bottle
+            or source.bottle_version_id != item.bottle.version_id
+            or observation.source_id != source.source_id
+            or observation.observed_at != source.captured_at
+            or (
+                observation.checked_on is not None
+                and observation.checked_on != source.checked_on
+            )
+        ):
+            raise ValueError("Price must cite reviewed same-source bottle evidence")
     for item in release.items:
         facts = {fact.field: fact for fact in item.facts}
         if len(facts) != len(item.facts):
@@ -173,14 +204,14 @@ def fits_budget(upper_bound: Decimal | None, budget: Decimal | None) -> bool:
     return budget is None or (upper_bound is not None and upper_bound <= budget)
 
 
-def price_upper_bound(
+def qualified_prices(
     bottle: Bottle,
     observations: list[PriceObservation],
     as_of: date,
     policy: PricePolicy = PricePolicy(),
-) -> Decimal | None:
+) -> tuple[PriceObservation, ...]:
     if bottle.abv is None or bottle.volume_ml is None:
-        return None
+        return ()
     latest: dict[UUID, PriceObservation] = {}
     ambiguous: set[UUID] = set()
     for observation in observations:
@@ -194,19 +225,50 @@ def price_upper_bound(
             observation.observed_at == previous.observed_at and observation != previous
         ):
             ambiguous.add(observation.source_id)
+    return tuple(
+        observation
+        for observation in latest.values()
+        if observation.bottle == bottle
+        and observation.source_id not in ambiguous
+        and observation.reviewed
+        and observation.amount is not None
+        and observation.market == "TW"
+        and observation.currency == "TWD"
+        and observation.unconditional
+        and observation.checked_on is not None
+        and 0 <= (as_of - observation.checked_on).days <= policy.maximum_age_days
+    )
+
+
+def price_upper_bound(
+    bottle: Bottle,
+    observations: list[PriceObservation],
+    as_of: date,
+    policy: PricePolicy = PricePolicy(),
+) -> Decimal | None:
     return max(
         (
-            observation.amount
-            for observation in latest.values()
-            if observation.bottle == bottle
-            and observation.source_id not in ambiguous
-            and observation.reviewed
-            and observation.amount is not None
-            and observation.market == "TW"
-            and observation.currency == "TWD"
-            and observation.unconditional
-            and observation.checked_on is not None
-            and 0 <= (as_of - observation.checked_on).days <= policy.maximum_age_days
+            quote.amount
+            for quote in qualified_prices(bottle, observations, as_of, policy)
+            if quote.amount is not None
         ),
         default=None,
     )
+
+
+@dataclass(frozen=True)
+class CatalogCandidate:
+    release_id: UUID
+    item: CatalogItem
+    prices: tuple[PublishedPrice, ...]
+
+    @property
+    def price_upper_bound(self) -> Decimal | None:
+        return max(
+            (
+                price.observation.amount
+                for price in self.prices
+                if price.observation.amount is not None
+            ),
+            default=None,
+        )

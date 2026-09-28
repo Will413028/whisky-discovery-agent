@@ -1,0 +1,326 @@
+{
+  "schema_version": 1,
+  "data_kind": "real",
+  "review_status": "draft",
+  "reviewed_by": null,
+  "reviewed_at": null,
+  "release": {
+    "id": "632ff03c-d3ba-4018-b34b-531de55736f7",
+    "published_at": "2026-09-28T13:50:05.095085+00:00",
+    "items": [
+      {
+        "id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+        "bottle": {
+          "version_id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+          "abv": "40",
+          "volume_ml": 700
+        },
+        "name": "格蘭菲迪 12 年",
+        "reviewed": false,
+        "facts": [
+          {
+            "field": "name",
+            "value": "格蘭菲迪 12 年",
+            "evidence_ids": [
+              "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+            ]
+          },
+          {
+            "field": "abv",
+            "value": "40",
+            "evidence_ids": [
+              "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+            ]
+          },
+          {
+            "field": "volume_ml",
+            "value": "700",
+            "evidence_ids": [
+              "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+            ]
+          },
+          {
+            "field": "age_years",
+            "value": "12",
+            "evidence_ids": [
+              "445346ab-9eef-45a1-801d-2ba0b480acd8"
+            ]
+          },
+          {
+            "field": "producer_tasting_notes",
+            "value": "品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主。",
+            "evidence_ids": [
+              "445346ab-9eef-45a1-801d-2ba0b480acd8"
+            ]
+          }
+        ],
+        "flavor_tags": [
+          {
+            "label": "果香",
+            "evidence_ids": [
+              "445346ab-9eef-45a1-801d-2ba0b480acd8"
+            ]
+          },
+          {
+            "label": "奶油糖",
+            "evidence_ids": [
+              "445346ab-9eef-45a1-801d-2ba0b480acd8"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+        "bottle": {
+          "version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+          "abv": "40",
+          "volume_ml": 700
+        },
+        "name": "格蘭利威 12 年",
+        "reviewed": false,
+        "facts": [
+          {
+            "field": "name",
+            "value": "格蘭利威 12 年",
+            "evidence_ids": [
+              "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            ]
+          },
+          {
+            "field": "abv",
+            "value": "40",
+            "evidence_ids": [
+              "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            ]
+          },
+          {
+            "field": "volume_ml",
+            "value": "700",
+            "evidence_ids": [
+              "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            ]
+          },
+          {
+            "field": "age_years",
+            "value": "12",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
+          },
+          {
+            "field": "producer_tasting_notes",
+            "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
+          }
+        ],
+        "flavor_tags": [
+          {
+            "label": "果香",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
+          },
+          {
+            "label": "香草甜香",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
+          },
+          {
+            "label": "太妃糖",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+        "bottle": {
+          "version_id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+          "abv": "40",
+          "volume_ml": 700
+        },
+        "name": "格蘭菲迪 15 年 Solera",
+        "reviewed": false,
+        "facts": [
+          {
+            "field": "name",
+            "value": "格蘭菲迪 15 年 Solera",
+            "evidence_ids": [
+              "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+            ]
+          },
+          {
+            "field": "abv",
+            "value": "40",
+            "evidence_ids": [
+              "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+            ]
+          },
+          {
+            "field": "volume_ml",
+            "value": "700",
+            "evidence_ids": [
+              "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+            ]
+          },
+          {
+            "field": "age_years",
+            "value": "15",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
+          },
+          {
+            "field": "producer_tasting_notes",
+            "value": "品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑。",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
+          }
+        ],
+        "flavor_tags": [
+          {
+            "label": "果香",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
+          },
+          {
+            "label": "香草甜香",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
+          },
+          {
+            "label": "辛香",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
+          }
+        ]
+      }
+    ],
+    "evidence": [
+      {
+        "id": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+        "source_id": "6c3ab63e-4960-4109-8541-d928a72590ea",
+        "bottle_version_id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+        "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+        "captured_at": "2026-09-28T13:50:05.095085+00:00",
+        "checked_on": "2026-09-28",
+        "reviewed": false
+      },
+      {
+        "id": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
+        "source_id": "05d25804-8d16-4dfb-8400-51c6f0ca6f01",
+        "bottle_version_id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+        "url": "https://www.drinks.com.tw/product.aspx?Id=1753",
+        "captured_at": "2026-09-28T13:50:05.095085+00:00",
+        "checked_on": "2026-09-28",
+        "reviewed": false
+      },
+      {
+        "id": "6e6549a4-f143-463c-99e6-962ec90234d8",
+        "source_id": "c5052363-2577-4f6e-a1e1-436e3e948441",
+        "bottle_version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+        "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+        "captured_at": "2026-09-28T13:50:05.095085+00:00",
+        "checked_on": "2026-09-28",
+        "reviewed": false
+      },
+      {
+        "id": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+        "source_id": "8db3ddf3-b1cf-49e1-b207-a67a6dd8707c",
+        "bottle_version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+        "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+        "captured_at": "2026-09-28T13:50:05.095085+00:00",
+        "checked_on": "2026-09-28",
+        "reviewed": false
+      },
+      {
+        "id": "90802104-a519-49dc-b76e-cde795e94c1f",
+        "source_id": "b41f235e-87a9-417c-9e3e-73313bdcca6b",
+        "bottle_version_id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+        "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+        "captured_at": "2026-09-28T13:50:05.095085+00:00",
+        "checked_on": "2026-09-28",
+        "reviewed": false
+      },
+      {
+        "id": "2e92d2cd-64cd-440c-8de0-589a9da35b12",
+        "source_id": "bff0d480-43ee-4f4b-b8cf-5a74614e3516",
+        "bottle_version_id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+        "url": "https://www.my9.com.tw/products/格蘭菲迪15年-glenfiddich-15y",
+        "captured_at": "2026-09-28T13:50:05.095085+00:00",
+        "checked_on": "2026-09-28",
+        "reviewed": false
+      }
+    ],
+    "prices": [
+      {
+        "id": "229ebe3b-3db0-44be-aeca-8bb09f5e6735",
+        "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+        "evidence_id": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
+        "observation": {
+          "source_id": "05d25804-8d16-4dfb-8400-51c6f0ca6f01",
+          "bottle": {
+            "version_id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+            "abv": "40",
+            "volume_ml": 700
+          },
+          "observed_at": "2026-09-28T13:50:05.095085+00:00",
+          "checked_on": "2026-09-28",
+          "amount": "978",
+          "reviewed": false,
+          "market": "TW",
+          "currency": "TWD",
+          "unconditional": true
+        }
+      },
+      {
+        "id": "29a6804f-b1e9-431a-9bc6-e9a83ba5bfcb",
+        "item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+        "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+        "observation": {
+          "source_id": "8db3ddf3-b1cf-49e1-b207-a67a6dd8707c",
+          "bottle": {
+            "version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+            "abv": "40",
+            "volume_ml": 700
+          },
+          "observed_at": "2026-09-28T13:50:05.095085+00:00",
+          "checked_on": "2026-09-28",
+          "amount": "816",
+          "reviewed": false,
+          "market": "TW",
+          "currency": "TWD",
+          "unconditional": true
+        }
+      },
+      {
+        "id": "dc06c7e4-c42a-4c7b-8330-05bf5f3b2c86",
+        "item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+        "evidence_id": "2e92d2cd-64cd-440c-8de0-589a9da35b12",
+        "observation": {
+          "source_id": "bff0d480-43ee-4f4b-b8cf-5a74614e3516",
+          "bottle": {
+            "version_id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+            "abv": "40",
+            "volume_ml": 700
+          },
+          "observed_at": "2026-09-28T13:50:05.095085+00:00",
+          "checked_on": "2026-09-28",
+          "amount": "1180",
+          "reviewed": false,
+          "market": "TW",
+          "currency": "TWD",
+          "unconditional": false
+        }
+      }
+    ]
+  }
+}

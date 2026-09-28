@@ -23,6 +23,9 @@ def sample_quote():
         checked_on=date(2026, 9, 28),
         amount=Decimal("1500.50"),
         reviewed=True,
+        market="TW",
+        currency="TWD",
+        unconditional=True,
     )
     return bottle, observation
 

@@ -353,3 +353,15 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - GitGuardian：使用者已處理 Compose 變數宣告誤判；新 head `c63fb9c` 的 GitGuardian 與 backend／web checks 全部成功，PR #1 已合併為 `8b5c888`。先前「等待 false-positive 處理」為當時紀錄，現已解除。
 - 獨立 correctness review 找到兩項 P2，均修正：非法 URL port／本機 literal host 可發布、等值 ABV decimal 字串被誤拒。7 個回歸 assertion 先 RED→GREEN，publication unit 現 26 passed；URL 僅做靜態格式／literal host 檢查，不宣稱完成 T08 的 DNS／redirect SSRF 防線。Domain／migration／store 的既有主鍵與 FK 路徑保持不變。
 - 修正後完整後端驗證：`uv run --project backend pytest backend/tests -q` 129 passed（87.47s）；ruff check／format、mypy 21 source files、Python boundary 再驗通過。
+
+
+### T03 價格持久化、查詢與人工覆核 — 2026-09-28
+
+- `PublishedPrice` 綁定 immutable release／item／evidence；新增 migration `0003_catalog_prices`，以既有 seal trigger 保護價格 snapshot，精確 Numeric 保存金額。查詢固定最新 sealed release，再共用純 `qualified_prices()`，不在 SQL／prompt 重寫資格規則；保留來源引用，不把舊 release 價格回填到新版。
+- TDD：price citation 的 item／evidence／source／bottle／draft／capture／duplicate 7 個 assertion RED→GREEN；真 PostgreSQL round-trip stub 與候選查詢 empty stub 各取得 assertion RED→GREEN。日期 30／31、關閉預算、跨 release 撤價、不可變價格為既有規則的 DB 整合驗證；外部 SQL 將 price 指向其他 bottle evidence 被真正 FK 23503 拒絕。
+- Manifest 明確宣告 schema version／real／reviewed／reviewer／aware review time。載入 stub RED→GREEN；10 個 draft／synthetic／缺 reviewer／非法時間／未覆核條目的 assertion RED→GREEN。CLI `whisky-catalog-publish` 先驗 manifest 再連 DB，不在 API startup 或 Agent 自動發布；重送同 release ID 明確拒絕，更新另建 snapshot。
+- 三款真實資料與 fixtures 分離於 `data/catalog`；原 draft 保留，reviewed 檔包含來源、版本、40%／700ml、台灣參考價及整理標籤。使用者明確回覆「已核對，同意三款資料與 30 日政策」，時間與來源見 `data/catalog/REVIEW.md`；格蘭菲迪 15 因條件不明保持 unconditional=false，不進嚴格預算候選。
+- 真 PostgreSQL 匯入 reviewed 檔，TWD 1000 候選為格蘭菲迪 12（978）與格蘭利威 12（816），關閉預算有三款，每個 fact／tag evidence 可解析。這是人工覆核後 snapshot 的查詢證據，不宣稱即時庫存或售價。
+- 獨立 design-review 0 findings，覆蓋 UUID／seal／FK／transaction／manifest／CLI／讀一致性與 query 規模。correctness review 找到 P1 缺欄位套合格預設與 P2 價格日期不符來源，6 assertion RED→GREEN；移除 domain 的市場／幣別／條件預設，非空 price.checked_on 須與 evidence.checked_on 相同。consumer 盤點 `rg -n 'PriceObservation\(' backend` 為 store 與兩個 fixture constructors，均已確認明確傳值。
+- 第一輪完整後端 155 passed；新增直接 FK 反例另 1 passed，review 修正後 affected unit 85 passed；最終完整結果接續記錄。ruff／mypy 23 source files／Python boundary 通過，repo 外 wheel 4 tests 通過、migration head `0003_catalog_prices`。未套用到 VM；T03 收口仍以最終驗證與 CI 為準。
+- 最終完整後端 `uv run --project backend pytest backend/tests -q`：162 passed（42.45s）。抽出共用規則後再執行日期／reviewed mutations，各 1 failed／34 passed；還原後 35 passed。ruff format 49 files、diff whitespace 檢查通過。

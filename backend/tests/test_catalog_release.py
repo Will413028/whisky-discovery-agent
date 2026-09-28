@@ -12,6 +12,8 @@ from whisky.modules.catalog.domain import (
     CatalogRelease,
     Evidence,
     FlavorTag,
+    PriceObservation,
+    PublishedPrice,
     validate_release,
 )
 
@@ -50,6 +52,64 @@ def synthetic_release():
 
 def test_reviewed_release_with_resolvable_source_facts_is_publishable():
     validate_release(synthetic_release())
+
+
+def synthetic_priced_release():
+    release = synthetic_release()
+    evidence = release.evidence[0]
+    price = PublishedPrice(
+        uuid4(),
+        release.items[0].id,
+        evidence.id,
+        PriceObservation(
+            evidence.source_id,
+            release.items[0].bottle,
+            evidence.captured_at,
+            evidence.checked_on,
+            Decimal("1500.50"),
+            True,
+            "TW",
+            "TWD",
+            True,
+        ),
+    )
+    return replace(release, prices=(price,))
+
+
+@pytest.mark.parametrize(
+    "fault", ["item", "evidence", "source", "bottle", "draft", "capture", "duplicate"]
+)
+def test_published_prices_require_unique_reviewed_same_source_bottle_references(fault):
+    release = synthetic_priced_release()
+    price = release.prices[0]
+    if fault == "item":
+        price = replace(price, item_id=uuid4())
+    elif fault == "evidence":
+        price = replace(price, evidence_id=uuid4())
+    elif fault == "source":
+        price = replace(
+            price, observation=replace(price.observation, source_id=uuid4())
+        )
+    elif fault == "bottle":
+        price = replace(
+            price,
+            observation=replace(
+                price.observation,
+                bottle=replace(price.observation.bottle, volume_ml=500),
+            ),
+        )
+    elif fault == "draft":
+        price = replace(price, observation=replace(price.observation, reviewed=False))
+    elif fault == "capture":
+        price = replace(
+            price,
+            observation=replace(
+                price.observation, observed_at=datetime(2027, 1, 1, tzinfo=UTC)
+            ),
+        )
+    prices = (price, price) if fault == "duplicate" else (price,)
+    with pytest.raises(ValueError):
+        validate_release(replace(release, prices=prices))
 
 
 @pytest.mark.parametrize(

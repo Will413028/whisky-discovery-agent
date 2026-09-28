@@ -1,17 +1,41 @@
 from dataclasses import replace
 from datetime import timedelta
+from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
 
 import pytest
 from sqlalchemy import create_engine, inspect, text
 from sqlalchemy.exc import IntegrityError
-from test_catalog_release import synthetic_release
+from test_catalog_release import synthetic_priced_release, synthetic_release
 
 from whisky.bootstrap.migrate import upgrade
+from whisky.modules.catalog.publication import load_reviewed_release
 from whisky.modules.catalog.store import CatalogStore
 
 pytestmark = pytest.mark.integration
+
+
+def test_published_prices_round_trip_with_exact_decimal_and_source_reference(
+    catalog_engine,
+):
+    release = synthetic_priced_release()
+    store = CatalogStore(catalog_engine)
+    store.publish(release)
+    assert store.prices(release.id, release.items[0].id) == release.prices
+
+
+def test_candidates_enforce_budget_and_preserve_reference_prices(catalog_engine):
+    release = synthetic_priced_release()
+    store = CatalogStore(catalog_engine)
+    store.publish(release)
+    candidates = store.candidates(release.published_at.date(), Decimal("1500.50"))
+    assert len(candidates) == 1
+    assert candidates[0].release_id == release.id
+    assert candidates[0].item.id == release.items[0].id
+    assert candidates[0].prices == release.prices
+    assert candidates[0].price_upper_bound == Decimal("1500.50")
+    assert store.candidates(release.published_at.date(), Decimal("1500.49")) == ()
 
 
 @pytest.fixture
@@ -147,3 +171,125 @@ def test_failed_publication_rolls_back_every_insert(catalog_engine):
             "catalog_citations",
         ):
             assert connection.scalar(text(f"SELECT count(*) FROM {table}")) == 0
+
+
+@pytest.mark.parametrize("age", [30, 31])
+def test_candidate_date_policy_applies_to_persisted_prices(catalog_engine, age):
+    release = synthetic_priced_release()
+    store = CatalogStore(catalog_engine)
+    store.publish(release)
+    as_of = release.published_at.date() + timedelta(days=age)
+    assert len(store.candidates(as_of, Decimal("2000"))) == (1 if age == 30 else 0)
+    unrestricted = store.candidates(as_of, None)
+    assert len(unrestricted) == 1
+    assert bool(unrestricted[0].prices) == (age == 30)
+    assert store.prices(release.id, release.items[0].id) == release.prices
+
+
+def test_latest_withdrawal_does_not_fall_back_to_old_release_price(catalog_engine):
+    original = synthetic_priced_release()
+    price = original.prices[0]
+    observed_at = original.published_at + timedelta(days=1)
+    revised = replace(
+        original,
+        id=uuid4(),
+        published_at=observed_at,
+        evidence=(
+            replace(
+                original.evidence[0],
+                captured_at=observed_at,
+                checked_on=observed_at.date(),
+            ),
+        ),
+        prices=(
+            replace(
+                price,
+                observation=replace(
+                    price.observation,
+                    amount=None,
+                    observed_at=observed_at,
+                    checked_on=observed_at.date(),
+                ),
+            ),
+        ),
+    )
+    store = CatalogStore(catalog_engine)
+    store.publish(original)
+    store.publish(revised)
+    assert store.candidates(observed_at.date(), Decimal("2000")) == ()
+    unrestricted = store.candidates(observed_at.date(), None)
+    assert len(unrestricted) == 1
+    assert unrestricted[0].release_id == revised.id
+    assert unrestricted[0].prices == ()
+    assert store.prices(original.id, original.items[0].id) == original.prices
+
+
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "UPDATE catalog_prices SET amount=1",
+        "DELETE FROM catalog_prices",
+    ],
+)
+def test_published_price_observations_are_immutable(catalog_engine, statement):
+    CatalogStore(catalog_engine).publish(synthetic_priced_release())
+    with pytest.raises(IntegrityError, match="immutable"):
+        with catalog_engine.begin() as connection:
+            connection.execute(text(statement))
+
+
+def test_human_reviewed_real_sample_publishes_with_budget_and_resolvable_citations(
+    catalog_engine,
+):
+    path = Path(__file__).parents[3] / "data/catalog/first-journey.reviewed.json"
+    release = load_reviewed_release(path.read_text())
+    store = CatalogStore(catalog_engine)
+    store.publish(release)
+    candidates = store.candidates(release.published_at.date(), Decimal("1000"))
+    assert {candidate.item.name for candidate in candidates} == {
+        "格蘭菲迪 12 年",
+        "格蘭利威 12 年",
+    }
+    assert {candidate.price_upper_bound for candidate in candidates} == {
+        Decimal("978"),
+        Decimal("816"),
+    }
+    assert len(store.candidates(release.published_at.date(), None)) == 3
+    for candidate in store.candidates(release.published_at.date(), None):
+        for claim in (*candidate.item.facts, *candidate.item.flavor_tags):
+            for evidence_id in claim.evidence_ids:
+                assert store.evidence(candidate.release_id, evidence_id) is not None
+
+
+def test_database_price_fk_rejects_another_bottle_evidence(catalog_engine):
+    release = synthetic_priced_release()
+    CatalogStore(catalog_engine).publish(release)
+    parameters = {"old": release.id, "new": uuid4(), "version": uuid4()}
+    with pytest.raises(IntegrityError) as rejected:
+        with catalog_engine.begin() as connection:
+            connection.execute(
+                text("""INSERT INTO catalog_releases
+                SELECT :new,published_at+interval '1 day',false
+                FROM catalog_releases WHERE id=:old"""),
+                parameters,
+            )
+            connection.execute(
+                text("""INSERT INTO catalog_items
+                SELECT :new,id,bottle_version_id,abv,volume_ml,name,reviewed
+                FROM catalog_items WHERE release_id=:old"""),
+                parameters,
+            )
+            connection.execute(
+                text("""INSERT INTO catalog_evidence
+                SELECT :new,id,source_id,:version,url,captured_at,checked_on,reviewed
+                FROM catalog_evidence WHERE release_id=:old"""),
+                parameters,
+            )
+            connection.execute(
+                text("""INSERT INTO catalog_prices
+                SELECT :new,id,item_id,evidence_id,bottle_version_id,amount,
+                    checked_on,reviewed,market,currency,unconditional
+                FROM catalog_prices WHERE release_id=:old"""),
+                parameters,
+            )
+    assert rejected.value.orig.sqlstate == "23503"

@@ -45,6 +45,13 @@ pnpm --filter @whisky/edge check                     # 薄 Worker dry-run
 pnpm --filter @whisky/web test:e2e                    # build 後，Node :3418
 ```
 
+Catalog 人工發布：先設定此專案的 `WHISKY_DATABASE_URL`，執行
+`uv run --project backend whisky-migrate --scripts backend/migrations`，再執行
+`uv run --project backend whisky-catalog-publish data/catalog/first-journey.reviewed.json`。
+只有明確 reviewed 的 real manifest 可發布，細節見 [覆核紀錄](data/catalog/REVIEW.md)。
+發布檔是完整 release snapshot，須帶上仍保留的酒款與來源觀察；封存後不能覆寫。
+重複匯入同一 release ID 會拒絕；更新須另建 release ID 與發布時間，保留舊檔與歷史引用。
+
 `GET /health/live` 只代表 API 存活。worker 目前只註冊基礎設施用 `BootstrapProbe`，不代表研究功能；對自己的 Temporal server 可執行 `uv run --project backend whisky-worker --address <host:port> --namespace <namespace> --task-queue <isolated-queue>`。整合測試會建立短生命週期 Temporal server 與獨立 queue；首次執行可能下載 SDK 測試 server。Docker／Temporal 缺失會失敗，不會 skip。
 
 邊界 gate 檢查直接、靜態可解析 imports：Python domain 只依賴同模組 domain 與非 framework 函式庫，跨模組經 `public.py`／`public/`；Web shared 不引用 features，feature 對外出口為 `index.ts(x)`。動態組合字串與執行時載入不在靜態 gate 的保證範圍，新增此類機制前須擴充檢查。CI 設定涵蓋 T00–T02 已實作的 deterministic checks；各提交遠端結果見實作計畫，不代表真 Auth0、恢復或 release gates 已通過。
