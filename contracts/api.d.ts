@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/agent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start */
+        post: operations["start_agent_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/agent/observe": {
         parameters: {
             query?: never;
@@ -38,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/commands/{command_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Command */
+        get: operations["read_command_api_v1_commands__command_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me": {
         parameters: {
             query?: never;
@@ -47,6 +81,58 @@ export interface paths {
         };
         /** Me */
         get: operations["me_api_v1_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Plans */
+        get: operations["list_plans_api_v1_plans_get"];
+        put?: never;
+        /** Create Plan */
+        post: operations["create_plan_api_v1_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Plan */
+        get: operations["read_plan_api_v1_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Task */
+        get: operations["read_task_api_v1_tasks__task_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -79,6 +165,33 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * ActivityMessage
+         * @description An activity progress message emitted between chat messages.
+         */
+        ActivityMessage: {
+            /** Activitytype */
+            activityType: string;
+            /** Content */
+            content: {
+                [key: string]: unknown;
+            };
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            role: "activity";
+            /** Subagentrunid */
+            subagentRunId?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** ActorView */
         ActorView: {
             /**
@@ -86,6 +199,150 @@ export interface components {
              * Format: uuid
              */
             id: string;
+        };
+        /**
+         * AssistantMessage
+         * @description An assistant message.
+         */
+        AssistantMessage: {
+            /** Content */
+            content?: string | null;
+            /** Encryptedvalue */
+            encryptedValue?: string | null;
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** Name */
+            name?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            role: "assistant";
+            /** Subagentrunid */
+            subagentRunId?: string | null;
+            /** Toolcalls */
+            toolCalls?: components["schemas"]["ToolCall"][] | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * AudioInputContent
+         * @description An audio input content fragment.
+         */
+        AudioInputContent: {
+            /** Metadata */
+            metadata?: unknown | null;
+            /** Source */
+            source: components["schemas"]["InputContentDataSource"] | components["schemas"]["InputContentUrlSource"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "audio";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * BinaryInputContent
+         * @description A deprecated binary payload reference in a multimodal user message.
+         */
+        BinaryInputContent: {
+            /** Data */
+            data?: string | null;
+            /** Filename */
+            filename?: string | null;
+            /** Id */
+            id?: string | null;
+            /** Mimetype */
+            mimeType: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "binary";
+            /** Url */
+            url?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CatalogReference */
+        CatalogReference: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+        };
+        /**
+         * Context
+         * @description Additional context for the agent.
+         */
+        Context: {
+            /** Description */
+            description: string;
+            /** Value */
+            value: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CreatePlanInput */
+        CreatePlanInput: {
+            conditions: components["schemas"]["ResearchConditions-Input"];
+            /** Key */
+            key: string;
+        };
+        /**
+         * DeveloperMessage
+         * @description A developer message.
+         */
+        DeveloperMessage: {
+            /** Content */
+            content: string;
+            /** Encryptedvalue */
+            encryptedValue?: string | null;
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** Name */
+            name?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            role: "developer";
+            /** Subagentrunid */
+            subagentRunId?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * DocumentInputContent
+         * @description A document input content fragment.
+         */
+        DocumentInputContent: {
+            /** Metadata */
+            metadata?: unknown | null;
+            /** Source */
+            source: components["schemas"]["InputContentDataSource"] | components["schemas"]["InputContentUrlSource"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "document";
+        } & {
+            [key: string]: unknown;
         };
         /** ErrorView */
         ErrorView: {
@@ -101,6 +358,69 @@ export interface components {
             /** Retryable */
             retryable: boolean;
         };
+        /**
+         * FunctionCall
+         * @description Name and arguments of a function call.
+         */
+        FunctionCall: {
+            /** Arguments */
+            arguments: string;
+            /** Name */
+            name: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ImageInputContent
+         * @description An image input content fragment.
+         */
+        ImageInputContent: {
+            /** Metadata */
+            metadata?: unknown | null;
+            /** Source */
+            source: components["schemas"]["InputContentDataSource"] | components["schemas"]["InputContentUrlSource"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "image";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * InputContentDataSource
+         * @description Inline base64-encoded source.
+         */
+        InputContentDataSource: {
+            /** Mimetype */
+            mimeType: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "data";
+            /** Value */
+            value: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * InputContentUrlSource
+         * @description URL-referenced source.
+         */
+        InputContentUrlSource: {
+            /** Mimetype */
+            mimeType?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "url";
+            /** Value */
+            value: string;
+        } & {
+            [key: string]: unknown;
+        };
         /** ObserveInput */
         ObserveInput: {
             /** Conditionsrevision */
@@ -115,6 +435,44 @@ export interface components {
              * Format: uuid
              */
             taskId: string;
+        };
+        /** PlanListView */
+        PlanListView: {
+            /** Items */
+            items: components["schemas"]["PlanView"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+        };
+        /** PlanView */
+        PlanView: {
+            conditions: components["schemas"]["ResearchConditions-Output"];
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** Preference */
+        Preference: {
+            /**
+             * Certainty
+             * @enum {string}
+             */
+            certainty: "user_stated" | "inferred" | "unknown";
+            /** Description */
+            description: string;
+            /**
+             * Intent
+             * @enum {string}
+             */
+            intent: "prefer" | "keep" | "change" | "avoid";
+            /**
+             * Strength
+             * @enum {string}
+             */
+            strength: "soft" | "hard";
         };
         /** QuestionView */
         QuestionView: {
@@ -132,6 +490,181 @@ export interface components {
             prompt: string;
             /** Waitingversion */
             waitingVersion: number;
+        };
+        /**
+         * ReasoningMessage
+         * @description A reasoning message containing the agent's internal reasoning process.
+         */
+        ReasoningMessage: {
+            /** Content */
+            content: string;
+            /** Encryptedvalue */
+            encryptedValue?: string | null;
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            role: "reasoning";
+            /** Subagentrunid */
+            subagentRunId?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ResearchCommandView */
+        ResearchCommandView: {
+            /**
+             * Acceptance
+             * @enum {string}
+             */
+            acceptance: "acceptance_pending" | "accepted";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Scope
+             * @default research.start
+             * @constant
+             */
+            scope: "research.start";
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+        };
+        /** ResearchConditions */
+        "ResearchConditions-Input": {
+            /** Budget Twd */
+            budget_twd?: number | string | null;
+            /**
+             * Entry
+             * @enum {string}
+             */
+            entry: "beginner" | "existing_bottle";
+            /** Goal */
+            goal: string;
+            /**
+             * Preferences
+             * @default []
+             */
+            preferences: components["schemas"]["Preference"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            starting_bottle?: components["schemas"]["CatalogReference"] | null;
+        };
+        /** ResearchConditions */
+        "ResearchConditions-Output": {
+            /** Budget Twd */
+            budget_twd?: string | null;
+            /**
+             * Entry
+             * @enum {string}
+             */
+            entry: "beginner" | "existing_bottle";
+            /** Goal */
+            goal: string;
+            /**
+             * Preferences
+             * @default []
+             */
+            preferences: components["schemas"]["Preference"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            starting_bottle?: components["schemas"]["CatalogReference"] | null;
+        };
+        /**
+         * ResumeEntry
+         * @description A per-interrupt response in the resume array of a RunAgentInput.
+         *
+         *     ``metadata`` carries envelope data about the response — signatures, routing
+         *     keys — as opposed to ``payload``, which is the answer the agent asked for
+         *     and will act on.
+         */
+        ResumeEntry: {
+            /** Interruptid */
+            interruptId: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** Payload */
+            payload?: unknown | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "resolved" | "cancelled";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * RunAgentInput
+         * @description Input for running an agent.
+         */
+        RunAgentInput: {
+            /** Context */
+            context: components["schemas"]["Context"][];
+            /** Forwardedprops */
+            forwardedProps: unknown;
+            /** Messages */
+            messages: (components["schemas"]["DeveloperMessage"] | components["schemas"]["SystemMessage"] | components["schemas"]["AssistantMessage"] | components["schemas"]["UserMessage"] | components["schemas"]["ToolMessage"] | components["schemas"]["ActivityMessage"] | components["schemas"]["ReasoningMessage"])[];
+            /** Parentrunid */
+            parentRunId?: string | null;
+            /** Resume */
+            resume?: components["schemas"]["ResumeEntry"][] | null;
+            /** Runid */
+            runId: string;
+            /** State */
+            state?: unknown;
+            /** Threadid */
+            threadId: string;
+            /** Tools */
+            tools: components["schemas"]["Tool"][];
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * SystemMessage
+         * @description A system message.
+         */
+        SystemMessage: {
+            /** Content */
+            content: string;
+            /** Encryptedvalue */
+            encryptedValue?: string | null;
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** Name */
+            name?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            role: "system";
+            /** Subagentrunid */
+            subagentRunId?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /** TaskError */
         TaskError: {
@@ -181,6 +714,135 @@ export interface components {
             /** Viewversion */
             viewVersion: number;
         } & (unknown & unknown & unknown);
+        /**
+         * TextInputContent
+         * @description A text fragment in a multimodal user message.
+         */
+        TextInputContent: {
+            /** Text */
+            text: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "text";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * Tool
+         * @description A tool definition.
+         */
+        Tool: {
+            /** Description */
+            description: string;
+            /** Name */
+            name: string;
+            /** Parameters */
+            parameters?: unknown | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ToolCall
+         * @description A tool call, modelled after OpenAI tool calls.
+         *
+         *     Carries its own metadata rather than folding into the assistant message that
+         *     owns it: several tool calls can share one parent, so merging them all into it
+         *     would make the result depend on their relative order.
+         */
+        ToolCall: {
+            /** Encryptedvalue */
+            encryptedValue?: string | null;
+            function: components["schemas"]["FunctionCall"];
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Type
+             * @default function
+             * @constant
+             */
+            type: "function";
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * ToolMessage
+         * @description A tool result message.
+         */
+        ToolMessage: {
+            /** Content */
+            content: string;
+            /** Encryptedvalue */
+            encryptedValue?: string | null;
+            /** Error */
+            error?: string | null;
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            role: "tool";
+            /** Subagentrunid */
+            subagentRunId?: string | null;
+            /** Toolcallid */
+            toolCallId: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * UserMessage
+         * @description A user message supporting text or multimodal content.
+         */
+        UserMessage: {
+            /** Content */
+            content: string | (components["schemas"]["TextInputContent"] | components["schemas"]["ImageInputContent"] | components["schemas"]["AudioInputContent"] | components["schemas"]["VideoInputContent"] | components["schemas"]["DocumentInputContent"] | components["schemas"]["BinaryInputContent"])[];
+            /** Encryptedvalue */
+            encryptedValue?: string | null;
+            /** Id */
+            id: string;
+            /** Metadata */
+            metadata?: {
+                [key: string]: unknown;
+            } | null;
+            /** Name */
+            name?: string | null;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            role: "user";
+            /** Subagentrunid */
+            subagentRunId?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /**
+         * VideoInputContent
+         * @description A video input content fragment.
+         */
+        VideoInputContent: {
+            /** Metadata */
+            metadata?: unknown | null;
+            /** Source */
+            source: components["schemas"]["InputContentDataSource"] | components["schemas"]["InputContentUrlSource"];
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "video";
+        } & {
+            [key: string]: unknown;
+        };
     };
     responses: never;
     parameters: never;
@@ -190,6 +852,91 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    start_agent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunAgentInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
     observe_agent_observe_post: {
         parameters: {
             query?: never;
@@ -230,6 +977,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -313,6 +1069,100 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorView"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_command_api_v1_commands__command_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                command_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchCommandView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
             /** @description Unprocessable Content */
             422: {
                 headers: {
@@ -380,6 +1230,358 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    list_plans_api_v1_plans_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanListView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    create_plan_api_v1_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePlanInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_plan_api_v1_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_task_api_v1_tasks__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -456,6 +1658,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

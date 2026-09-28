@@ -25,6 +25,7 @@ from whisky.modules.identity.tokens import Principal
 class Actor:
     id: UUID
     active: bool
+    generation: int
 
 
 metadata = MetaData()
@@ -51,15 +52,15 @@ class IdentityStore:
     def read_actor(self, identifier: UUID, owner: UUID) -> Actor | None:
         with self.engine.connect() as connection:
             row = connection.execute(
-                select(users.c.id, users.c.active).where(
+                select(users.c.id, users.c.active, users.c.generation).where(
                     users.c.id == identifier, users.c.id == owner
                 )
             ).first()
-            return Actor(row.id, row.active) if row else None
+            return Actor(row.id, row.active, row.generation) if row else None
 
     def resolve(self, principal: Principal) -> Actor | None:
         query = (
-            select(users.c.id, users.c.active)
+            select(users.c.id, users.c.active, users.c.generation)
             .join(identities)
             .where(
                 identities.c.issuer == principal.issuer,
@@ -88,4 +89,4 @@ class IdentityStore:
                     if getattr(error.orig, "sqlstate", None) != "23505":
                         raise
                 row = connection.execute(query).one()
-            return Actor(row.id, row.active)
+            return Actor(row.id, row.active, row.generation)

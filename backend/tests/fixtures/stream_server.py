@@ -12,12 +12,13 @@ from ag_ui.core import (
     StateSnapshotEvent,
 )
 from ag_ui.encoder import EventEncoder
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 
 from whisky.modules.research.public import TaskView, waiting_event
 
 app = FastAPI()
+release_snapshot = asyncio.Event()
 TASK = "00000000-0000-4000-8000-000000000001"
 THREAD = "00000000-0000-4000-8000-000000000002"
 QUESTION = "00000000-0000-4000-8000-000000000003"
@@ -29,9 +30,18 @@ def health():
     return {"fixture": True}
 
 
+@app.post("/__release")
+async def release():
+    release_snapshot.set()
+    return {"released": True}
+
+
 @app.post("/agent/observe")
-async def observe():
+async def observe(request: Request):
     encoder = EventEncoder()
+    gated = request.headers.get("authorization") == "Bearer synthetic-stream-gate"
+    if gated:
+        release_snapshot.clear()
 
     async def events():
         view = TaskView(
@@ -50,7 +60,11 @@ async def observe():
         yield encoder.encode(
             StateSnapshotEvent(snapshot=view.model_dump(mode="json", by_alias=True))
         )
-        await asyncio.sleep(0.8)
+        if gated:
+            async with asyncio.timeout(8):
+                await release_snapshot.wait()
+        else:
+            await asyncio.sleep(0.8)
         waiting = TaskView.model_validate(
             {
                 **view.model_dump(),

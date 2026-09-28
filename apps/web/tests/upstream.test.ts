@@ -28,3 +28,11 @@ test("unconfigured or malformed API origin stays closed", () => {
     expect(()=>apiUpstream(origin)).toThrow();
   }
 });
+
+test("Node upstream preserves an already validated pagination query", async () => {
+  const fetcher = vi.fn(async (_request: Request) => Response.json({items: []}));
+  await apiUpstream("http://api:8417", fetcher)!.fetch(
+    new Request("http://whisky-api.internal/api/v1/plans?limit=2&cursor=YWJjZA%3D%3D"),
+  );
+  expect(fetcher.mock.calls[0][0].url).toBe("http://api:8417/api/v1/plans?limit=2&cursor=YWJjZA%3D%3D");
+});

@@ -8,6 +8,8 @@ Copy `.env.example` to ignored `.env`, generate a project-only database password
 
 The Docker context allowlists package source, public contracts/configuration, migrations and lockfiles, excluding environment files and credentials. Images pin ARM64-capable digests. The installed Python package runs as UID 10001; native Next.js standalone runs as UID 1000. Both use read-only filesystems. Web, PostgreSQL and API publish no host ports and share only the dedicated project network with its connector. No other project's services, volumes or credentials are reused. Auth0 domain/client ID/audience are public Web build arguments; private API origin is runtime-only.
 
+The API accepts optional `WHISKY_TEMPORAL_ADDRESS` (`host:port`, no URL or credentials), `WHISKY_TEMPORAL_NAMESPACE` and `WHISKY_TEMPORAL_TASK_QUEUE`. Set all three together for the dedicated private Temporal service; partial configuration fails startup. With all three absent, research start returns 503 while configured plan and recovery reads remain available. A lazy client keeps API startup independent of Temporal availability. Each start attempt has a 10-second Temporal deadline; an uncertain response preserves the committed pending receipt for reconciliation with the same command key. This deadline does not cover product DB transactions. The current Compose stack does not yet provision Temporal or a research worker; do not enable these values against another project's service.
+
 ## Launch and verify
 
 From the repository root, set immutable `WHISKY_RELEASE` (API) and `WHISKY_WEB_RELEASE` tags plus the public Auth0 values:

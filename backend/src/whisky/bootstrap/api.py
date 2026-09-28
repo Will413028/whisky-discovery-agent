@@ -17,10 +17,16 @@ from starlette.responses import Response
 
 from whisky.bootstrap.errors import ErrorView, error_response
 from whisky.bootstrap.settings import Settings
+from whisky.modules.discovery.http import plan_router as discovery_router
+from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.tokens import TokenVerifier
+from whisky.modules.research.acceptance import AcceptResearch
 from whisky.modules.research.http import observation_router as research_router
 from whisky.modules.research.observation import ObservationSource
+from whisky.modules.research.store import ResearchStore
+from whisky.modules.research.temporal_start import ConnectingTemporalResearchStarter
+from whisky.platform.http_errors import PublicAPIError
 
 
 def configured_app(
@@ -34,9 +40,28 @@ def configured_app(
     verifier = TokenVerifier(
         settings.issuer, settings.audience, settings.issuer + ".well-known/jwks.json"
     )
+    research_store = ResearchStore(engine)
+    acceptance = None
+    if settings.temporal is not None:
+        acceptance = AcceptResearch(
+            research_store,
+            ConnectingTemporalResearchStarter(
+                settings.temporal.address,
+                settings.temporal.namespace,
+                settings.temporal.task_queue,
+            ),
+        )
     app = create_app(
         router(engine, verifier),
-        research_router(IdentityAccess(engine, verifier), source),
+        research_router(
+            IdentityAccess(engine, verifier),
+            source,
+            store=research_store,
+            acceptance=acceptance,
+        ),
+        plan_router=discovery_router(
+            IdentityAccess(engine, verifier), PlanStore(engine)
+        ),
     )
 
     @asynccontextmanager
@@ -53,11 +78,13 @@ def configured_app(
 def create_app(
     identity_router: APIRouter | None = None,
     observation_router: APIRouter | None = None,
+    plan_router: APIRouter | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Whisky Discovery Agent",
         responses={
-            status: {"model": ErrorView} for status in (401, 403, 404, 422, 429, 503)
+            status: {"model": ErrorView}
+            for status in (401, 403, 404, 409, 422, 429, 503)
         },
     )
     app.include_router(
@@ -67,6 +94,11 @@ def create_app(
         observation_router
         if observation_router is not None
         else research_router(IdentityAccess(None, None), None)
+    )
+    app.include_router(
+        plan_router
+        if plan_router is not None
+        else discovery_router(IdentityAccess(None, None), None)
     )
 
     @app.middleware("http")
@@ -80,7 +112,9 @@ def create_app(
             response = error_response(
                 503, "DATABASE_UNAVAILABLE", request.state.request_id
             )
-        if request.url.path.startswith(("/api/", "/agent/")):
+        if request.url.path == "/agent" or request.url.path.startswith(
+            ("/api/", "/agent/")
+        ):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -93,12 +127,17 @@ def create_app(
             429: "OBSERVATION_LIMIT",
             503: "IDENTITY_UNAVAILABLE",
         }
+        code = codes.get(error.status_code, "REQUEST_REJECTED")
         return error_response(
             error.status_code,
-            codes.get(error.status_code, "REQUEST_REJECTED"),
+            code,
             request.state.request_id,
             error.headers,
         )
+
+    @app.exception_handler(PublicAPIError)
+    async def public_error(request: Request, error: PublicAPIError) -> Response:
+        return error_response(error.status, error.code, request.state.request_id)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error(

@@ -1,9 +1,20 @@
+import {forwardPrivate, privateFailure, type PrivateAPI} from "../../shared/api/private-forward";
+
 export interface ObservationUpstream { fetch(request: Request): Promise<Response> }
 
-// T02 transport composition; application authentication remains at the API boundary.
-export async function observationProxy(request: Request, upstream?: ObservationUpstream): Promise<Response> {
+export async function researchReadProxy(request: Request, upstream?: PrivateAPI): Promise<Response> {
   const url = new URL(request.url);
-  if (url.pathname !== "/agent/observe" || url.search) return failure(404, "NOT_FOUND");
+  if (!/^\/api\/v1\/(tasks|commands)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(url.pathname) || url.search) {
+    return privateFailure(404, "NOT_FOUND");
+  }
+  if (request.method !== "GET") return privateFailure(405, "METHOD_NOT_ALLOWED");
+  return forwardPrivate(request, upstream);
+}
+
+// Stream transport; application authentication and commands remain at the API boundary.
+export async function researchStreamProxy(request: Request, upstream?: ObservationUpstream): Promise<Response> {
+  const url = new URL(request.url);
+  if (!["/agent", "/agent/observe"].includes(url.pathname) || url.search) return failure(404, "NOT_FOUND");
   if (request.method !== "POST") return failure(405, "METHOD_NOT_ALLOWED");
   if (!upstream) return failure(503, "PROXY_UNAVAILABLE");
   const headers = new Headers({"Content-Type":"application/json"});
@@ -28,7 +39,7 @@ export async function observationProxy(request: Request, upstream?: ObservationU
     const body = new Uint8Array(size);
     let offset = 0;
     for (const chunk of chunks) {body.set(chunk, offset); offset += chunk.length;}
-    const response = await upstream.fetch(new Request("http://whisky-api.internal/agent/observe", {
+    const response = await upstream.fetch(new Request(`http://whisky-api.internal${url.pathname}`, {
       method:"POST", body: size ? body : undefined, headers, redirect:"manual",
       signal:AbortSignal.any([request.signal, AbortSignal.timeout(70_000)]),
     }));
@@ -38,7 +49,7 @@ export async function observationProxy(request: Request, upstream?: ObservationU
       return failure(502, "UPSTREAM_REJECTED");
     }
     const safe = new Headers({"Cache-Control":"no-store"});
-    for (const name of ["content-type", "www-authenticate"]) {
+    for (const name of ["content-type", "www-authenticate", "x-command-id"]) {
       const value = response.headers.get(name);
       if (value) safe.set(name, value);
     }

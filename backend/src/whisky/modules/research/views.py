@@ -38,6 +38,13 @@ class QuestionView(ViewModel):
     expires_at: AwareDatetime
 
 
+class ResearchCommandView(ViewModel):
+    id: UUID
+    task_id: UUID
+    scope: Literal["research.start"] = "research.start"
+    acceptance: Literal["acceptance_pending", "accepted"]
+
+
 class TaskError(ViewModel):
     code: str = Field(min_length=1, max_length=80)
     message: str = Field(min_length=1, max_length=500)

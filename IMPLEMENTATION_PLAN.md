@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 純規則與不可變 publication 進行中，T04 起待依序實作。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-29。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 已驗收本機可靠受理與對帳，T05 開始 durable Agent。T03–T04 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03 純規則／不可變 publication 進行中；T04–T09 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03–T04 已驗收本機出口；T05 開始；T06–T09 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -375,3 +375,113 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - `uv run --project backend pytest backend/tests -q`：171 passed（23.82s）；真 DB catalog tests 20 passed，另補 legacy-null metadata 可解析但不可重新發布的 test，1 passed。`python3 scripts/test_wheel.py`：4 passed，打包 migration head 為 `0004_catalog_provenance`；ruff／mypy 23 source files 通過。
 - 原 T03 兩次 fresh design-review 無設計發現；本次欄位補全由未參與實作的既有 reviewer 追加獨立 correctness／SSOT 對帳，無新增缺陷與阻擋出口缺口。嘗試新 reviewer 遇 host thread limit，沒有冒稱此次另啟 fresh agent，也沒有由作者扮演獨立 reviewer。
 - 人工覆核、30 日政策、真 DB／mutation／不可變引用／draft 隔離出口已有證據；本次提交 CI 成功後可驗收 T03，接續 T04，不把 T03 當作完整產品或 live deployment 驗收。
+
+- T03 最終 CI：head `84c7bb3` 的 push run `36434196560` 與 PR run `36434203958`，各 backend／web job 均 SUCCESS，GitGuardian SUCCESS。PR #2 已合併為 `ec3ff9b`。T03 已驗收；開始 T04。T03 migration／資料尚未部署到 VM，該工作隨後續持久研究部署驗證進行，沒有宣稱 live catalog 已上線。
+
+### T04 前提盤點 — 2026-09-28
+
+- 沿用 ARCHITECTURE 的 DB receipt＋穩定 workflow ID、Temporal 接受確認與明確 running/closed ID 政策；這是跨 DB／Temporal 的非原子邊界，不自建 queue 或 scheduler。完成後重送仍由既有 receipt 返回，不依賴 Temporal retention 永遠保留 history。
+- 已核對 [Temporal workflow ID／run ID](https://docs.temporal.io/workflow-execution/workflowid-runid) 與 [Python Client.start_workflow](https://python.temporal.io/temporalio.client.Client.html#start_workflow)；實際 policy 與 start response loss 將用已固定 SDK 和真 Temporal 驗證，不以文件或 mock 當通過。
+
+### T04 第一段 — identity generation 與 Temporal start adapter
+
+- 真 PostgreSQL RED：將既有 actor generation 更新為 7，同一已驗證 token 再登入仍未取得 generation（`None != 7`）；`/tmp/whisky-t04-generation-red.log`。補上內部 Actor／AccessSession 的 persisted generation，公開 `/me` JSON 不變；登入／停用／跨帳號與 observation 整合 `13 passed`，`/tmp/whisky-t04-generation-green.log`。
+- 真 Temporal RED：SDK 預設 conflict policy 導致並行／回應遺失後重送衝突，預設 reuse policy 讓已關閉工作重開，`3 failed`，`/tmp/whisky-t04-start-red.log`。adapter 依 persisted task UUID 組成固定 workflow ID；workflow type 固定、queue 由 server composition 提供，running 採 USE_EXISTING、closed 採 REJECT_DUPLICATE 並查回既有 run。
+- GREEN：`uv run pytest tests/integration/test_research_start.py -q` → `4 passed`，包含並行受理、terminated 後重送、真 worker 完成後重送、真 server 接受後由 client interceptor 注入回應遺失；`/tmp/whisky-t04-start-green.log`。完成 fixture 僅驗受理，不執行研究、不代表 T05 通過。
+- Mutation：將 REJECT_DUPLICATE 暫改為 ALLOW_DUPLICATE，completed retry 測試因不同 run ID 失敗；`/tmp/whisky-t04-start-mutation.log`。已恢復原 policy。Temporal retention 外的防重仍必須由後續持久 receipt 保證。
+- 本段尚未接入 HTTP／DB task receipt，未部署；T04 仍進行中。接續 discovery typed 條件與 plan、owner／revision／generation 的交易檢查、唯一 receipt 及 acceptance_pending→queued 對帳；目前 adapter 的 server acceptance 不等於完整 T04 出口。
+- 還原 mutation 後，`uv run pytest tests/integration/test_identity.py tests/integration/test_observation_http.py tests/integration/test_research_start.py -q` → `17 passed`（`/tmp/whisky-t04-increment-green.log`）；ruff／format、mypy（24 source files）與 `scripts/check_python_boundaries.py backend/src` 通過。
+
+### T04 第二段 — typed 條件與 plan 建立 receipt
+
+- 條件 RED：推測／未知可誤成硬限制、空白欄位、缺版本起點、等值金額 hash 不一致與 mutable snapshot，`10 failed, 5 passed`（`/tmp/whisky-t04-conditions-red.log`）。GREEN：frozen typed schema 保存 entry／goal／版本化起點、prefer／keep／change／avoid、certainty／strength，未知與推測不提升為硬限制；TWD 預算為正有限 Decimal、最多 18 位數／2 位小數，None 表示關閉預算。另有極端 exponent／不足一分金額 `2 failed` 的 RED（`/tmp/whisky-t04-budget-bounds-red.log`），防止 canonical fixed-point 輸出無界膨脹。
+- plan 真 DB RED：初建、同 key／payload、不同 payload、跨 owner、停用／generation、並行去重 `6 failed`（`/tmp/whisky-t04-plans-red.log`）。GREEN：0005 migration 建立 plans 與 discovery 所有的 discovery_commands；後者是垂直流程 logical command_receipts 的模組內實作，scope 固定 plans.create，owner／scope／key 唯一，完成結果與 target 同 transaction 保存。未建立共享可寫 receipt service 或自建 queue。
+- 交易按 identity→command→plan 次序；identity 公開契約用 caller connection 鎖定並驗當前 generation，catalog 公開契約查 reviewed／sealed 起點，discovery 不操作他模組 ORM／表。receipt→plan 使用 deferred 複合 FK 保證 owner 一致；真 DB 直接篡改 owner 回 23503，receipt 寫入後注入中斷會整筆回滾，重送可成功。
+- 起點不存在原先誤受理的 RED `1 failed`（`/tmp/whisky-t04-plan-reference-red.log`）已修復；published fixture 引用可 round-trip。plan 改版後 create 重送原先回 revision 2 的 RED `1 failed`（`/tmp/whisky-t04-plan-receipt-result-red.log`）已修復：receipt 保存初建結果，不從可變 plan 重建當時回應。
+- 最終受影響測試 `uv run pytest tests/integration/test_plans.py tests/test_research_conditions.py -q` → `27 passed`（`/tmp/whisky-t04-plans-final.log`）；ruff／format、mypy 28 source files、模組邊界檢查通過。wheel 以獨立環境驗 migration head 0005 與 executable/Temporal `4 passed`（`/tmp/whisky-t04-plans-wheel.log`）；後续 receipt 欄位變更仍須以最終完整測試核對。
+- fresh t04_plan_design 對 ID／schema／跨模組公開契約／鎖定順序／receipt／條件／索引／migration 的設計審查回 NO DESIGN FINDINGS。T04 尚未完成：下一段接研究 task／receipt、舊 revision 拒絕、DB commit→Temporal start 中斷恢復與 HTTP／AG-UI command 接線；本段沒有部署或宣稱完整受理出口通過。
+- 最終 `uv run --project backend pytest backend/tests -q` → `204 passed`（`/tmp/whisky-t04-plans-final-full.log`），涵蓋 receipt result 的最後變更。同一未參與實作 reviewer 複核最後差集及 correctness，未發現缺陷；主 agent 核對 repo／second-brain status 與 log，沒有 reviewer 寫入。
+
+### T04 第三段 — 持久研究 receipt 與 Temporal 對帳
+
+- 前一增量 head `191391b` 的 push run `36436948716`、PR run `36436997269` 各 backend／web job 均 SUCCESS，GitGuardian SUCCESS；PR #3 保持 draft。
+- 真 DB RED `6 failed`（`/tmp/whisky-t04-receipts-red.log`）：reserve 尚未保存 receipt／task、owner／revision／key 未保護。0006 建立 research_tasks 與 research 所有的 research_commands；identity→plan 的公開交易契約保留鎖到提交，保存起始条件／generation／revision、獨立 thread ID、固定 task-derived workflow ID、write fence 與 view version。task→plan、receipt→task 複合 FK 綁 owner。
+- 初次 migration 測試因 DDL 少一個結尾括號失敗，屬實作錯誤而非行為 RED；修正後重跑真 DB。受理確認與 receipt result 同 transaction 保存；pending→queued 才推進 view version，worker 已進入 researching 時不倒退。
+- 聯合真 PostgreSQL／Temporal RED `4 failed`（`/tmp/whisky-t04-acceptance-red.log`）；GREEN `4 passed`（`/tmp/whisky-t04-acceptance-green.log`）：DB commit 後、start 前中斷沿同 key 恢復；真 server 接受後由 interceptor 丟棄回應，DB 保持 acceptance_pending，重送找回原 run；並行同 command 只留一個 task／workflow；完成後 accepted receipt 直接回原結果，故意不可用的 starter 不會被呼叫，不依賴 history 永久保留。完成 workflow 是明示 fixture，只驗受理，沒有宣稱 Agent／報告已驗收。
+- RPC timeout／暫時性 UNAVAILABLE、DEADLINE_EXCEEDED、UNKNOWN、RESOURCE_EXHAUSTED 保留 pending；其他 RPC error 仍傳出，async cancellation 不吞掉。不啟用 background task／scheduler，不把 DB 有一列當 Temporal 已接受。DB 同步 I/O 經 asyncio.to_thread，network start 在 transaction 外。
+- 追加真 DB 案例驗 generation／停用後不得讀寫、pending 舊 revision 不可重啟但 accepted receipt 可回歷史結果、receipt 與 task 中斷整筆 rollback、跨 owner FK 拒絕。write fence 在 receipt SELECT 後才關閉的 RED `1 failed`（`/tmp/whisky-t04-confirm-fence-red.log`）已以 UPDATE predicate＋RETURNING 修復，不能只信先前讀到的 fence。
+- 最終 core suite `uv run pytest tests/integration/test_research_receipts.py tests/integration/test_research_acceptance.py tests/integration/test_research_start.py -q` → `20 passed`（`/tmp/whisky-t04-research-core-green.log`）。全後端 `220 passed`（`/tmp/whisky-t04-acceptance-full.log`）；wheel head 0006／安裝執行 `4 passed`（`/tmp/whisky-t04-acceptance-wheel.log`）；ruff／format、mypy 32 source files 與模組邊界通過。
+- 未部署；HTTP／AG-UI start mapping、command 查詢及 production observation source 仍待接線，T04 不提前驗收。
+- fresh t04_acceptance_design 設計審查提出 1 項沿用機制簡化：research 已先在 identity lock 下完成查詢去重，不需複製 plan 的 receipt-first／deferred FK。採納為「改」：task 先 INSERT、receipt 後 INSERT，使用 immediate 複合 FK。第二筆失敗整筆回滾測試先取得 RED `1 failed`（`/tmp/whisky-t04-task-first-red.log`），修改後隨下述最終 core suite 重驗。
+- 同一獨立 reviewer 的 correctness review 提出 P2：pending receipt 遇到已完成 task，不能因 Temporal history 超過 retention 而再次 start。補上真 server 接受後丟回應、workflow 完成、明示 fixture 代替 T05 原子 report commit、ForbiddenStarter 的 regression；write fence true／false 均先 RED `2 failed`（`/tmp/whisky-t04-pending-completed-red.log`）。現在 reserve 在 owner／generation／hash 驗證後，由產品 completed snapshot 補齊 receipt acceptance，不修改 task／view version／fence、不再碰 Temporal。core 最終 `22 passed`（`/tmp/whisky-t04-research-core-final.log`）。這證明重送不依賴 retained history，未宣稱已跑過真 Agent 發布報告。
+- reviewer 複核確認兩項均收口，最後差集無新增 correctness finding；設計發現 1 改、correctness 發現 1 修復，無駁回或待決。
+- 最後完整驗證（含審查修正）：`uv run --project backend pytest backend/tests -q` → `222 passed`（`/tmp/whisky-t04-acceptance-final-full.log`）；獨立 wheel → `4 passed`（`/tmp/whisky-t04-acceptance-final-wheel.log`），ruff／format、mypy／boundary 再次通過。主 agent 已核對 shared repo 的 status／log，未發現 reviewer 寫入。
+
+### T04 第四段 — plan HTTP／Web proxy 與公開錯誤
+
+- head `206c417` 的 push run `36439236076` 與 PR run `36439242980` 各 backend／web job 均 SUCCESS，GitGuardian SUCCESS。
+- plan HTTP RED `8 failed`（`/tmp/whisky-t04-plan-http-red.log`）：端點尚不存在。新增 `POST /api/v1/plans`／`GET /api/v1/plans/{id}`，由 verified actor 建立與恢復 plan，client owner／額外欄位拒絕；同 key 回初建結果、異 payload 409、跨 owner 與 missing 同 404，私人回應 no-store。GREEN `8 passed`（`/tmp/whisky-t04-plan-http-green.log`）；正式 configured_app 與無外部連線的 schema app 都已組裝端點，生成 OpenAPI／TypeScript。
+- Web plan proxy RED `3 failed`（`/tmp/whisky-t04-plan-proxy-red.log`）；新增 feature allowlist、POST JSON body 轉送與 GET UUID resource。identity／discovery 共用一般 private transport，固定 origin、10 秒 deadline、client cancellation、manual redirect、header allowlist／no-store；SSE 保留獨立生命週期。相關 proxy／upstream `14 passed`（`/tmp/whisky-t04-plan-proxy-green.log`），Web 全套 `62 passed`，typecheck／boundary／Next build 通過。
+- fresh t04_plan_http_design 發現 1 項 B：adapter 與 bootstrap 重複維護公開錯誤 code/status。採「改」：adapter 將已知 domain failure 轉 PublicAPIError，bootstrap 僅統一格式化；普通 HTTPException 仍不公開任意 detail。新測試先 RED `2 failed, 1 passed`（`/tmp/whisky-t04-public-error-red.log`），包含普通 exception 冒用已知 code 仍須 fallback；修後 public errors＋plan HTTP `11 passed`（`/tmp/whisky-t04-public-error-green.log`）。獨立 reviewer 已確認設計收口，並完成 correctness 複核，無新增缺陷。
+- 本機第一次 E2E `4 passed, 1 failed` 是 build 讀入 ignored `.env.local` 的公開 Auth0 設定，但 unconfigured fixture 預期未設定。依既有規約以 `NEXT_PUBLIC_AUTH0_DOMAIN= NEXT_PUBLIC_AUTH0_CLIENT_ID= NEXT_PUBLIC_AUTH0_AUDIENCE= pnpm --filter @whisky/web build` 重建，不修改正式設定；`pnpm --filter @whisky/web test:e2e` → `5 passed`（`/tmp/whisky-t04-plan-http-e2e-green.log`）。這是既有入口／SSE 回歸，不宣稱完整新 plan UI 旅程。
+- 最終 `uv run --project backend pytest backend/tests -q` → `233 passed`（`/tmp/whisky-t04-plan-http-final-full.log`），獨立 wheel `4 passed`（`/tmp/whisky-t04-plan-http-final-wheel.log`）；ruff／format、mypy 35 source files、Python boundary 通過。shared repo status／log 已核對，未見 reviewer 寫入。
+- T04 仍進行中，未部署本增量：計畫 bounded cursor 列表、研究 task／command 查詢、production observation source 與 AG-UI start mapping 尚待接線，不以本段 plan CRUD 代替完整研究受理驗收。
+
+### T04 第五段 — 有界計畫列表
+
+- 真 DB RED：`test_plans.py -k 'page'` 缺少 page 行為 6 failed；HTTP RED：`test_plan_http.py -k 'list or pagination'` 的 GET collection 為 405，10 failed。Web RED：`vitest run tests/plan-proxy.test.ts tests/upstream.test.ts` 有 9 failed，涵蓋 query 被拒絕或被兩層 transport 丟棄。
+- GREEN：PlanStore 以 owner／當前 active generation 限定資料，使用 `(updated_at, id)` keyset、預設 20／最多 50 筆及 limit+1；同時間以 ID 穩定排序。HTTP 使用 versioned JSON／base64 cursor，拒絕未知及重複 query、無效 limit／cursor；跨 owner 即使沿用 cursor 仍無法讀他人資料。cursor 只表示位置，不作授權，也不承諾跨頁固定 snapshot。
+- Web feature allowlist 開放 GET collection 的 limit／cursor，兩層固定 origin transport 保留已驗 query；identity／observe 仍拒絕 query。OpenAPI／TypeScript 重新生成，沒有手寫第二份 schema。
+- 驗證命令：`uv run --project backend pytest backend/tests -q` → 249 passed（63.24 秒）；`pnpm --filter @whisky/web test` → 71 passed；`pnpm --filter @whisky/web test:e2e` → 5 passed（13.8 秒）。ruff／format、mypy、Python／Web 邊界、Web typecheck、Next build 通過；build 按既有 fixture 指令清空三個公開 Auth0 build vars。
+- fresh t04_pagination_design：NO DESIGN FINDINGS；覆蓋 ID／索引、keyset、cursor encoding、generation、唯讀交易、query 驗證、shared transport、其他 consumer 與生成契約；改／記／提／駁回均 0。主 agent 核對最終 diff 與兩個共享 tree 的 status／log，無 reviewer 越界修改。
+- 前段 head `2f63910` 的 push／PR runs `36441049266`、`36441057207`，backend／web jobs 均 SUCCESS。本段尚未部署；T04 繼續研究 task／command 查詢、production observation source 與 AG-UI start mapping。
+
+### T04 第六段 — task／command 恢復查詢
+
+- HTTP 行為 RED：`uv run --project backend pytest backend/tests/integration/test_research_reads.py -q` → 4 failed／1 passed；缺少路由讓合法恢復、401 與停用 actor 的 403 失敗。最早 fixture 傳入尚未存在的 store 參數是接線錯誤，不算 RED，已改為既有 router 後取得上述行為證據。
+- GREEN：GET task 讀既有 owner／generation 限定的 TaskView；GET command 讀 research.start receipt，驗 owner／當前 active generation，回公開 command ID、task ID、scope、acceptance。兩者不啟動／重試 Temporal，也不將 pending 改成 accepted；不存在與跨 owner 同為 404。configured_app 接上 ResearchStore，未配置 store 明確 503。
+- Web RED：`vitest run tests/research-reads.test.ts` → 3 failed／3 passed；GREEN 6 passed。catch-all route 轉送受限的 UUID GET task／command；拒絕 query／額外路徑／mutation，沿用固定 origin、Bearer-only、安全 response header 與 no-store。OpenAPI／TypeScript 由 Pydantic 生成。
+- 完整驗證：`uv run --project backend pytest backend/tests -q` → 254 passed（89.74 秒）；`pnpm --filter @whisky/web test` → 77 passed；`python3 scripts/test_wheel.py` → 4 passed（6.35 秒）；`pnpm --filter @whisky/web test:e2e` → 5 passed（11.5 秒）。ruff／format、mypy、Python／Web 邊界、typecheck 與清空公開 Auth0 fixture build vars 的 Next build 通過。
+- t04_plan_http_design 唯讀 correctness review 未發現缺陷：覆蓋 owner／generation、真實 pending／accepted、HTTP authentication、固定 origin Web forwarding。此段僅沿用已審查的 read-store／HTTP／proxy 結構，沒有新 transaction、schema migration 或執行機制。主 agent 已核對 diff 與 repo／second-brain status／log，未見 reviewer 越界修改。
+- 前段 `7a72622` 的 push／PR runs `36442509642`、`36442517530`，backend／web jobs 均 SUCCESS。T04 仍未驗收、未部署；接續 agent_turns mapping、AG-UI start 與 production observation source，再驗真 DB／Temporal／HTTP 接受出口。
+
+### T04 第七段 — typed start envelope 與跨層恢復證據
+
+- 前提差異已交由使用者決定：既有 store 由伺服器產生 thread UUID；標準 RunAgentInput 首輪必帶 threadId。選項為預先向伺服器配發、接受 client UUID 後綁定、另存雙 ID 映射；建議接受 client UUID 並驗 owner／永久 task 綁定，task／workflow ID 仍由伺服器產生。此決定尚未收到回覆，未修改 thread 建立與 DB mapping。
+- 不依賴 ID 配發選擇的 typed envelope 已實作：只解析 forwardedProps 中 type=start、key、planId、conditionsRevision；拒絕額外 owner／workflowId／taskQueue／conditions、空白或過長 key、無效 UUID／revision，並拒絕 start 搭配 resume／parentRunId。messages／state 不作權威條件或工具指令，parse 不啟動執行。
+- RED→GREEN：`uv run --project backend pytest backend/tests/test_start_command.py -q`，15 failed（明確未實作的 parser）→15 passed。resume fixture 已依 installed AG-UI 0.1.22 的 ResumeEntry 必填 status 修正後才計算行為 RED，schema fixture 錯誤不算通過或 RED 證據。
+- 追加既有恢復能力的跨層驗收：`uv run --project backend pytest backend/tests/integration/test_research_reads.py -k actual_temporal -q` → 2 passed。真 PostgreSQL／Temporal 建立研究，HTTP 查詢一般受理與遺失回應後的 pending；同 key 對帳後 command=accepted、task=queued，task ID／Temporal run 保持相同。這是既有受理能力追加驗證，不冒稱本次才取得該能力的行為 RED，也不代表正式 Agent／worker 執行完成。
+- 前段 `72cabcb` 的 push／PR runs `36443243528`、`36443251228`，backend／web jobs 均 SUCCESS。
+- 完整後端驗證：`uv run --project backend pytest backend/tests -q` → 271 passed（56.91 秒）；`python3 scripts/test_wheel.py` → 4 passed（5.81 秒）；ruff／format、mypy 與 Python 邊界通過。本段未改 Web 或公開 HTTP schema；parser 尚未接 `/agent`，T04 保持進行中。
+
+### T04 第八段 — AG-UI turn 原子映射
+
+- 前段 thread ID 問題尚未收到選項回答；它是尚未部署的可逆入口選擇，依使用者本 session「不需要再問」的既有授權採建議方案繼續，不把等待回覆當成授權缺口，也不記為使用者已明確選定 client UUID。client thread/run 只作關聯，task/workflow 仍由伺服器產生；不同 owner 可使用相同 client UUID。
+- 0007 migration 將 task thread 唯一性改為 owner 範圍，增加 agent_turns 的 owner/thread/run 主鍵、command 唯一性與 task／command／owner／thread 複合 FK。outcome 初始 null；終結回合的寫入仍由後續執行接線完成。
+- reserve_turn 在 identity lock 的同一 transaction 內驗既有綁定、共用 reserve 邏輯、保存 task／receipt／turn。相同回合回放原 receipt；變更 key、run、thread 或 payload 拒絕，不多建 task；插入 turn 失敗整筆回滾。
+- 真 DB RED→GREEN：`uv run --project backend pytest backend/tests/integration/test_agent_turns.py -q` → 8 failed（6.54 秒）→8 passed（3.94 秒）；RED 前先建 schema，避免把缺表當行為 RED。測試涵蓋並行、owner 隔離、綁定衝突與第三筆插入失敗回滾。
+- fresh design-review 嘗試 t04_turn_design 遭 host thread limit，尚未完成此 gate；不以作者自查或舊 reviewer 的 correctness 取代。現有 t04_plan_http_design 另做唯讀 correctness review；未提交／未推送／未部署本段。
+- 完整驗證：`uv run --project backend pytest backend/tests -q` → 279 passed（94.58 秒）；`python3 scripts/test_wheel.py` → 4 passed（7.19 秒，migration head 0007）；ruff／format、mypy、Python 邊界通過。首次 full command 在 mypy 的 SQL scalar 型別註記被擋，補 UUID annotation 後才執行上述全套，不算行為 RED。
+- t04_plan_http_design 的獨立 correctness review 未發現缺陷；核對 scope／generation、唯一性、identity lock 序列化、兩組複合 FK、交易與 migration/wheel。主 agent 核對 repo／second-brain status／log，無 reviewer 越界寫入。fresh design-review 仍受 host thread limit 阻擋，未聲稱此 gate 通過；接續 `/agent` 與 observe 接線可先在未提交工作區推進。
+
+### T04 第九段 — AG-UI HTTP 與 DB 觀察接線
+
+- HTTP RED `uv run --project backend pytest backend/tests/integration/test_agent_http.py -q` → 3 failed（5.47 秒，/agent 尚不存在）；GREEN → 3 passed（9.66 秒）。真 DB／Temporal 驗一般 queued、接受後回應遺失的 pending、同回合重送找回原 task／command、正確 run observe、跨 owner／錯 run／錯 revision 404，以及換 run 的 409。未確認執行完成時不發 RUN_FINISHED。
+- AcceptResearch.execute_turn 與原 execute 共用同一受理邏輯；DBObservationSource 先驗持久 turn 關聯，再讀 owner／active generation 的 TaskView。configured_app 的 store 路徑已可使用 DB source，但 Temporal client／settings 尚未 wiring，正式 start 目前仍 fail closed 503，不宣稱已完成正式入口。
+- Web RED `vitest run tests/research-proxy.test.ts` → 1 failed／5 passed（start 被拒絕）；GREEN 後全 Web 78 passed，typecheck／邊界／Next build 與 E2E 5 passed（45.6 秒）。共用 researchStreamProxy 只接受 /agent 與 /agent/observe 的 POST，保持有界 body、固定 origin、no-store／redirect 拒絕，加入公開 X-Command-Id；RunAgentInput／API 契約重新生成。
+- 完整 backend 首輪出現 3 failed；在已確認失敗後以 SIGINT 結束該測試程序取得摘要（66 passed／349.03 秒），沒有因觀察逾時重啟。真 DB 當時沒有 lock wait。原因是 HTTP fixture 的 200 ms 與舊 observe fixture 的 80 ms lifetime 先到期，讓授權／回放測試拿到合法 503。調整整合 fixture 為 2 秒／1 秒；production 60 秒政策與專門的期限／取消測試未改。這是驗證前提修正，不冒稱產品 regression。
+- fresh native reviewer 因 host thread limit 無法建立後，以 codex exec --sandbox read-only --ephemeral 啟動全新 CLI reviewer，未繼承作者對話；使用 design-review 原文提示與相同材料。其 session 01a0e8b2-7833-74e3-9e0c-8a61a6ba0fea 完成，提出 2 項；主 agent 核對 repo／second-brain status／log，無 reviewer 寫入。原先 fresh gate 的 host 阻擋已用此獨立程序解決。
+- 分流：A（外部 ID 沿用 UUID）→「記」：現有 ObserveInput／TaskView／validator 已使用 UUID，第一版本專案 client 可控制 ID 生成，從零設計同一範圍仍採 UUID；不宣稱 AG-UI 普遍要求 UUID。改接任意外部 client 前重評所有 consumer。B（turn FK 指向 start-only scope 的 receipt）→「記」：採納定稿前決定 receipt 形狀的要求；research_commands 已有 scope／key／payload／task／result 欄位；T06 可 ALTER scope check 擴充 research.answer，owner／task FK 不需拆除。已明定同研究模組共用此 receipt 表，避免未來另建表後繞過 FK。兩項具體決定與重評條件已補 VERTICAL_SLICE；改 0／記 2／提 0／駁回 0。
+- 既有 t04_plan_http_design 另做 correctness 複核，無確認缺陷；指出 server acceptance 本身尚未設定應用 deadline，70 秒僅是 Web transport，下一段正式 Temporal wiring 一併處理。真 HTTP client 中途斷線尚未新增跨層驗收，不以既有 cancellation unit gate 冒充此證據。
+- 最終完整 backend：`uv run --project backend pytest backend/tests -q` → 282 passed（77.70 秒）；wheel → 4 passed（6.20 秒，head 0007）；ruff／format、mypy、Python 邊界通過。Web 78／E2E 5、typecheck／Web 邊界／Next build 已於本增量通過。fresh design-review gate 已完成並分流全部 finding；第八／九段可提交，但 T04 保持進行中、未部署，下一段處理正式 Temporal settings/client、受理 deadline 與真 client 斷線證據。
+
+### T04 第十段 — 設定化 Temporal 入口與真 HTTP 斷線（2026-09-29）
+
+- 設定 RED：`pytest backend/tests/test_settings.py -q` → 11 failed、6 passed，尚無 Temporal 設定群組。GREEN：可選 address／namespace／task queue 必須一起提供；address 僅 host:port、禁止 URL／credentials，沒有宣稱驗證 DNS 的網路私有性。
+- Deadline RED：`pytest backend/tests/integration/test_research_acceptance.py -k deadline -q` → 1 failed，未限制 starter 時超過外層期限。GREEN：AcceptResearch 以 10 秒限制 Temporal 連線／start／describe，超時仍回 committed pending receipt；不涵蓋產品 DB transaction，也不新增 background task。
+- 正式 app factory RED：`pytest backend/tests/integration/test_configured_agent.py -q` → 1 failed（503，缺少 acceptance wiring）。GREEN：bootstrap 組合共用 lazy Client adapter，真 PostgreSQL、Temporal local server、uvicorn TCP socket 與 HTTP client 驗到 queued；關閉 SSE socket 後重送找回相同 command／task／Temporal run，GET task 可恢復。僅 JWKS verifier 使用簽章 fixture；DB／Temporal／HTTP 不 mock。此案例斷線點在首份 snapshot 之後，不宣稱已驗到 Agent 完成（T05）。
+- 設定與受理相關測試按目錄分組執行 → 25 passed（14.77 秒）；先前交錯指定 parent／child 目錄時 7 個 fixture lookup errors 不算行為 RED。完整 `uv run --project backend pytest backend/tests -q` → 295 passed（125.08 秒，`/tmp/whisky-t04-configured-full.log`）；wheel → 4 passed（9.75 秒）。ruff／format、mypy 37 source files、Python boundaries、diff whitespace 通過。
+- fresh design-review `/root/t04_config_review` 檢查設定、composition、client lifetime、adapter、deadline、交易、ID／去重、錯誤與部署邊界，NO DESIGN FINDINGS（改 0／記 0／提 0／駁回 0）；核對兩個 shared trees status／log，無 reviewer 寫入。前段 0780428 的 runs 36447286553／36447282183，backend 與 web jobs 均 success。
+- Compose 只新增可選設定，尚未部署專用 Temporal／ResearchWorkflow worker，也未部署 T03–T04 migrations。T05–T12 的 durable 執行與 live gates 仍待完成。
+- T04 出口對帳（2026-09-29）：本機真 PostgreSQL＋Temporal 驗 committed pending、並行 start、遺失回應後同 ID／run 對帳、completed 重送不重啟，以及正式 API HTTP socket 斷線後重送；未確認接受仍 pending，已確認 queued。完整本機 295、wheel 4、Web 78、E2E 5 與必要 lint／types／boundaries／build 通過。commit `2304fd1` 的 Actions runs `36448719851`、`36448727900` 各自 backend／web jobs 均 success，`gh pr checks 3` 全綠。T04 因此標為**本機已驗收**；本項不要求正式 worker 完成報告或 live 部署，兩者分屬 T05／T09。未部署的 migration 與 worker 不冒充正式環境證據。
+- 追加 CI 串流測試判別力：文件狀態 commit `6ffbe07` 的 run `36449093934` Web job 在 `stream.spec.ts` 失敗，兩份 snapshot 間隔實測 375.5ms，原門檻 `>400ms`；同 commit 另一 run `36449103397` Web job 通過。失敗 trace 中 HTTP 首次回應等待約 434ms，單靠間隔不能判定入口是否緩衝。改以測試專用 FastAPI barrier：第一份 snapshot 穿過 Node／workerd 抵達瀏覽器後，測試才呼叫 release endpoint 產生第二份；若緩衝到 EOF，第一份等待會逾時。這保留實際串流路徑且去掉猜測時間門檻。本機 `pnpm --filter @whisky/web test:e2e` → 5 passed（19.9 秒，`/tmp/whisky-t04-flush-handshake-e2e.log`），Web typecheck 與 fixture ruff 通過；本修正的 CI 結論另行記錄。
