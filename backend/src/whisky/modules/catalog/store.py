@@ -105,9 +105,10 @@ class CatalogStore:
             for evidence in release.evidence:
                 connection.execute(
                     text("""INSERT INTO catalog_evidence
-                    (release_id,id,source_id,bottle_version_id,url,captured_at,checked_on,reviewed)
+                    (release_id,id,source_id,bottle_version_id,url,captured_at,
+                     checked_on,reviewed,publisher)
                     VALUES (:release_id,:id,:source_id,:bottle_version_id,
-                            :url,:captured_at,:checked_on,:reviewed)"""),
+                            :url,:captured_at,:checked_on,:reviewed,:publisher)"""),
                     {
                         "release_id": release.id,
                         "id": evidence.id,
@@ -117,14 +118,15 @@ class CatalogStore:
                         "captured_at": evidence.captured_at,
                         "checked_on": evidence.checked_on,
                         "reviewed": evidence.reviewed,
+                        "publisher": evidence.publisher,
                     },
                 )
             for item in release.items:
                 connection.execute(
                     text("""INSERT INTO catalog_items
-                    (release_id,id,bottle_version_id,abv,volume_ml,name,reviewed)
+                    (release_id,id,bottle_version_id,abv,volume_ml,name,reviewed,reviewed_on)
                     VALUES (:release_id,:id,:bottle_version_id,
-                            :abv,:volume_ml,:name,:reviewed)"""),
+                            :abv,:volume_ml,:name,:reviewed,:reviewed_on)"""),
                     {
                         "release_id": release.id,
                         "id": item.id,
@@ -133,28 +135,41 @@ class CatalogStore:
                         "volume_ml": item.bottle.volume_ml,
                         "name": item.name,
                         "reviewed": item.reviewed,
+                        "reviewed_on": item.reviewed_on,
                     },
                 )
-                claims = [
-                    ("fact", fact.field, fact.value, fact.evidence_ids)
+                claims: list[
+                    tuple[str, str, str, tuple[UUID, ...], str | None, str | None]
+                ] = [
+                    ("fact", fact.field, fact.value, fact.evidence_ids, None, None)
                     for fact in item.facts
                 ]
                 claims.extend(
-                    ("tag", tag.label, tag.label, tag.evidence_ids)
+                    (
+                        "tag",
+                        tag.label,
+                        tag.label,
+                        tag.evidence_ids,
+                        tag.method,
+                        tag.method_version,
+                    )
                     for tag in item.flavor_tags
                 )
-                for kind, key, value, identifiers in claims:
+                for kind, key, value, identifiers, method, method_version in claims:
                     parameters = {
                         "release_id": release.id,
                         "item_id": item.id,
                         "kind": kind,
                         "key": key,
                         "value": value,
+                        "method": method,
+                        "method_version": method_version,
                     }
                     connection.execute(
                         text("""INSERT INTO catalog_claims
-                        (release_id,item_id,kind,key,value)
-                        VALUES (:release_id,:item_id,:kind,:key,:value)"""),
+                        (release_id,item_id,kind,key,value,method,method_version)
+                        VALUES (:release_id,:item_id,:kind,:key,:value,
+                                :method,:method_version)"""),
                         parameters,
                     )
                     for identifier in identifiers:
@@ -226,7 +241,7 @@ class CatalogStore:
             facts = []
             tags = []
             for claim in connection.execute(
-                text("""SELECT kind,key,value FROM catalog_claims
+                text("""SELECT kind,key,value,method,method_version FROM catalog_claims
                 WHERE release_id=:release_id AND item_id=:item_id ORDER BY kind,key"""),
                 parameters,
             ).mappings():
@@ -234,7 +249,14 @@ class CatalogStore:
                 if claim["kind"] == "fact":
                     facts.append(CatalogFact(claim["key"], claim["value"], identifiers))
                 else:
-                    tags.append(FlavorTag(claim["value"], identifiers))
+                    tags.append(
+                        FlavorTag(
+                            claim["value"],
+                            identifiers,
+                            claim["method"],
+                            claim["method_version"],
+                        )
+                    )
             return CatalogItem(
                 row["id"],
                 Bottle(row["bottle_version_id"], row["abv"], row["volume_ml"]),
@@ -242,6 +264,7 @@ class CatalogStore:
                 tuple(facts),
                 tuple(tags),
                 row["reviewed"],
+                row["reviewed_on"],
             )
 
     def evidence(self, release_id: UUID, evidence_id: UUID) -> Evidence | None:
@@ -267,4 +290,5 @@ class CatalogStore:
                 row["captured_at"],
                 row["checked_on"],
                 row["reviewed"],
+                row["publisher"],
             )

@@ -365,3 +365,13 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 獨立 design-review 0 findings，覆蓋 UUID／seal／FK／transaction／manifest／CLI／讀一致性與 query 規模。correctness review 找到 P1 缺欄位套合格預設與 P2 價格日期不符來源，6 assertion RED→GREEN；移除 domain 的市場／幣別／條件預設，非空 price.checked_on 須與 evidence.checked_on 相同。consumer 盤點 `rg -n 'PriceObservation\(' backend` 為 store 與兩個 fixture constructors，均已確認明確傳值。
 - 第一輪完整後端 155 passed；新增直接 FK 反例另 1 passed，review 修正後 affected unit 85 passed；最終完整結果接續記錄。ruff／mypy 23 source files／Python boundary 通過，repo 外 wheel 4 tests 通過、migration head `0003_catalog_prices`。未套用到 VM；T03 收口仍以最終驗證與 CI 為準。
 - 最終完整後端 `uv run --project backend pytest backend/tests -q`：162 passed（42.45s）。抽出共用規則後再執行日期／reviewed mutations，各 1 failed／34 passed；還原後 35 passed。ruff format 49 files、diff whitespace 檢查通過。
+- 完成前對照 PRODUCT_SPEC「最小資料契約」發現仍需補：來源 publisher、風味整理 method/version，以及真實酒款的 brand／正式名稱／適用市場與明確版本欄位；現有 URL、name、ABV、容量、年分與 tag citation 不等於完整 metadata。T03 保持進行中，先補此契約差集再進入 T04。PR #2 保存目前增量，不以價格測試通過取代上述剩餘要求。
+
+
+### T03 metadata 差集收口 — 2026-09-28
+
+- 發布契約補齊 publisher、風味整理 method/version、item reviewed_on；brand／official_name／market／version_label 是有來源引用的必要 facts，未提供 alias 仍為未知，年分未知不當成 NAS。9 個缺值／未來日期 assertions 先 RED→GREEN；metadata DB 讀回遺失 assertion RED→GREEN。
+- Migration `0004_catalog_provenance` 以 nullable 擴充保留舊 snapshot 的未知值，新發布強制欄位完整。新 metadata 不改写原 release：`first-journey.v1.reviewed.json` 與 `git show 2aa306a:data/catalog/first-journey.reviewed.json` byte-identical；current 檔使用新 release ID／published_at。既有人工覆核內容僅結構化為欄位，未新增品飲或價格結論。
+- `uv run --project backend pytest backend/tests -q`：171 passed（23.82s）；真 DB catalog tests 20 passed，另補 legacy-null metadata 可解析但不可重新發布的 test，1 passed。`python3 scripts/test_wheel.py`：4 passed，打包 migration head 為 `0004_catalog_provenance`；ruff／mypy 23 source files 通過。
+- 原 T03 兩次 fresh design-review 無設計發現；本次欄位補全由未參與實作的既有 reviewer 追加獨立 correctness／SSOT 對帳，無新增缺陷與阻擋出口缺口。嘗試新 reviewer 遇 host thread limit，沒有冒稱此次另啟 fresh agent，也沒有由作者扮演獨立 reviewer。
+- 人工覆核、30 日政策、真 DB／mutation／不可變引用／draft 隔離出口已有證據；本次提交 CI 成功後可驗收 T03，接續 T04，不把 T03 當作完整產品或 live deployment 驗收。

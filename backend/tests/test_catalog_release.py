@@ -28,11 +28,16 @@ def synthetic_release():
         datetime(2026, 9, 28, tzinfo=UTC),
         date(2026, 9, 28),
         True,
+        "Synthetic source publisher",
     )
     facts = tuple(
         CatalogFact(field, value, (evidence.id,))
         for field, value in [
             ("name", "Synthetic test bottle"),
+            ("brand", "Synthetic brand"),
+            ("official_name", "Synthetic test bottle"),
+            ("market", "TW"),
+            ("version_label", "Synthetic regular release"),
             ("abv", "46"),
             ("volume_ml", "700"),
         ]
@@ -42,8 +47,13 @@ def synthetic_release():
         bottle,
         "Synthetic test bottle",
         facts,
-        (FlavorTag("synthetic-fruit", (evidence.id,)),),
+        (
+            FlavorTag(
+                "synthetic-fruit", (evidence.id,), "editorial_source_summary", "1"
+            ),
+        ),
         True,
+        date(2026, 9, 28),
     )
     return CatalogRelease(
         uuid4(), datetime(2026, 9, 28, tzinfo=UTC), (item,), (evidence,)
@@ -52,6 +62,43 @@ def synthetic_release():
 
 def test_reviewed_release_with_resolvable_source_facts_is_publishable():
     validate_release(synthetic_release())
+
+
+@pytest.mark.parametrize("missing", ["publisher", "method", "method_version"])
+def test_new_publication_requires_publisher_and_versioned_flavor_method(missing):
+    release = synthetic_release()
+    if missing == "publisher":
+        release = replace(
+            release, evidence=(replace(release.evidence[0], publisher=None),)
+        )
+    else:
+        item = release.items[0]
+        tag = replace(item.flavor_tags[0], **{missing: None})
+        release = replace(release, items=(replace(item, flavor_tags=(tag,)),))
+    with pytest.raises(ValueError):
+        validate_release(release)
+
+
+@pytest.mark.parametrize("field", ["brand", "official_name", "market", "version_label"])
+def test_new_release_requires_sourced_bottle_identity_fields(field):
+    release = synthetic_release()
+    item = release.items[0]
+    incomplete = replace(
+        item, facts=tuple(fact for fact in item.facts if fact.field != field)
+    )
+    with pytest.raises(ValueError):
+        validate_release(replace(release, items=(incomplete,)))
+
+
+@pytest.mark.parametrize("reviewed_on", [None, date(2027, 1, 1)])
+def test_publication_requires_nonfuture_item_review_date(reviewed_on):
+    release = synthetic_release()
+    with pytest.raises(ValueError):
+        validate_release(
+            replace(
+                release, items=(replace(release.items[0], reviewed_on=reviewed_on),)
+            )
+        )
 
 
 def synthetic_priced_release():

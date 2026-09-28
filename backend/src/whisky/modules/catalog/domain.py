@@ -59,6 +59,7 @@ class Evidence:
     captured_at: datetime
     checked_on: date
     reviewed: bool
+    publisher: str | None = None
 
 
 @dataclass(frozen=True)
@@ -72,6 +73,8 @@ class CatalogFact:
 class FlavorTag:
     label: str
     evidence_ids: tuple[UUID, ...]
+    method: str | None = None
+    method_version: str | None = None
 
 
 @dataclass(frozen=True)
@@ -82,6 +85,7 @@ class CatalogItem:
     facts: tuple[CatalogFact, ...]
     flavor_tags: tuple[FlavorTag, ...]
     reviewed: bool
+    reviewed_on: date | None = None
 
 
 @dataclass(frozen=True)
@@ -108,6 +112,8 @@ def validate_release(release: CatalogRelease) -> None:
     if len({evidence.id for evidence in release.evidence}) != len(release.evidence):
         raise ValueError("Duplicate evidence identifiers")
     for evidence in release.evidence:
+        if not evidence.publisher or not evidence.publisher.strip():
+            raise ValueError("New publication requires a source publisher")
         url = urlsplit(evidence.url)
         # Accessing port validates its syntax and range; no network lookup occurs.
         _ = url.port
@@ -160,7 +166,20 @@ def validate_release(release: CatalogRelease) -> None:
         ):
             raise ValueError("Price must cite reviewed same-source bottle evidence")
     for item in release.items:
+        if item.reviewed_on is None or item.reviewed_on > published_on:
+            raise ValueError("New publication requires a nonfuture item review date")
+        for tag in item.flavor_tags:
+            if (
+                not tag.method
+                or not tag.method.strip()
+                or not tag.method_version
+                or not tag.method_version.strip()
+            ):
+                raise ValueError("New flavor tags require a versioned method")
         facts = {fact.field: fact for fact in item.facts}
+        for field in ("brand", "official_name", "market", "version_label"):
+            if field not in facts or not facts[field].value.strip():
+                raise ValueError("Bottle identity requires sourced metadata")
         if len(facts) != len(item.facts):
             raise ValueError("Duplicate fact fields")
         expected = {"name": item.name}

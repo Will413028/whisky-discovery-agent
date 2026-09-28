@@ -5,7 +5,7 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import create_engine, inspect, text
+from sqlalchemy import MetaData, create_engine, inspect, select, text
 from sqlalchemy.exc import IntegrityError
 from test_catalog_release import synthetic_priced_release, synthetic_release
 
@@ -75,6 +75,8 @@ def test_published_item_and_source_are_resolvable_by_immutable_release(catalog_e
     )
     assert item.name == release.items[0].name
     assert item.bottle == release.items[0].bottle
+    assert item.reviewed_on == release.items[0].reviewed_on
+    assert item.flavor_tags == release.items[0].flavor_tags
     assert {fact.field: fact.value for fact in item.facts} == {
         fact.field: fact.value for fact in release.items[0].facts
     }
@@ -293,3 +295,49 @@ def test_database_price_fk_rejects_another_bottle_evidence(catalog_engine):
                 parameters,
             )
     assert rejected.value.orig.sqlstate == "23503"
+
+
+def test_legacy_snapshot_with_unknown_metadata_remains_resolvable(catalog_engine):
+    release = synthetic_release()
+    store = CatalogStore(catalog_engine)
+    store.publish(release)
+    legacy_id = uuid4()
+    tables = (
+        "catalog_items",
+        "catalog_evidence",
+        "catalog_claims",
+        "catalog_citations",
+    )
+    metadata = MetaData()
+    metadata.reflect(bind=catalog_engine, only=list(tables))
+    with catalog_engine.begin() as connection:
+        connection.execute(
+            text("""INSERT INTO catalog_releases (id,published_at,sealed)
+            VALUES (:id,:published_at,false)"""),
+            {"id": legacy_id, "published_at": release.published_at - timedelta(days=1)},
+        )
+        for name in tables:
+            table = metadata.tables[name]
+            for row in connection.execute(
+                select(table).where(table.c.release_id == release.id)
+            ).mappings():
+                values = dict(row)
+                values["release_id"] = legacy_id
+                for column in ("publisher", "method", "method_version", "reviewed_on"):
+                    if column in values:
+                        values[column] = None
+                connection.execute(table.insert().values(**values))
+        connection.execute(
+            text("UPDATE catalog_releases SET sealed=true WHERE id=:id"),
+            {"id": legacy_id},
+        )
+    item = store.item(legacy_id, release.items[0].id)
+    assert item is not None
+    assert item.name == release.items[0].name
+    assert item.reviewed_on is None
+    assert item.flavor_tags[0].method is None
+    assert store.evidence(legacy_id, release.evidence[0].id).publisher is None
+    with pytest.raises(ValueError):
+        from whisky.modules.catalog.domain import validate_release
+
+        validate_release(replace(release, items=(item,)))

@@ -5,8 +5,8 @@
   "reviewed_by": "project maintainer",
   "reviewed_at": "2026-09-28T13:52:09.802747+00:00",
   "release": {
-    "id": "632ff03c-d3ba-4018-b34b-531de55736f7",
-    "published_at": "2026-09-28T13:52:09.802747+00:00",
+    "id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+    "published_at": "2026-09-28T14:08:02.933079+00:00",
     "items": [
       {
         "id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
@@ -52,6 +52,34 @@
             "evidence_ids": [
               "445346ab-9eef-45a1-801d-2ba0b480acd8"
             ]
+          },
+          {
+            "field": "brand",
+            "value": "Glenfiddich",
+            "evidence_ids": [
+              "445346ab-9eef-45a1-801d-2ba0b480acd8"
+            ]
+          },
+          {
+            "field": "official_name",
+            "value": "Glenfiddich 12 Year Old",
+            "evidence_ids": [
+              "445346ab-9eef-45a1-801d-2ba0b480acd8"
+            ]
+          },
+          {
+            "field": "market",
+            "value": "TW",
+            "evidence_ids": [
+              "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+            ]
+          },
+          {
+            "field": "version_label",
+            "value": "12 Year Old 常規版 40%",
+            "evidence_ids": [
+              "445346ab-9eef-45a1-801d-2ba0b480acd8"
+            ]
           }
         ],
         "flavor_tags": [
@@ -59,15 +87,20 @@
             "label": "果香",
             "evidence_ids": [
               "445346ab-9eef-45a1-801d-2ba0b480acd8"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           },
           {
             "label": "奶油糖",
             "evidence_ids": [
               "445346ab-9eef-45a1-801d-2ba0b480acd8"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           }
-        ]
+        ],
+        "reviewed_on": "2026-09-28"
       },
       {
         "id": "be37452e-960a-488d-ab88-6f5679fe8e21",
@@ -113,6 +146,34 @@
             "evidence_ids": [
               "6e6549a4-f143-463c-99e6-962ec90234d8"
             ]
+          },
+          {
+            "field": "brand",
+            "value": "The Glenlivet",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
+          },
+          {
+            "field": "official_name",
+            "value": "The Glenlivet 12 Year Old",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
+          },
+          {
+            "field": "market",
+            "value": "TW",
+            "evidence_ids": [
+              "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            ]
+          },
+          {
+            "field": "version_label",
+            "value": "12 Year Old Double Oak 常規版 40%",
+            "evidence_ids": [
+              "6e6549a4-f143-463c-99e6-962ec90234d8"
+            ]
           }
         ],
         "flavor_tags": [
@@ -120,21 +181,28 @@
             "label": "果香",
             "evidence_ids": [
               "6e6549a4-f143-463c-99e6-962ec90234d8"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           },
           {
             "label": "香草甜香",
             "evidence_ids": [
               "6e6549a4-f143-463c-99e6-962ec90234d8"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           },
           {
             "label": "太妃糖",
             "evidence_ids": [
               "6e6549a4-f143-463c-99e6-962ec90234d8"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           }
-        ]
+        ],
+        "reviewed_on": "2026-09-28"
       },
       {
         "id": "47ca1d78-50b4-400e-b571-7285cc624e97",
@@ -180,6 +248,34 @@
             "evidence_ids": [
               "90802104-a519-49dc-b76e-cde795e94c1f"
             ]
+          },
+          {
+            "field": "brand",
+            "value": "Glenfiddich",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
+          },
+          {
+            "field": "official_name",
+            "value": "Glenfiddich 15 Year Old",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
+          },
+          {
+            "field": "market",
+            "value": "TW",
+            "evidence_ids": [
+              "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+            ]
+          },
+          {
+            "field": "version_label",
+            "value": "15 Year Old Solera 常規版 40%",
+            "evidence_ids": [
+              "90802104-a519-49dc-b76e-cde795e94c1f"
+            ]
           }
         ],
         "flavor_tags": [
@@ -187,21 +283,28 @@
             "label": "果香",
             "evidence_ids": [
               "90802104-a519-49dc-b76e-cde795e94c1f"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           },
           {
             "label": "香草甜香",
             "evidence_ids": [
               "90802104-a519-49dc-b76e-cde795e94c1f"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           },
           {
             "label": "辛香",
             "evidence_ids": [
               "90802104-a519-49dc-b76e-cde795e94c1f"
-            ]
+            ],
+            "method": "editorial_source_summary",
+            "method_version": "1"
           }
-        ]
+        ],
+        "reviewed_on": "2026-09-28"
       }
     ],
     "evidence": [
@@ -212,7 +315,8 @@
         "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
         "captured_at": "2026-09-28T13:50:05.095085+00:00",
         "checked_on": "2026-09-28",
-        "reviewed": true
+        "reviewed": true,
+        "publisher": "Glenfiddich 品牌官網"
       },
       {
         "id": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
@@ -221,7 +325,8 @@
         "url": "https://www.drinks.com.tw/product.aspx?Id=1753",
         "captured_at": "2026-09-28T13:50:05.095085+00:00",
         "checked_on": "2026-09-28",
-        "reviewed": true
+        "reviewed": true,
+        "publisher": "橡木桶洋酒"
       },
       {
         "id": "6e6549a4-f143-463c-99e6-962ec90234d8",
@@ -230,7 +335,8 @@
         "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
         "captured_at": "2026-09-28T13:50:05.095085+00:00",
         "checked_on": "2026-09-28",
-        "reviewed": true
+        "reviewed": true,
+        "publisher": "The Glenlivet 品牌官網"
       },
       {
         "id": "53f1c620-4bed-4153-97b1-d02c31d84d16",
@@ -239,7 +345,8 @@
         "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
         "captured_at": "2026-09-28T13:50:05.095085+00:00",
         "checked_on": "2026-09-28",
-        "reviewed": true
+        "reviewed": true,
+        "publisher": "橡木桶洋酒"
       },
       {
         "id": "90802104-a519-49dc-b76e-cde795e94c1f",
@@ -248,7 +355,8 @@
         "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
         "captured_at": "2026-09-28T13:50:05.095085+00:00",
         "checked_on": "2026-09-28",
-        "reviewed": true
+        "reviewed": true,
+        "publisher": "Glenfiddich 品牌官網"
       },
       {
         "id": "2e92d2cd-64cd-440c-8de0-589a9da35b12",
@@ -257,7 +365,8 @@
         "url": "https://www.my9.com.tw/products/格蘭菲迪15年-glenfiddich-15y",
         "captured_at": "2026-09-28T13:50:05.095085+00:00",
         "checked_on": "2026-09-28",
-        "reviewed": true
+        "reviewed": true,
+        "publisher": "MY9 買酒網"
       }
     ],
     "prices": [

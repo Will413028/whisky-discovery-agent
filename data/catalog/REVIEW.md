@@ -20,4 +20,10 @@
 
 覆核項目：版本／容量是否一致、每個 fact／tag 的來源是否支持、公開單瓶價格是否仍如此、30 個台灣日曆日是否採為展示政策。覆核完成後記錄 reviewer／日期，另建 reviewed 發布檔；不由 Agent 自動將本稿改為 reviewed。
 
+資料契約補全：source `publisher` 使用品牌網站／零售商名稱；酒款 `reviewed_on` 使用本次人工覆核日期，與來源 `checked_on` 分開。`brand`、`official_name`、`market`、`version_label` 將上表既有版本判讀轉成有引用的 facts；未提供的別名仍未知，不代表沒有別名。年分 12／15 為明示年份，不能把缺少 `age_years` 的未來條目當成 NAS。
+
+風味整理方式 `editorial_source_summary`／版本 `1`：把同一常規版品牌品飲描述整理為簡短中文文字標籤；果實種類可歸入「果香」，香草明述可歸入「香草甜香」，肉桂／薑明述可歸入「辛香」。保留較具體的奶油糖／太妃糖標籤，不從未提及推論不存在，也不導出強度、喜好或順口分數。`producer_tasting_notes` 是來源方感官描述的中文摘要；tags 是編輯整理，兩者型別分開。
+
+新增 metadata 採新的 release ID／publication timestamp；先前提交的 snapshot 原樣保存於 `first-journey.v1.reviewed.json`。新發布必須具備 publisher／method／method_version／reviewed_on；舊 snapshot 的未知 metadata 不補造，歷史讀取仍可解析，但舊版檔案不符合新版發布驗證，不應重新匯入。
+
 人工覆核已完成（2026-09-28T13:52:09.802747+00:00）：專案維護者回覆「已核對，同意三款資料與 30 日政策」。reviewed 發布檔為 `first-journey.reviewed.json`，原 draft 保留供拒絕路徑驗證；格蘭菲迪 15 的條件價仍不合格。這筆覆核不代表有即時庫存或保證售價。
