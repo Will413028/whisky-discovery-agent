@@ -41,6 +41,16 @@ def main() -> None:
             str(root / "requirements.txt"),
             str(next(root.glob("*.whl"))),
         )
+        run(
+            python,
+            "-I",
+            "-c",
+            "from pathlib import Path; from alembic.script import ScriptDirectory; "
+            "import whisky.bootstrap.migrate as migration; "
+            "scripts = Path(migration.__file__).parents[1] / 'migrations'; "
+            "assert (scripts / 'env.py').is_file(); "
+            "assert ScriptDirectory(str(scripts)).get_current_head() == '0001_identity'",
+        )
         shutil.copy(BACKEND / "tests/test_installed.py", root / "test_installed.py")
         shutil.copy(
             BACKEND / "tests/integration/test_temporal.py", root / "test_temporal.py"

@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00 本機骨架 GREEN，CI 設定已建立、遠端尚未執行；T01 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
+更新：2026-09-28。狀態：T00 本機骨架 GREEN；遠端 CI 因帳戶 billing 限制未能啟動 jobs。T01 本機 GREEN，真 Auth0 callback／跨帳號瀏覽器 gate 尚缺 tenant。T02 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -8,7 +8,7 @@
 
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
-| 技術入口 | T00–T02 | T00 本機 GREEN；T01–T02 未開始 |
+| 技術入口 | T00–T02 | T00、T01 本機 GREEN；外部 gate 未通過；T02 未開始 |
 | 持久研究骨架與樣本 | T03–T09 | 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
@@ -216,6 +216,41 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 前提盤點：已授權的唯讀 SSH 查得 Ubuntu 24.04.4 ARM64、4 CPU、RAM total 23,974 MiB／available 21,902 MiB、root available 128 GiB、load 0.16／0.16／0.17（2026-09-28 本輪快照）。主機另有 workload；此刻餘裕不等於新增 stack 的容量驗收。帳戶既有查核紀錄為 PAYG，Oracle [公開價目表](https://www.oracle.com/cloud/price-list/)的 paid tenancy A1 額度為每月 3,000 OCPU-hours／18,000 GB-hours；與 Free Tier 的 1,500／9,000 不可混用。未重新查 OCI Usage API、未改動 VM；個人 inventory／查核來源位置留於 ignored local context。
 
-尚未驗證：GitHub Actions、Linux／Oracle ARM 安裝產物與新增 workload 量測、Agent／AG-UI 組合、真 Auth0／VPC／SSE、備份還原。T00 保持 GREEN 而非整體技術入口已驗收；T01–T12 未開始。
+此處為 T00 首次驗證快照；後續 CI／Linux 與 T01 證據見下。Oracle 新增 workload、Agent／AG-UI 組合、真 Auth0／VPC／SSE、備份還原仍未驗證。T00 保持 GREEN 而非整體技術入口已驗收。
 
 獨立複核：1 個 P2 finding（單檔 domain gate）已依 RED→GREEN 修正並回看；PostgreSQL ARM-only 疑點經 registry index 證據排除。主程序另以 `docker run --rm -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.12 .github/workflows/ci.yml` 驗 CI YAML 通過；不等同 Actions job 已執行。
+
+### T00 後續驗證／T01 — 2026-09-28
+
+基線 commit `a9bb3bb` 已推送 main，T01 工作分支 `feat/t01-identity-entry`。T00 [Actions run 36391026128](https://github.com/Will413028/whisky-discovery-agent/actions/runs/36391026128) 的 backend／web jobs 均未啟動；逐一查 check-run annotations，原因為帳戶付款或 spending limit，不是程式 assertion。未修改帳戶 billing。
+
+T00 額外 Linux 證據：`git archive a9bb3bb` 輸入 `docker run --rm --platform linux/amd64 --cpus 2 --memory 2g -i python:3.13-slim`，安裝 uv 0.12.9 後執行 `python scripts/test_wheel.py`，4 passed（13.13s）。這是該 commit 的 Linux wheel／Temporal smoke，不代替 Actions、完整 Linux DB／Web 或 Oracle 部署。
+
+以下命令以 repo root 執行；實際操作使用絕對路徑。T01 證據隨 source／tests 保存於本分支的身份入口增量提交。
+
+| 行為／測試 | 實際 RED | GREEN／回歸 |
+|---|---|---|
+| `backend/tests/test_tokens.py` 有效 RSA token | `uv run --project backend pytest backend/tests/test_tokens.py -q`：stub verifier 拒絕有效 token | 固定 issuer／audience／RS256，從固定 JWKS 取 key；有效 token 通過 |
+| 同檔空 subject | 同命令：空 subject 未拋 InvalidToken | 拒絕空白 subject；issuer／audience／signature／exp／iat／nbf／sub type、null 必要 claims 為 library 既有保護的回歸測試，不冒充首次 RED |
+| `backend/tests/integration/test_identity.py` 首次身份映射 | `uv run --project backend pytest backend/tests/integration/test_identity.py -q`：resolve 回 None | 真 PostgreSQL＋Alembic 建立 users／identities，同 issuer＋sub 回同 UUID |
+| 有效 token 讀自己 | 同命令：GET /me 回 404 | 回 200 及 no-store |
+| 停用帳號 | 同命令：預期 403 實際 200 | current_actor 檢查 active，拒絕停用帳號 |
+| 自己／他人 actor resource | 自己最初 404；加入 endpoint 後，他人資料錯回 200 | SQL 同時比對 resource ID 與 owner ID，其他與不存在同為 404 |
+| 安全錯誤 | 同命令：401 回 detail，缺少 code／request_id | 統一安全 envelope、不回 token；驗證錯誤與 DB failure 亦安全回應 |
+| `account.test.tsx` 登入返回原頁 | `pnpm --filter @whisky/web test`：找不到登入按鈕 | SDK loginWithRedirect 帶 appState.returnTo |
+| 帳號載入／登出／token 到期 | 同命令：找不到「帳號已連線」與「重新登入」 | memory bearer 呼叫生成 client；登出清除私人 state、abort 與 stale-response guard；SDK login_required 顯示重新登入 |
+| `tests/proxy.test.ts` 固定 proxy | 同命令：stub 回 503 而非 200 | 固定 upstream、路徑／方法 allowlist，拒絕 query、redirect，不轉送 cookie；missing binding fail closed |
+| 複核：失敗 callback 重試 | 同命令：returnTo 仍含已消耗 code/state/error | 統一 safeReturnTo，移除 OAuth response 參數並保留正常 query/hash；失敗 callback 清理及外部／無效 URL 回歸通過 |
+
+Owner mutation：暫時移除 `users.c.id == owner`，執行 `uv run --project backend pytest backend/tests/integration/test_identity.py -q -k other_actor`，1 failed（foreign 200 != missing 404）；finally 還原，完整 suite 重新通過。並行首次登入測試用 barrier 強制四個 transaction 首次 lookup 均未找到身份，再驗同 actor 且 users／identities 各一筆；這是 savepoint 實作的回歸，不宣稱首次 RED。
+
+最終本機檢查：
+
+- `uv run --project backend pytest backend/tests -q`：29 passed，包含真 DB、Temporal、設定 fail-closed；`python3 scripts/test_wheel.py`：4 passed，另驗 wheel 內 Alembic revision／env 資源可解析。
+- `pnpm --filter @whisky/web test`：22 passed；`build` 與 `test:e2e`：2 passed，包含未配置帳號頁及真 workerd 私有 API 503/no-store。沒有用 mock 宣稱 Auth0 真登入通過。
+- Python ruff／format／mypy、Python／Web boundary gates、TS typecheck、OpenAPI→TypeScript 生成、peer 檢查、actionlint 均以本機命令檢查。CI 新增契約 drift 檢查；遠端仍受 billing 限制。
+- TypeScript 7 無法提供 openapi-typescript 7.13 所需 compiler API，實測 generator 失敗後固定 5.9.3，生成成功。Auth0 React 2.27、PyJWT 2.15、SQLAlchemy 2.1.1、Alembic 1.20，完整依賴以 lockfiles 為準。
+
+獨立複核：design-review 檢查 ID、transaction、schema、JWT/JWKS、cache、proxy、Auth0、migration、錯誤與契約生成，0 design findings（改／記／提／駁回均 0）。另一般 code review 提出 callback 重試 1 個 P2，已按 RED→GREEN 修正並由原複核者唯讀回看確認關閉。
+
+尚缺：專用 Auth0 tenant domain／SPA client ID／API audience，真 callback、重新整理、跨帳號瀏覽器驗收；VPC／具名 Tunnel 與真部署仍屬 T02。T01 只標本機 GREEN，未標已驗收。沒有新增外部登入、設定 secrets 或改動 VM。

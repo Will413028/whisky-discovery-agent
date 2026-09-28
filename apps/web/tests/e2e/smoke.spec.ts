@@ -9,3 +9,15 @@ test("workerd renders the entry and hydrates its explanation control", async ({ 
   await expect(page.getByText("從喜歡的風味或酒款出發，找出下一支想探索的威士忌。", { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test("unconfigured identity stays closed in workerd", async ({ page, request }) => {
+  const errors: string[] = [];
+  page.on("pageerror", (error) => errors.push(error.message));
+  await page.goto("/account");
+  await expect(page.getByText("帳號功能準備中。")).toBeVisible();
+  const response = await request.get("/api/v1/me");
+  expect(response.status()).toBe(503);
+  expect(response.headers()["cache-control"]).toBe("no-store");
+  expect((await response.json()).code).toBe("PROXY_UNAVAILABLE");
+  expect(errors).toEqual([]);
+});

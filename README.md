@@ -4,16 +4,16 @@
 
 ## 目前狀態
 
-已開始 T00：具備最小 Web、FastAPI 與 Temporal worker 入口、lockfiles、隔離 PostgreSQL／Temporal 測試及 CI 設定。本機 wheel、workerd 瀏覽器互動與 time-skipping 已驗證；尚未部署，產品功能未實作。第一版以「個人探索計畫＋可交辦研究任務」為主軸，涵蓋背景研究、等待補充與恢復。原有雙入口、六項基礎能力、小型真實酒款庫與台灣參考價格繼續提供探索依據。
+T00 本機骨架已通過；T01 已加入 JWT／身份映射、私有 API、固定 proxy 與 Auth0 登入接線，本機測試通過。尚無 Auth0 tenant 與 VPC 部署，不能宣稱真登入或跨帳號瀏覽器驗收完成。GitHub Actions 因帳戶 billing 限制未能啟動 jobs。第一版以「個人探索計畫＋可交辦研究任務」為主軸，涵蓋背景研究、等待補充與恢復；產品探索功能與酒款庫仍待實作。
 
 主軸是保留喜歡的特徵、探索剛剛好的差異，最後留下可回看的選擇與取捨。互動流程、資料契約、建議工程預設與驗收情境見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。功能仍待實作，酒款庫也尚未建立。
 
 ## 開發方向
 
-- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前執行 T00。
+- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前執行 T01。
 - [技術架構](ARCHITECTURE.md) 採 Cloudflare Workers 上的 Next.js、AG-UI Agent 互動、Oracle VM 上的 FastAPI／PostgreSQL／PydanticAI＋Temporal。無自有網域時，前端先用 `workers.dev`、登入採 Auth0 Free、同源 API 經 Workers VPC Service／具名 Tunnel 連私有後端；逐階段狀態與報告由產品 DB 支援重連。vinext、VPC/SSE、Workers CPU、Oracle 免費資格及備份還原仍待實測；目前帳單 US$0 不等於長期免費額度已確認，尚未開通新服務。
 - 這是可獨立開發與部署的產品；不依賴其他作品的執行環境。
-- 專案採單一 repo：前端依功能組織，後端以業務模組為主、模組內按需分層，保留 Python `backend/src/whisky/`。目錄與責任見 [技術架構](ARCHITECTURE.md)，首個流程契約與驗證見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。目前只建立 bootstrap 與 welcome，未預建業務模組。
+- 專案採單一 repo：前端依功能組織，後端以業務模組為主、模組內按需分層，保留 Python `backend/src/whisky/`。目錄與責任見 [技術架構](ARCHITECTURE.md)，首個流程契約與驗證見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。目前有 bootstrap、identity 與 welcome，未預建其他業務模組。
 - 第一個垂直流程驗證委託研究、查證、等待補充、跨程序恢復與保存；另測 worker crash、Update 重送、取消與舊 history replay，再擴展完整探索 UI。
 - 展示採用小型、人工查證的真實酒款庫，保留版本、來源與查核日期；合成資料限於明確標示並隔離的測試情境。
 - 來源事實、研究草稿、風味整理與回饋分開保存；只有 reviewed 資料進正式推薦，未知資訊保持未知，參考價格不代表即時報價或供貨。
@@ -46,4 +46,22 @@ pnpm --filter @whisky/web test:e2e                    # build 後，workerd :341
 
 `GET /health/live` 只代表 API 存活。worker 目前只註冊基礎設施用 `BootstrapProbe`，不代表研究功能；對自己的 Temporal server 可執行 `uv run --project backend whisky-worker --address <host:port> --namespace <namespace> --task-queue <isolated-queue>`。整合測試會建立短生命週期 Temporal server 與獨立 queue；首次執行可能下載 SDK 測試 server。Docker／Temporal 缺失會失敗，不會 skip。
 
-邊界 gate 檢查直接、靜態可解析 imports：Python domain 只依賴同模組 domain 與非 framework 函式庫，跨模組經 `public.py`／`public/`；Web shared 不引用 features，feature 對外出口為 `index.ts(x)`。動態組合字串與執行時載入不在靜態 gate 的保證範圍，新增此類機制前須擴充檢查。CI 目前涵蓋 T00，不代表未實作的 schema、Auth0、AG-UI、恢復或 release gates 已通過。
+邊界 gate 檢查直接、靜態可解析 imports：Python domain 只依賴同模組 domain 與非 framework 函式庫，跨模組經 `public.py`／`public/`；Web shared 不引用 features，feature 對外出口為 `index.ts(x)`。動態組合字串與執行時載入不在靜態 gate 的保證範圍，新增此類機制前須擴充檢查。CI 設定涵蓋 T00 與 T01 deterministic checks，不代表真 Auth0、AG-UI、恢復或 release gates 已通過。
+
+## T01 身份設定與契約
+
+Web 公開設定範本為 `apps/web/.env.example`；Auth0 SPA 使用 Authorization Code＋PKCE、memory token cache，不需要 client secret。建立專用 tenant 後，設定 callback 為 `<Web origin>/account`，logout URL／web origin 為 `<Web origin>`；變更公開值後重新 build。缺少設定時 `/account` 顯示準備中。
+
+API 讀取 process environment，範例見 `backend/.env.example`，不自動載入 `.env`。三項身份設定必須同時存在，issuer 必須為含結尾 `/` 的 HTTPS origin。完全未設定時私有 API 回 503；不以測試帳號繞過登入。先在隔離的產品 DB 執行 `uv run --project backend whisky-migrate --scripts backend/migrations`，再啟動 API；安裝 wheel 後直接執行 `whisky-migrate`，migration 已隨包提供。API startup 不改 schema，migration 只 forward upgrade；回退需另行審查資料相容性。
+
+Worker proxy 預留 `WHISKY_API` fetch binding，目前尚未設定 VPC binding；沒有 binding 回 503。只接受固定 `/api/v1/me`、`/api/v1/actors/<UUID>` 的 GET，不接收任意 upstream 或 query。真 VPC 接線留 T02 驗證。
+
+契約由 Pydantic 產生，不手改 `contracts/`：
+
+```bash
+uv run --project backend python scripts/export_openapi.py
+pnpm --filter @whisky/web exec openapi-typescript ../../contracts/openapi.json -o ../../contracts/api.d.ts
+git diff --exit-code -- contracts/
+```
+
+`typecheck` 先以固定 Wrangler 版本產生 ignored runtime types。TypeScript 固定 5.9.3，因 openapi-typescript 7.13 依賴 TypeScript 5 compiler API；TypeScript 7 的實測 generator 不相容。

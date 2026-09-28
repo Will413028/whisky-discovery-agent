@@ -5,7 +5,7 @@
 - 第一版採 Cloudflare Workers 上的 Next.js、AG-UI Agent 互動、Oracle VM 上的 FastAPI／PostgreSQL／PydanticAI＋Temporal。Temporal 是任務等待、重試與恢復的唯一執行權威；PydanticAI 管模型與工具協調。產品 DB 保存可重連的任務狀態與報告，不以逐 token 事件作權威；HTTP endpoint 不直接執行非持久 Agent。架構與驗證門檻見 [ARCHITECTURE.md](ARCHITECTURE.md)，尚未實作。不自建通用 Agent engine、queue 或 checkpoint 系統。
 - 無自有網域；第一版 Web 使用 `workers.dev`，訪客可看公開 catalog，私人紀錄需 Auth0 登入；Worker 經 Workers VPC Service／具名 Tunnel 連私有 API。VPC beta 與 AG-UI/SSE 須通過真實部署驗證，不用 Quick Tunnel 當正式入口。
 - 部署預算以現有帳單 US$0 的 Oracle Ampere VM 為起點，Cloudflare 優先使用免費服務，最多考慮 Workers Paid US$5 基本費；其他持續付費服務不在目前範圍。OCI A1 的 Free Tier 與 PAYG 免費時數不同，按實際帳戶類型及總用量核對，不能從 US$0 現況推論長期免費。Workers Paid 另有用量費，不能當成總帳單上限。新增 stack 容量與還原能力未實測前不可宣稱達標。
-- T00 已有 pnpm／uv 骨架；實際安裝、啟動與驗證命令見 README「本機開發與驗證」。改後端跑 pytest、ruff、mypy、Python 邊界與 wheel；改 Web 跑 Vitest、typecheck、Web 邊界、build 與 workerd Playwright。業務、Auth0／VPC 與部署仍未實作／驗證。
+- T00 已有 pnpm／uv 骨架，T01 已有本機 identity／JWT、私有 API 與登入接線；實際安裝、啟動與驗證命令見 README「本機開發與驗證」。改後端跑 pytest、ruff、mypy、Python 邊界與 wheel；改 Web 跑 Vitest、typecheck、Web 邊界、build 與 workerd Playwright。契約由 Pydantic→OpenAPI→TypeScript 生成，CI 檢查 drift。探索業務、真 Auth0／VPC 與部署仍未實作／驗證。
 - 產品互動流程與資料契約須先明確，再實作功能；不要將規劃中的行為寫成已完成。
 - 實作採 TDD：每個行為先取得可解釋的 RED，再以最小實作達成 GREEN，必要時 REFACTOR 並重跑受影響測試。環境錯誤不算行為 RED，mock 通過不代替真 DB／Temporal／部署驗證；依 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) 執行並保存證據，不事後補測試冒充 TDD。
 - 單一 repo；前端 `apps/web/src/` 依功能組織、app 保持薄路由層，shared 不反向依賴 features。後端保留 `backend/src/whisky/`，採業務模組優先的 Modular Monolith，模組內按需分層；跨模組走公開契約，不直接操作其他模組的 ORM／資料表。API 與 worker 共用套件；不預建空層或以 PYTHONPATH 修補打包問題。結構與驗證見 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。

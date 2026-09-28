@@ -1,4 +1,4 @@
-name: T00 deterministic checks
+name: Deterministic checks
 
 on:
   push:
@@ -20,6 +20,8 @@ jobs:
       - run: uv run --project backend ruff check backend scripts
       - run: uv run --project backend ruff format --check backend scripts
       - run: uv run --project backend mypy backend/src
+      - run: uv run --project backend python scripts/export_openapi.py
+      - run: git diff --exit-code -- contracts/openapi.json
       - run: python3 -m unittest discover -s scripts/tests -t scripts
       - run: python3 scripts/check_python_boundaries.py backend/src
       - run: uv run --project backend pytest backend/tests -q
@@ -35,6 +37,8 @@ jobs:
           node-version: "26.8.1"
       - run: npm install --global pnpm@11.2.2
       - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @whisky/web exec openapi-typescript ../../contracts/openapi.json -o ../../contracts/api.d.ts
+      - run: git diff --exit-code -- contracts/api.d.ts
       - run: pnpm --filter @whisky/web typecheck
       - run: pnpm --filter @whisky/web check:boundaries
       - run: pnpm --filter @whisky/web test

@@ -154,3 +154,9 @@ Update validator 做不含 I/O 的格式／等待版本檢查；handler 經冪�
 - 備份工具與 VM 外儲存配額、還原時間、最終保留政策；跨 VM 故障的實際告警方式。
 
 這些證據依既有 Pending 的入口→垂直流程順序收集；本文件不另立一份平行進度清單。未通過入口測試前只建立必要骨架，不展開整個 MVP。
+
+## T01 身份入口契約
+
+此段僅描述 T01 本機契約，真 Auth0／VPC 尚未驗收。`GET /api/v1/me` 驗證 access token 後，以 `(issuer, sub)` 原子建立或讀取內部 UUID actor，回 `{id}`。`GET /api/v1/actors/{actor_id}` 只讀取目前 actor 自己的身份視圖，以 SQL owner 條件限制；非本人與不存在都回 404。兩者均拒絕 inactive actor，私有回應均 `Cache-Control: no-store`。沒有修改或管理其他帳號的 endpoint。
+
+401／403／404／422／503 使用 `{code, message, request_id, retryable}`；不回傳 token、claim、DB exception 或身份是否存在的細節。此身份視圖只供登入與 ownership 入口驗證，不代表探索計畫／任務資源已建立。產生的 schema 見 `contracts/openapi.json`。
