@@ -107,12 +107,17 @@ class PlanStore:
             return plan if plan is not None and plan.generation == generation else None
 
     @staticmethod
-    def _read(connection: Connection, identifier: UUID, owner: UUID) -> Plan | None:
+    def _read(
+        connection: Connection, identifier: UUID, owner: UUID, *, lock: bool = False
+    ) -> Plan | None:
         row = connection.execute(
-            text("""
+            text(
+                """
             SELECT id, owner_id, generation, conditions_revision, conditions
             FROM plans WHERE id = :id AND owner_id = :owner
-        """),
+        """
+                + (" FOR UPDATE" if lock else "")
+            ),
             dict(id=identifier, owner=owner),
         ).first()
         if row is None:

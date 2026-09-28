@@ -6,6 +6,8 @@ from temporalio.client import Client
 from temporalio.common import WorkflowIDConflictPolicy, WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
+from whisky.modules.research.domain import workflow_id_for
+
 
 class TemporalResearchStarter:
     def __init__(self, client: Client, task_queue: str) -> None:
@@ -13,7 +15,7 @@ class TemporalResearchStarter:
         self.task_queue = task_queue
 
     async def start(self, task_id: UUID) -> str:
-        workflow_id = f"whisky-research-{task_id}"
+        workflow_id = workflow_id_for(task_id)
         try:
             handle = await self.client.start_workflow(
                 "ResearchWorkflow",
