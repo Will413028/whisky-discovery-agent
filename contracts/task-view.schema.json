@@ -1,8 +1,38 @@
 {
   "$defs": {
+    "QuestionChoiceView": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "label": {
+          "maxLength": 160,
+          "minLength": 1,
+          "title": "Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "label"
+      ],
+      "title": "QuestionChoiceView",
+      "type": "object"
+    },
     "QuestionView": {
       "additionalProperties": false,
       "properties": {
+        "choices": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/QuestionChoiceView"
+          },
+          "title": "Choices",
+          "type": "array"
+        },
         "expiresAt": {
           "format": "date-time",
           "title": "Expiresat",
@@ -142,6 +172,19 @@
     }
   ],
   "properties": {
+    "activeRunId": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Activerunid"
+    },
     "conditionsRevision": {
       "minimum": 1,
       "title": "Conditionsrevision",

@@ -22,7 +22,8 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import StreamingResponse
 from starlette.types import Receive, Scope, Send
 
-from whisky.modules.research.views import ReportView, TaskView, ViewModel
+from whisky.modules.research.public import waiting_event
+from whisky.modules.research.views import QuestionView, ReportView, TaskView, ViewModel
 
 
 class ObserveInput(ViewModel):
@@ -33,6 +34,8 @@ class ObserveInput(ViewModel):
 
 class ObservationSource(Protocol):
     async def read(self, request: ObserveInput, owner: UUID) -> TaskView | None: ...
+
+    async def outcome(self, request: ObserveInput, owner: UUID) -> dict | None: ...
 
     async def report(self, report_id: UUID, owner: UUID) -> ReportView | None: ...
 
@@ -155,6 +158,10 @@ class Observer:
         yield encoder.encode(
             StateSnapshotEvent(snapshot=view.model_dump(mode="json", by_alias=True))
         )
+        outcome = await self.source.outcome(request, owner)
+        if outcome is not None and outcome.get("type") == "interrupt":
+            yield self.interrupt_frame(outcome, view, request, encoder)
+            return
         if view.status in {"completed", "failed", "cancelled", "superseded"}:
             async for frame in self.terminal_events(view, request, owner, encoder):
                 yield frame
@@ -174,6 +181,7 @@ class Observer:
             next_poll = now + self.policy.poll_seconds
             try:
                 view = await self.source.read(request, owner)
+                outcome = await self.source.outcome(request, owner)
             except SQLAlchemyError:
                 yield encoder.encode(
                     RunErrorEvent(
@@ -202,10 +210,40 @@ class Observer:
                         snapshot=view.model_dump(mode="json", by_alias=True)
                     )
                 )
+            if outcome is not None and outcome.get("type") == "interrupt":
+                yield self.interrupt_frame(outcome, view, request, encoder)
+                return
             if view.status in {"completed", "failed", "cancelled", "superseded"}:
                 async for frame in self.terminal_events(view, request, owner, encoder):
                     yield frame
                 return
+
+    @staticmethod
+    def interrupt_frame(
+        outcome: dict,
+        view: TaskView,
+        request: ObserveInput,
+        encoder: EventEncoder,
+    ) -> str:
+        try:
+            question = QuestionView.model_validate(outcome["question"])
+        except (KeyError, ValueError):
+            return encoder.encode(
+                RunErrorEvent(
+                    code="RUN_OUTCOME_UNAVAILABLE",
+                    message="暫時無法讀取補充問題，請重新連線。",
+                )
+            )
+        return encoder.encode(
+            waiting_event(
+                str(view.thread_id),
+                str(request.run_id),
+                str(question.id),
+                prompt=question.prompt,
+                choices=question.choices,
+                expires_at=question.expires_at.isoformat(),
+            )
+        )
 
     async def terminal_events(
         self,

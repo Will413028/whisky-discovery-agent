@@ -4,10 +4,13 @@ export interface ObservationUpstream { fetch(request: Request): Promise<Response
 
 export async function researchReadProxy(request: Request, upstream?: PrivateAPI): Promise<Response> {
   const url = new URL(request.url);
-  if (!/^\/api\/v1\/(tasks|commands|reports)\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(url.pathname) || url.search) {
+  const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
+  const read = url.pathname === "/api/v1/tasks" || new RegExp(`^/api/v1/(tasks|commands|reports)/${uuid}$`).test(url.pathname);
+  const answer = new RegExp(`^/api/v1/tasks/${uuid}/clarifications/${uuid}/answer$`).test(url.pathname);
+  if ((!read && !answer) || url.search) {
     return privateFailure(404, "NOT_FOUND");
   }
-  if (request.method !== "GET") return privateFailure(405, "METHOD_NOT_ALLOWED");
+  if (request.method !== (answer ? "POST" : "GET")) return privateFailure(405, "METHOD_NOT_ALLOWED");
   return forwardPrivate(request, upstream);
 }
 

@@ -141,6 +141,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Open Tasks */
+        get: operations["list_open_tasks_api_v1_tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tasks/{task_id}": {
         parameters: {
             query?: never;
@@ -152,6 +169,23 @@ export interface paths {
         get: operations["read_task_api_v1_tasks__task_id__get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{task_id}/clarifications/{question_id}/answer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Answer Question */
+        post: operations["answer_question_api_v1_tasks__task_id__clarifications__question_id__answer_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -216,6 +250,17 @@ export interface components {
              * Format: uuid
              */
             id: string;
+        };
+        /** AnswerRequest */
+        AnswerRequest: {
+            /** Answer */
+            answer: string;
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /** Key */
+            key: string;
+            /** Waitingversion */
+            waitingVersion: number;
         };
         /**
          * AssistantMessage
@@ -298,6 +343,23 @@ export interface components {
              * Format: uuid
              */
             release_id: string;
+        };
+        /** ClarifiedBottleView */
+        ClarifiedBottleView: {
+            /**
+             * Bottleversionid
+             * Format: uuid
+             */
+            bottleVersionId: string;
+            /** Name */
+            name: string;
+            /**
+             * Questionid
+             * Format: uuid
+             */
+            questionId: string;
+            /** Reviewedinrelease */
+            reviewedInRelease: boolean;
         };
         /**
          * Context
@@ -491,8 +553,23 @@ export interface components {
              */
             strength: "soft" | "hard";
         };
+        /** QuestionChoiceView */
+        QuestionChoiceView: {
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Label */
+            label: string;
+        };
         /** QuestionView */
         QuestionView: {
+            /**
+             * Choices
+             * @default []
+             */
+            choices: components["schemas"]["QuestionChoiceView"][];
             /**
              * Expiresat
              * Format: date-time
@@ -615,6 +692,7 @@ export interface components {
             candidates: components["schemas"]["ReportCandidateView"][];
             /** Catalogreleaseid */
             catalogReleaseId: string | null;
+            clarifiedBottle?: components["schemas"]["ClarifiedBottleView"] | null;
             /** Conditionsrevision */
             conditionsRevision: number;
             /**
@@ -654,7 +732,9 @@ export interface components {
              * Acceptance
              * @enum {string}
              */
-            acceptance: "acceptance_pending" | "accepted";
+            acceptance: "acceptance_pending" | "accepted" | "rejected";
+            /** Code */
+            code?: string | null;
             /**
              * Id
              * Format: uuid
@@ -663,9 +743,9 @@ export interface components {
             /**
              * Scope
              * @default research.start
-             * @constant
+             * @enum {string}
              */
-            scope: "research.start";
+            scope: "research.start" | "research.answer";
             /**
              * Taskid
              * Format: uuid
@@ -809,6 +889,11 @@ export interface components {
         };
         /** TaskView */
         TaskView: {
+            /**
+             * Activerunid
+             * @default null
+             */
+            activeRunId: string | null;
             /** Conditionsrevision */
             conditionsRevision: number;
             error: components["schemas"]["TaskError"] | null;
@@ -1750,6 +1835,89 @@ export interface operations {
             };
         };
     };
+    list_open_tasks_api_v1_tasks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskView"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
     read_task_api_v1_tasks__task_id__get: {
         parameters: {
             query?: never;
@@ -1768,6 +1936,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TaskView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    answer_question_api_v1_tasks__task_id__clarifications__question_id__answer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+                question_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnswerRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchCommandView"];
                 };
             };
             /** @description Unauthorized */

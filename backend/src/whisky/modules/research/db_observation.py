@@ -21,6 +21,11 @@ class DBObservationSource:
             self.store.observed_task, request.task_id, request.run_id, owner
         )
 
+    async def outcome(self, request: ObserveInput, owner: UUID) -> dict | None:
+        return await asyncio.to_thread(
+            self.store.turn_outcome, request.task_id, request.run_id, owner
+        )
+
     async def report(self, report_id: UUID, owner: UUID) -> ReportView | None:
         if self.reports is None:
             return None

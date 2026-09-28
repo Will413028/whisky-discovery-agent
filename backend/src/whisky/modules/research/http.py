@@ -5,12 +5,15 @@ from uuid import UUID
 from ag_ui.core import RunAgentInput
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import Field, field_validator
 from starlette.concurrency import run_in_threadpool
-from starlette.responses import StreamingResponse
+from starlette.responses import Response, StreamingResponse
 
 from whisky.modules.identity.public import AccessSession, IdentityAccess
 from whisky.modules.research.acceptance import AcceptResearch
-from whisky.modules.research.commands import parse_start
+from whisky.modules.research.answer import AnswerResearch
+from whisky.modules.research.commands import parse_resume, parse_start
+from whisky.modules.research.contracts import AnswerInput
 from whisky.modules.research.db_observation import DBObservationSource
 from whisky.modules.research.observation import (
     ObservationPolicy,
@@ -20,7 +23,12 @@ from whisky.modules.research.observation import (
 )
 from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.store import ResearchConflict, ResearchStore
-from whisky.modules.research.views import ReportView, ResearchCommandView, TaskView
+from whisky.modules.research.views import (
+    ReportView,
+    ResearchCommandView,
+    TaskView,
+    ViewModel,
+)
 from whisky.platform.http_errors import PublicAPIError
 
 
@@ -38,12 +46,33 @@ class AuthorizedSource:
             raise HTTPException(503, "OBSERVATION_UNAVAILABLE")
         return await self.source.read(request, owner)
 
+    async def outcome(self, request: ObserveInput, owner: UUID) -> dict | None:
+        if not await run_in_threadpool(self.identity.is_active, owner):
+            return None
+        if self.source is None:
+            raise HTTPException(503, "OBSERVATION_UNAVAILABLE")
+        return await self.source.outcome(request, owner)
+
     async def report(self, report_id: UUID, owner: UUID) -> ReportView | None:
         if not await run_in_threadpool(self.identity.is_active, owner):
             return None
         if self.source is None:
             return None
         return await self.source.report(report_id, owner)
+
+
+class AnswerRequest(ViewModel):
+    key: str = Field(min_length=1, max_length=128)
+    conditions_revision: int = Field(ge=1)
+    waiting_version: int = Field(ge=1)
+    answer: str = Field(min_length=1, max_length=160)
+
+    @field_validator("key", "answer")
+    @classmethod
+    def nonblank(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Answer command fields cannot be blank")
+        return value
 
 
 def observation_router(
@@ -53,6 +82,7 @@ def observation_router(
     *,
     store: ResearchStore | None = None,
     acceptance: AcceptResearch | None = None,
+    answers: AnswerResearch | None = None,
     reports: ReportStore | None = None,
 ) -> APIRouter:
     routes = APIRouter()
@@ -65,6 +95,14 @@ def observation_router(
         credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     ) -> AccessSession:
         return identity.authenticate(credentials.credentials if credentials else None)
+
+    @routes.get("/api/v1/tasks", response_model=tuple[TaskView, ...])
+    def list_open_tasks(
+        session: AccessSession = Depends(authenticate),
+    ) -> tuple[TaskView, ...]:
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        return store.list_open(session.actor_id)
 
     @routes.get("/api/v1/tasks/{task_id}", response_model=TaskView)
     def read_task(
@@ -88,7 +126,11 @@ def observation_router(
             raise HTTPException(404, "NOT_FOUND")
         return view
 
-    @routes.get("/api/v1/commands/{command_id}", response_model=ResearchCommandView)
+    @routes.get(
+        "/api/v1/commands/{command_id}",
+        response_model=ResearchCommandView,
+        response_model_exclude_none=True,
+    )
     def read_command(
         command_id: UUID, session: AccessSession = Depends(authenticate)
     ) -> ResearchCommandView:
@@ -99,19 +141,112 @@ def observation_router(
             raise HTTPException(404, "NOT_FOUND")
         return view
 
+    @routes.post(
+        "/api/v1/tasks/{task_id}/clarifications/{question_id}/answer",
+        response_model=ResearchCommandView,
+        response_model_exclude_none=True,
+    )
+    async def answer_question(
+        task_id: UUID,
+        question_id: UUID,
+        body: AnswerRequest,
+        response: Response,
+        session: AccessSession = Depends(authenticate),
+    ) -> ResearchCommandView:
+        if answers is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        try:
+            result = await answers.execute(
+                session.actor_id,
+                session.generation,
+                AnswerInput(
+                    task_id,
+                    question_id,
+                    body.waiting_version,
+                    body.conditions_revision,
+                    body.key,
+                    body.answer,
+                ),
+            )
+        except ResearchConflict as error:
+            code = str(error)
+            status = {
+                "NOT_FOUND": 404,
+                "IDENTITY_CHANGED": 403,
+                "IDEMPOTENCY_CONFLICT": 409,
+                "REVISION_CONFLICT": 409,
+                "QUESTION_CLOSED": 409,
+                "QUESTION_EXPIRED": 409,
+                "TURN_CONFLICT": 409,
+                "INVALID_ANSWER": 422,
+            }.get(code)
+            if status is None:
+                raise
+            raise PublicAPIError(status, code) from None
+        if result.acceptance == "rejected":
+            raise PublicAPIError(409, result.code or "QUESTION_CLOSED")
+        if result.acceptance == "acceptance_pending":
+            response.status_code = 202
+        return ResearchCommandView(
+            id=result.command_id,
+            task_id=result.task_id,
+            scope="research.answer",
+            acceptance=result.acceptance,
+        )
+
     @routes.post("/agent", response_class=StreamingResponse)
     async def start(
         request: RunAgentInput, session: AccessSession = Depends(authenticate)
     ) -> StreamingResponse:
+        if request.resume:
+            try:
+                answer_turn = parse_resume(request)
+            except ValueError:
+                raise PublicAPIError(422, "INVALID_REQUEST") from None
+            if answers is None:
+                raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+            try:
+                result = await answers.execute(
+                    session.actor_id, session.generation, answer_turn.command
+                )
+            except ResearchConflict as error:
+                code = str(error)
+                status = {
+                    "NOT_FOUND": 404,
+                    "IDENTITY_CHANGED": 403,
+                    "IDEMPOTENCY_CONFLICT": 409,
+                    "REVISION_CONFLICT": 409,
+                    "TASK_NOT_WRITABLE": 409,
+                    "QUESTION_CLOSED": 409,
+                    "QUESTION_EXPIRED": 409,
+                    "TURN_CONFLICT": 409,
+                    "INVALID_ANSWER": 422,
+                }.get(code)
+                if status is None:
+                    raise
+                raise PublicAPIError(status, code) from None
+            if result.acceptance == "rejected":
+                raise PublicAPIError(409, result.code or "QUESTION_CLOSED")
+            response = await observer.response(
+                ObserveInput(
+                    task_id=result.task_id,
+                    run_id=answer_turn.run_id,
+                    conditions_revision=answer_turn.command.conditions_revision,
+                ),
+                session.actor_id,
+                session.expires_at,
+            )
+            response.headers["X-Command-Id"] = str(result.command_id)
+            return response
         try:
-            turn = parse_start(request)
+            start_turn = parse_start(request)
         except ValueError:
             raise PublicAPIError(422, "INVALID_REQUEST") from None
         if acceptance is None:
             raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
         try:
             receipt = await acceptance.execute_turn(
-                session.actor_id, session.generation, turn
+                session.actor_id, session.generation, start_turn
             )
         except ResearchConflict as error:
             code = str(error)
@@ -129,8 +264,8 @@ def observation_router(
         response = await observer.response(
             ObserveInput(
                 task_id=receipt.task_id,
-                run_id=turn.run_id,
-                conditions_revision=turn.command.conditions_revision,
+                run_id=start_turn.run_id,
+                conditions_revision=start_turn.command.conditions_revision,
             ),
             session.actor_id,
             session.expires_at,

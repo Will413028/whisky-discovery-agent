@@ -20,13 +20,11 @@ from temporalio.worker.workflow_sandbox import (
 )
 
 from whisky.bootstrap.probe import BootstrapProbe
-from whisky.modules.research.activities import (
-    begin_research,
-    fail_research,
-    save_report,
-)
+from whisky.modules.research.activities import ResearchActivities
 from whisky.modules.research.agent import configure_research_agent
+from whisky.modules.research.agent_v2 import configure_research_agent_v2
 from whisky.modules.research.workflow import ResearchWorkflow
+from whisky.modules.research.workflow_v2 import ResearchWorkflowV2
 
 WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash"
 
@@ -63,16 +61,27 @@ def research_worker(
     client: Client, task_queue: str, engine: Engine, model: Model
 ) -> Worker:
     configure_research_agent(engine, model)
+    configure_research_agent_v2(engine, model)
+    db = ResearchActivities(engine)
     runner = SandboxedWorkflowRunner(
         restrictions=SandboxRestrictions.default.with_passthrough_modules(
-            "whisky.modules.research.agent"
+            "whisky.modules.research.agent",
+            "whisky.modules.research.agent_v2",
         )
     )
     return Worker(
         client,
         task_queue=task_queue,
-        workflows=[BootstrapProbe, ResearchWorkflow],
-        activities=[begin_research, save_report, fail_research],
+        workflows=[BootstrapProbe, ResearchWorkflow, ResearchWorkflowV2],
+        activities=[
+            db.begin_research,
+            db.begin_research_v2,
+            db.save_report,
+            db.fail_research,
+            db.publish_question,
+            db.accept_answer,
+            db.expire_question,
+        ],
         workflow_runner=runner,
     )
 

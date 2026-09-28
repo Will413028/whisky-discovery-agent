@@ -60,6 +60,34 @@ class PublishedPriceDetail:
     source: PublishedSource
 
 
+@dataclass(frozen=True)
+class ReviewedVersion:
+    release_id: UUID
+    item_id: UUID
+    bottle_version_id: UUID
+    name: str
+
+
+def reviewed_version_in_release(
+    connection: Connection, release_id: UUID, bottle_version_id: UUID
+) -> ReviewedVersion | None:
+    """Resolve a stable bottle version in a specific sealed reviewed release."""
+    row = connection.execute(
+        text("""
+        SELECT i.id,i.name FROM catalog_items i
+        JOIN catalog_releases r ON r.id=i.release_id
+        WHERE i.release_id=:release AND i.bottle_version_id=:bottle
+          AND i.reviewed AND r.sealed
+        """),
+        dict(release=release_id, bottle=bottle_version_id),
+    ).first()
+    return (
+        ReviewedVersion(release_id, row.id, bottle_version_id, row.name)
+        if row
+        else None
+    )
+
+
 def published_item_name(
     connection: Connection, release_id: UUID, item_id: UUID, bottle_version_id: UUID
 ) -> str | None:

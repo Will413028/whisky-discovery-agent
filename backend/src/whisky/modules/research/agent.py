@@ -38,14 +38,7 @@ class ResearchAgentDeps:
     budget_twd: Decimal | None
 
 
-_engine: Engine | None = None
 _agent: Agent[ResearchAgentDeps, ReportDraft] | None = None
-
-
-def configured_engine() -> Engine:
-    if _engine is None:
-        raise RuntimeError("Research worker database is not configured")
-    return _engine
 
 
 def research_agent() -> Agent[ResearchAgentDeps, ReportDraft]:
@@ -58,8 +51,7 @@ def configure_research_agent(
     engine: Engine, model: Model
 ) -> Agent[ResearchAgentDeps, ReportDraft]:
     """Bind process-local I/O once; only serializable deps cross Temporal history."""
-    global _engine, _agent
-    _engine = engine
+    global _agent
     toolset: FunctionToolset[ResearchAgentDeps] = FunctionToolset(
         id="reviewed_catalog_v1"
     )
@@ -71,7 +63,7 @@ def configure_research_agent(
         """Return reviewed bottles, source-backed facts and qualified Taiwan prices."""
         options: list[dict[str, Any]] = []
         for candidate in search_reviewed_candidates(
-            configured_engine(), ctx.deps.as_of, ctx.deps.budget_twd
+            engine, ctx.deps.as_of, ctx.deps.budget_twd
         ):
             facts = [
                 {

@@ -37,10 +37,14 @@ class Source:
         self.view = view
         self.owner = owner
         self.reads = []
+        self.outcome_value = None
 
     async def read(self, request, owner):
         self.reads.append((request, owner))
         return self.view if owner == self.owner else None
+
+    async def outcome(self, request, owner):
+        return self.outcome_value if owner == self.owner else None
 
 
 def request_for(view):
@@ -63,6 +67,52 @@ async def test_observe_existing_task_emits_run_and_authoritative_snapshot():
     assert found[0]["runId"] == str(request.run_id)
     assert found[1]["snapshot"] == view.model_dump(mode="json", by_alias=True)
     assert source.reads == [(request, owner)]
+
+
+async def test_waiting_turn_ends_with_structured_interrupt():
+    owner = uuid4()
+    question_id = uuid4()
+    choices = [{"id": str(uuid4()), "label": label} for label in ("12 年", "15 年")]
+    view = task(
+        status="needs_input",
+        question={
+            "id": str(question_id),
+            "prompt": "哪個版本？",
+            "waitingVersion": 1,
+            "expiresAt": "2026-10-06T00:00:00Z",
+            "choices": choices,
+        },
+    )
+    source = Source(view, owner)
+    source.outcome_value = {
+        "type": "interrupt",
+        "question": {
+            "id": str(question_id),
+            "prompt": "哪個版本？",
+            "waitingVersion": 1,
+            "choices": choices,
+            "expiresAt": "2026-10-06T00:00:00Z",
+        },
+    }
+    events = Observer(source).events(request_for(view), owner)
+    assert (
+        json.loads((await anext(events)).removeprefix("data: "))["type"]
+        == "RUN_STARTED"
+    )
+    assert (
+        json.loads((await anext(events)).removeprefix("data: "))["type"]
+        == "STATE_SNAPSHOT"
+    )
+    terminal = json.loads(
+        (await asyncio.wait_for(anext(events), 0.1)).removeprefix("data: ")
+    )
+    assert terminal["type"] == "RUN_FINISHED"
+    assert terminal["outcome"]["type"] == "interrupt"
+    assert terminal["outcome"]["interrupts"][0]["id"] == str(question_id)
+    assert terminal["outcome"]["interrupts"][0]["responseSchema"]["properties"][
+        "answer"
+    ]["enum"] == [choice["id"] for choice in choices]
+    await events.aclose()
 
 
 @pytest.mark.parametrize(

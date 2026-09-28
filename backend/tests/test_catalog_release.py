@@ -60,6 +60,56 @@ def synthetic_release():
     )
 
 
+def synthetic_versioned_release():
+    """Two reviewed versions of one synthetic bottle, with stable version IDs."""
+    release = synthetic_release()
+    original = release.items[0]
+    source = release.evidence[0]
+    first_name = "Synthetic test bottle 12 年"
+    first = replace(
+        original,
+        name=first_name,
+        facts=tuple(
+            replace(
+                fact,
+                value=first_name
+                if fact.field in {"name", "official_name"}
+                else "12 年",
+            )
+            if fact.field in {"name", "official_name", "version_label"}
+            else fact
+            for fact in original.facts
+        ),
+    )
+    second_name = "Synthetic test bottle 15 年"
+    second_evidence = replace(
+        source, id=uuid4(), source_id=uuid4(), bottle_version_id=uuid4()
+    )
+    second = replace(
+        first,
+        id=uuid4(),
+        bottle=replace(first.bottle, version_id=second_evidence.bottle_version_id),
+        name=second_name,
+        facts=tuple(
+            replace(
+                fact,
+                value=second_name
+                if fact.field in {"name", "official_name"}
+                else "15 年"
+                if fact.field == "version_label"
+                else fact.value,
+                evidence_ids=(second_evidence.id,),
+            )
+            for fact in first.facts
+        ),
+        flavor_tags=tuple(
+            replace(tag, evidence_ids=(second_evidence.id,))
+            for tag in first.flavor_tags
+        ),
+    )
+    return replace(release, items=(first, second), evidence=(source, second_evidence))
+
+
 def test_reviewed_release_with_resolvable_source_facts_is_publishable():
     validate_release(synthetic_release())
 
