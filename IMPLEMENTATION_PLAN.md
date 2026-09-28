@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 起待依序實作。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 純規則與不可變 publication 進行中，T04 起待依序實作。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03 純規則／不可變 publication 進行中；T04–T09 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -333,3 +333,45 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 最終驗收：第二個真 Google 身份確認不同 actor，自身資料 200、原帳號資料與 task 404/no-store，沒有 snapshot。兩條真瀏覽器未讀 response 為 200／200、第三條 429，未取消前在 66,136 ms 新連線成功 200；這是目前 compact snapshot 的有界期限驗證，搭配本機 stalled-send 測試，不外推高流量 TCP 壓力。Probe URL 恢復 404、臨時 callback 移除、正常 API／Web healthy；舊 SSR rollback 與 thin Worker restore 各實測首頁 200／私人 API 401。
 - `3e012f4` CI run `36410967590` 的 backend／web jobs 各自 success；Web 55 tests、typecheck 與 probe build 通過。獨立唯讀 T00–T02 requirement/evidence audit 無阻擋 gate 缺口，兩項紀錄對帳已補齊。T00–T02 已驗收，容量／持久研究／模型／還原仍依 T03–T12，不把入口驗收當產品完成。
 - PR #1 的 GitGuardian incident 37686918 命中 `4209109` 中 Compose 的 `POSTGRES_PASSWORD: ${WHISKY_DB_PASSWORD:?...}` 必填變數宣告；該行沒有字面憑證。2026-09-28 使用者已在 GitGuardian 處理誤判；保存此查核紀錄並觸發新 head 檢查，不改寫歷史或跳過 security gate。
+
+### T03 價格純規則 — 2026-09-28 進行中
+
+- 前提沿用 PRODUCT_SPEC 的 TW／TWD 單瓶可比版本、每來源最新觀察、合格報價上緣與集中配置 30 日政策；不把來源撤價當作沒有新資料。Domain 採 Python dataclass／Decimal，沒有 ORM／Agent framework 依賴。
+- `test_catalog_prices.py`：精確價格先 RED（None≠1500.50）→GREEN；draft 排除先 RED→GREEN；version／ABV／容量三個反例各 RED→GREEN；市場／幣別／條件價三個反例各 RED→GREEN；day 31／未來／缺日期各 RED→GREEN，day 0／30 保持可用；最新撤價及每來源最新→跨來源上緣各 RED→GREEN。
+- `uv run --project backend pytest backend/tests/test_catalog_prices.py -q`：15 passed；affected ruff／mypy 與 Python boundary 通過。尚未建立 catalog persistence／migration／publication／真實資料，不把純規則視為 T03 完成；預算相等、台灣時區、缺資料與其他邊界、mutation、真 PostgreSQL 及人工覆核仍待依序完成。
+- 後續預算邊界 RED（相等／關閉價格篩選被拒絕）→GREEN；台灣午夜與 naive timestamp RED→GREEN。現為 21 passed，ruff／mypy 通過。T01–T02 PR #1 的 GitGuardian 命中舊 commit `4209109` 的 Compose `POSTGRES_PASSWORD` 必填環境變數宣告，查核為非字面密碼；GitGuardian 登入／false-positive 處理尚待使用者完成瀏覽器登入，不改歷史或略過檢查，亦不阻擋獨立 T03 開發。
+
+
+### T03 不可變 publication 增量 — 2026-09-28 進行中
+
+- 價格資料驗證取得逐項 RED→GREEN：非法 amount／ABV／volume、未知 ABV／容量、同來源同時戳衝突；35 個價格案例通過。Publication 的 draft、缺來源／錯版本、缺展示欄位來源、重複識別與不合法日期各取得 assertion RED→GREEN；19 個案例通過。來源 facts 與 derived flavor tags 保持不同 domain 型別。
+- 真 PostgreSQL：migration 缺表 assertion RED→GREEN；publish/read stub 的 None assertion RED→GREEN；直接更新五類 sealed component 與刪除 citation 的六個 assertion RED→GREEN。追加新 fact、後續 release 保留舊 item／evidence 引用、DB 中途錯誤完整 rollback 為既有防線驗證，沒有冒稱新 RED。`uv run --project backend pytest backend/tests/integration/test_catalog_store.py -q`：11 passed。
+- 同 transaction 發布並 seal；component trigger 鎖定 parent release 後拒絕 sealed 寫入，複合 FK 綁定 release／item／evidence／bottle version。沿用 UUID、SQLAlchemy Core、Alembic 的理由是既定 PostgreSQL 與不可變引用契約；domain 不依賴 ORM，未新增 queue／cache／extension。
+- Mutation：暫將 `<= policy.maximum_age_days` 改成 `<`，以及移除 price reviewed filter，各取得 1 failed／34 passed；還原後價格＋publication unit 54 passed。日界線與 draft 排除不是僅跑正常輸入的綠燈。
+- 完整 `uv run --project backend pytest backend/tests -q`：122 passed；ruff check／format、mypy 21 source files、Python boundary 通過；`python3 scripts/test_wheel.py` repo 外安裝與 Temporal tests 4 passed，migration head 驗為 `0002_catalog`。本增量未套用到 VM。
+- 獨立 design-review：覆蓋 ID／snapshot／transaction／seal trigger／FK／fact-tag／型別／錯誤／migration，共 0 findings（改 0、記 0、提 0、駁回 0）。T03 仍待價格 persistence、查詢用例、真實樣本人工覆核及資料隔離，不宣稱已驗收。
+- GitGuardian：使用者已處理 Compose 變數宣告誤判；新 head `c63fb9c` 的 GitGuardian 與 backend／web checks 全部成功，PR #1 已合併為 `8b5c888`。先前「等待 false-positive 處理」為當時紀錄，現已解除。
+- 獨立 correctness review 找到兩項 P2，均修正：非法 URL port／本機 literal host 可發布、等值 ABV decimal 字串被誤拒。7 個回歸 assertion 先 RED→GREEN，publication unit 現 26 passed；URL 僅做靜態格式／literal host 檢查，不宣稱完成 T08 的 DNS／redirect SSRF 防線。Domain／migration／store 的既有主鍵與 FK 路徑保持不變。
+- 修正後完整後端驗證：`uv run --project backend pytest backend/tests -q` 129 passed（87.47s）；ruff check／format、mypy 21 source files、Python boundary 再驗通過。
+
+
+### T03 價格持久化、查詢與人工覆核 — 2026-09-28
+
+- `PublishedPrice` 綁定 immutable release／item／evidence；新增 migration `0003_catalog_prices`，以既有 seal trigger 保護價格 snapshot，精確 Numeric 保存金額。查詢固定最新 sealed release，再共用純 `qualified_prices()`，不在 SQL／prompt 重寫資格規則；保留來源引用，不把舊 release 價格回填到新版。
+- TDD：price citation 的 item／evidence／source／bottle／draft／capture／duplicate 7 個 assertion RED→GREEN；真 PostgreSQL round-trip stub 與候選查詢 empty stub 各取得 assertion RED→GREEN。日期 30／31、關閉預算、跨 release 撤價、不可變價格為既有規則的 DB 整合驗證；外部 SQL 將 price 指向其他 bottle evidence 被真正 FK 23503 拒絕。
+- Manifest 明確宣告 schema version／real／reviewed／reviewer／aware review time。載入 stub RED→GREEN；10 個 draft／synthetic／缺 reviewer／非法時間／未覆核條目的 assertion RED→GREEN。CLI `whisky-catalog-publish` 先驗 manifest 再連 DB，不在 API startup 或 Agent 自動發布；重送同 release ID 明確拒絕，更新另建 snapshot。
+- 三款真實資料與 fixtures 分離於 `data/catalog`；原 draft 保留，reviewed 檔包含來源、版本、40%／700ml、台灣參考價及整理標籤。使用者明確回覆「已核對，同意三款資料與 30 日政策」，時間與來源見 `data/catalog/REVIEW.md`；格蘭菲迪 15 因條件不明保持 unconditional=false，不進嚴格預算候選。
+- 真 PostgreSQL 匯入 reviewed 檔，TWD 1000 候選為格蘭菲迪 12（978）與格蘭利威 12（816），關閉預算有三款，每個 fact／tag evidence 可解析。這是人工覆核後 snapshot 的查詢證據，不宣稱即時庫存或售價。
+- 獨立 design-review 0 findings，覆蓋 UUID／seal／FK／transaction／manifest／CLI／讀一致性與 query 規模。correctness review 找到 P1 缺欄位套合格預設與 P2 價格日期不符來源，6 assertion RED→GREEN；移除 domain 的市場／幣別／條件預設，非空 price.checked_on 須與 evidence.checked_on 相同。consumer 盤點 `rg -n 'PriceObservation\(' backend` 為 store 與兩個 fixture constructors，均已確認明確傳值。
+- 第一輪完整後端 155 passed；新增直接 FK 反例另 1 passed，review 修正後 affected unit 85 passed；最終完整結果接續記錄。ruff／mypy 23 source files／Python boundary 通過，repo 外 wheel 4 tests 通過、migration head `0003_catalog_prices`。未套用到 VM；T03 收口仍以最終驗證與 CI 為準。
+- 最終完整後端 `uv run --project backend pytest backend/tests -q`：162 passed（42.45s）。抽出共用規則後再執行日期／reviewed mutations，各 1 failed／34 passed；還原後 35 passed。ruff format 49 files、diff whitespace 檢查通過。
+- 完成前對照 PRODUCT_SPEC「最小資料契約」發現仍需補：來源 publisher、風味整理 method/version，以及真實酒款的 brand／正式名稱／適用市場與明確版本欄位；現有 URL、name、ABV、容量、年分與 tag citation 不等於完整 metadata。T03 保持進行中，先補此契約差集再進入 T04。PR #2 保存目前增量，不以價格測試通過取代上述剩餘要求。
+
+
+### T03 metadata 差集收口 — 2026-09-28
+
+- 發布契約補齊 publisher、風味整理 method/version、item reviewed_on；brand／official_name／market／version_label 是有來源引用的必要 facts，未提供 alias 仍為未知，年分未知不當成 NAS。9 個缺值／未來日期 assertions 先 RED→GREEN；metadata DB 讀回遺失 assertion RED→GREEN。
+- Migration `0004_catalog_provenance` 以 nullable 擴充保留舊 snapshot 的未知值，新發布強制欄位完整。新 metadata 不改写原 release：`first-journey.v1.reviewed.json` 與 `git show 2aa306a:data/catalog/first-journey.reviewed.json` byte-identical；current 檔使用新 release ID／published_at。既有人工覆核內容僅結構化為欄位，未新增品飲或價格結論。
+- `uv run --project backend pytest backend/tests -q`：171 passed（23.82s）；真 DB catalog tests 20 passed，另補 legacy-null metadata 可解析但不可重新發布的 test，1 passed。`python3 scripts/test_wheel.py`：4 passed，打包 migration head 為 `0004_catalog_provenance`；ruff／mypy 23 source files 通過。
+- 原 T03 兩次 fresh design-review 無設計發現；本次欄位補全由未參與實作的既有 reviewer 追加獨立 correctness／SSOT 對帳，無新增缺陷與阻擋出口缺口。嘗試新 reviewer 遇 host thread limit，沒有冒稱此次另啟 fresh agent，也沒有由作者扮演獨立 reviewer。
+- 人工覆核、30 日政策、真 DB／mutation／不可變引用／draft 隔離出口已有證據；本次提交 CI 成功後可驗收 T03，接續 T04，不把 T03 當作完整產品或 live deployment 驗收。

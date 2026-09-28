@@ -17,6 +17,7 @@ dependencies = [
 whisky-api = "whisky.bootstrap.api:main"
 whisky-worker = "whisky.bootstrap.worker:main"
 whisky-migrate = "whisky.bootstrap.migrate:main"
+whisky-catalog-publish = "whisky.bootstrap.catalog:main"
 
 [build-system]
 requires = ["hatchling==1.32.4"]
