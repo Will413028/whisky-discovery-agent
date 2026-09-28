@@ -31,13 +31,15 @@ if (new URL(location.href).searchParams.has("reconnect")) {
     },
   }).then(()=>{stopped = true; render();}).catch(error=>{output.textContent = `fixture failed: ${error.code ?? "unknown"}`;});
 } else {
-void readEvents(() => fetch("/agent/observe", {method:"POST"}), (event) => {
+const gated = new URL(location.href).searchParams.has("gated");
+void readEvents(() => fetch("/agent/observe", {method:"POST", headers:gated ? {Authorization:"Bearer synthetic-stream-gate"} : undefined}), (event) => {
   if (event.type === "STATE_SNAPSHOT") {
     state = snapshot(state, event.snapshot, 1);
     times.push(performance.now());
+    if (gated) output.textContent = JSON.stringify({status:state.view?.status, connected:state.connected, snapshots:times.length});
   }
 }).then(() => {
   state = disconnected(state, 1);
-  output.textContent = JSON.stringify({status:state.view?.status, connected:state.connected, times});
+  output.textContent = JSON.stringify({status:state.view?.status, connected:state.connected, snapshots:times.length, times});
 }).catch(() => {output.textContent = "fixture failed";});
 }
