@@ -7,6 +7,7 @@
 - 部署預算以現有帳單 US$0 的 Oracle Ampere VM 為起點，Cloudflare 優先使用免費服務，最多考慮 Workers Paid US$5 基本費；其他持續付費服務不在目前範圍。現行 OCI A1 公布額度約 2 OCPU／12 GB，與回報的 4 CPU／24 GB 須在帳戶中核對，不能從 US$0 現況推論長期免費。Workers Paid 另有用量費，不能當成總帳單上限。容量與還原能力未實測前不可宣稱達標。
 - 尚無 package manifest、原始碼、測試或可執行命令。建立第一個可執行骨架後，再依實際檔案補上開發及驗證命令。
 - 產品互動流程與資料契約須先明確，再實作功能；不要將規劃中的行為寫成已完成。
+- 實作採 TDD：每個行為先取得可解釋的 RED，再以最小實作達成 GREEN，必要時 REFACTOR 並重跑受影響測試。環境錯誤不算行為 RED，mock 通過不代替真 DB／Temporal／部署驗證；依 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) 執行並保存證據，不事後補測試冒充 TDD。
 - 單一 repo；前端 `apps/web/src/` 依功能組織、app 保持薄路由層，shared 不反向依賴 features。後端保留 `backend/src/whisky/`，採業務模組優先的 Modular Monolith，模組內按需分層；跨模組走公開契約，不直接操作其他模組的 ORM／資料表。API 與 worker 共用套件；不預建空層或以 PYTHONPATH 修補打包問題。結構與驗證見 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。
 - 雙入口、六項基礎能力、小型真實酒款庫與台灣價格篩選納入探索計畫；記憶以可靠、可長期使用優先，帳號保存仍為具體建議。新增研究、等待補充與恢復的產品契約見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。
 - 真實酒款須保留版本、來源與查核日期；來源事實、整理後風味標籤與使用者回饋不得混為一談。合成酒款、價格與品飲資料限明確標示並隔離的測試情境。

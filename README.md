@@ -10,6 +10,7 @@
 
 ## 開發方向
 
+- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 以 RED → GREEN → REFACTOR 拆分入口驗證、持久研究、完整探索與展示驗收；目前僅規劃，尚未執行測試循環。
 - [技術架構](ARCHITECTURE.md) 採 Cloudflare Workers 上的 Next.js、AG-UI Agent 互動、Oracle VM 上的 FastAPI／PostgreSQL／PydanticAI＋Temporal。無自有網域時，前端先用 `workers.dev`、登入採 Auth0 Free、同源 API 經 Workers VPC Service／具名 Tunnel 連私有後端；逐階段狀態與報告由產品 DB 支援重連。vinext、VPC/SSE、Workers CPU、Oracle 免費資格及備份還原仍待實測；目前帳單 US$0 不等於長期免費額度已確認，尚未開通新服務。
 - 這是可獨立開發與部署的產品；不依賴其他作品的執行環境。
 - 專案採單一 repo：前端依功能組織，後端以業務模組為主、模組內按需分層，保留 Python `backend/src/whisky/`。目錄與責任見 [技術架構](ARCHITECTURE.md)，首個流程契約與驗證見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)；程式骨架尚未建立。

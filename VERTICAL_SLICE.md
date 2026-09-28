@@ -4,6 +4,8 @@
 
 ## 範圍與實作取捨
 
+實作順序與每一步的 RED／GREEN／完成證據見 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md)；本文件維持設計契約，不重複記進度。
+
 交付旅程：登入 → 建立探索計畫 → 委託研究 → 查 reviewed catalog 與指定真實來源 → 提出版本問題 → 關頁 → 登入補充 → 同一 Temporal workflow 繼續 → 保存有引用的報告。另驗取消、重送、worker crash、舊 history replay 與還原防復活。
 
 | 設計面向 | 可行方式與取捨 | 本流程預設 |
