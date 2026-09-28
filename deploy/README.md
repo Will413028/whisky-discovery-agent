@@ -23,7 +23,7 @@ docker compose --env-file deploy/.env -f deploy/compose.yaml up -d tunnel
 
 `api` waits for the one-shot migration, which waits for PostgreSQL. Liveness does not prove DB, authentication, VPC, SSE or recovery readiness. Record those checks separately. Keep exactly one API container/process: the two-connections-per-owner limiter is process-local. No rolling overlap or `--scale api` is allowed until that limiter is replaced and revalidated.
 
-Register an HTTP Workers VPC Service against this named Tunnel, hostname `web`, HTTP port `3417`, and bind it as `WHISKY_WEB` in `apps/edge`. After Web health and private-network checks, deploy with `pnpm --filter @whisky/edge deploy`. This replaces the former SSR Worker at the same public URL. The Tunnel uses QUIC; no public Tunnel hostname or Quick Tunnel. The thin Worker forwards only to its fixed binding, preserves the public forwarded origin, and never follows redirects. Node Web retains the API path/method allowlist, Bearer-only forwarding and no-store; FastAPI remains the authentication/owner authority.
+Register an HTTP Workers VPC Service against this named Tunnel, hostname `web`, HTTP port `3417`, and bind it as `WHISKY_WEB` in `apps/edge`. After Web health and private-network checks, deploy with `pnpm --filter @whisky/edge run deploy` (`run` distinguishes the script from pnpm's built-in deploy command). This replaces the former SSR Worker at the same public URL. The Tunnel uses QUIC; no public Tunnel hostname or Quick Tunnel. The thin Worker forwards only to its fixed binding, preserves the public forwarded origin, and never follows redirects. Node Web retains the API path/method allowlist, Bearer-only forwarding and no-store; FastAPI remains the authentication/owner authority.
 
 ## Stop / rollback
 
