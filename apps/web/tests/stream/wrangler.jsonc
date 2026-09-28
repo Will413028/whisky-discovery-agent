@@ -1,0 +1,6 @@
+{
+  "name": "whisky-local-stream-fixture",
+  "main": "worker.ts",
+  "compatibility_date": "2026-09-25",
+  "assets": {"directory":"../../.artifacts/stream-fixture", "binding":"ASSETS"}
+}

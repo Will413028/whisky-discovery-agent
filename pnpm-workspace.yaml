@@ -1,6 +1,7 @@
 packages:
   - apps/*
 allowBuilds:
+  browser-tabs-lock: false
   esbuild: true
   workerd: true
 minimumReleaseAgeExclude:

@@ -1,0 +1,113 @@
+name: whisky-discovery
+
+x-api: &api
+  image: whisky-discovery-api:${WHISKY_RELEASE:?set immutable release tag}
+  build:
+    context: ..
+    dockerfile: deploy/Dockerfile
+  environment:
+    WHISKY_DATABASE_URL: ${WHISKY_DATABASE_URL:?set dedicated database URL}
+    WHISKY_AUTH0_ISSUER: ${WHISKY_AUTH0_ISSUER:?set Auth0 issuer}
+    WHISKY_AUTH0_AUDIENCE: ${WHISKY_AUTH0_AUDIENCE:?set API audience}
+  read_only: true
+  tmpfs: ["/tmp:size=16m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: [no-new-privileges:true]
+  init: true
+  mem_limit: 512m
+  cpus: 0.5
+  networks: [private]
+  logging:
+    driver: json-file
+    options: {max-size: 10m, max-file: "3"}
+
+services:
+  web:
+    image: whisky-discovery-web:${WHISKY_WEB_RELEASE:?set immutable web release tag}
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        NEXT_PUBLIC_AUTH0_DOMAIN: ${WHISKY_AUTH0_DOMAIN:?set Auth0 domain}
+        NEXT_PUBLIC_AUTH0_CLIENT_ID: ${WHISKY_AUTH0_CLIENT_ID:?set SPA client ID}
+        NEXT_PUBLIC_AUTH0_AUDIENCE: ${WHISKY_AUTH0_AUDIENCE:?set API audience}
+    environment:
+      WHISKY_API_ORIGIN: http://api:8417
+    networks: [private]
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=32m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    mem_limit: 512m
+    cpus: 1
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3417/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  db:
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    environment:
+      POSTGRES_DB: whisky
+      POSTGRES_USER: whisky
+      POSTGRES_PASSWORD: ${WHISKY_DB_PASSWORD:?set dedicated database password}
+    volumes: [product-db:/var/lib/postgresql]
+    networks: [private]
+    restart: unless-stopped
+    mem_limit: 512m
+    cpus: 0.5
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U whisky -d whisky"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  migrate:
+    <<: *api
+    command: [whisky-migrate]
+    depends_on:
+      db: {condition: service_healthy}
+    restart: "no"
+  api:
+    <<: *api
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: unless-stopped
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8417/health/live', timeout=2)"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+  tunnel:
+    image: cloudflare/cloudflared:2026.9.0@sha256:ff69a2225ad7c6f85ed84fbd5f3087df46202426b2388ec60214098e0adf05e9
+    command: [tunnel, --no-autoupdate, --protocol, quic, run, --token-file, /run/secrets/tunnel_token]
+    secrets: [tunnel_token]
+    networks: [private]
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 128m
+    cpus: 0.25
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+networks:
+  private: {}
+volumes:
+  product-db: {}
+secrets:
+  tunnel_token:
+    file: ./secrets/tunnel-token

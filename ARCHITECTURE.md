@@ -1,6 +1,6 @@
 # Whisky Discovery Agent 技術架構
 
-更新：2026-09-28。第一版採 **Cloudflare Workers 上的 Next.js、AG-UI、PydanticAI＋Python 後端與 Temporal**；無自有網域時以 `workers.dev`、Auth0 Free 與 Workers VPC Service 連接既有 Oracle VM 作為實作基準。Oracle Ampere ARM VM 以 4 CPU／24 GB、目前帳單 US$0 為基準；免費資格須按 PAYG／Free Tier 類型及總用量分別核對。Cloudflare 優先 Free，最多考慮 Workers Paid 的 US$5 基本費，不新增其他持續付費服務。入口、額度與還原仍須實測；目前實作證據見 IMPLEMENTATION_PLAN。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
+更新：2026-09-28。使用者改選 **Oracle VM 上的原生 Next.js／Node、AG-UI、PydanticAI＋Python 後端與 Temporal**。Cloudflare Worker 只經 VPC／具名 Tunnel 轉送至 VM Web，保留 `workers.dev`，不執行 SSR。Oracle 現有 PAYG 4 CPU／24 GB、US$0 帳單不是未來費用保證；新增負載、薄入口免費額度與還原仍須實測。實作證據见 IMPLEMENTATION_PLAN，產品契約見 PRODUCT_SPEC。
 
 ## 已確定與待選項
 
@@ -10,7 +10,7 @@
 | 執行權威 | Temporal 管工作派送、等待、重試及恢復；Agent framework 管模型與工具協調。 |
 | 產品範圍 | 個人探索計畫、可交辦研究，沿用雙入口、六項基礎能力、小型 reviewed catalog、台灣參考價格及可靠記憶。 |
 | Agent framework | 已選 PydanticAI＋Python 後端，使用官方 Temporal 整合；Mastra TypeScript 留作替代紀錄。 |
-| Web／互動協定 | Next.js 部署在 Cloudflare Workers；AG-UI 是 Agent 互動的前後端協定。vinext 優先驗證，仍需實測。 |
+| Web／互動協定 | 原生 Next.js／Node standalone 在 Oracle VM；AG-UI 管互動，Worker 只轉送 HTTP／SSE。 |
 | 身分與入口 | 無自有網域；訪客可看公開 catalog，私人探索使用 Auth0 Free 登入；Web 先用 `workers.dev`。 |
 | API／產品保存 | FastAPI、PostgreSQL＋SQLAlchemy／psycopg／Alembic 為第一版實作基準；與 Temporal、備份的容量和恢復仍待實測。 |
 | 託管與預算 | 現有 Oracle VM 帳單 US$0；A1 的 PAYG 與 Free Tier 公開免費時數不同，按實際帳戶與總用量核對，不把現況當未來保證。Cloudflare Free 優先，Workers Paid US$5 基本費不是用量硬上限。 |
@@ -43,17 +43,17 @@
 
 ## 配套選型的前提與替代
 
-真實限制是已選 Cloudflare Workers 上的 Next.js、AG-UI、Python Agent 後端、Temporal、可跨裝置找回探索紀錄、小型人工覆核 catalog、個人維護、無自有網域，以及沿用現有 Oracle VM／Cloudflare、持續費用 US$0 優先且最多考慮 Cloudflare Workers Paid US$5 基本費。TypeScript 全棧、每頁 SSR、Render、Temporal Cloud、既有資料遷移、微服務與本機保存都不是限制。這是選型與預算邊界，不是開通服務的授權。
+真實限制是 Next.js、AG-UI、Python Agent、Temporal、跨裝置保存、覆核 catalog、個人維護、無自有網域，以及現有 Oracle／Cloudflare、US$0 優先。使用者改選 Oracle Web，Workers 執行 Next.js 已不再是限制；每頁 SSR、Render、Temporal Cloud、微服務亦非限制。
 
 | 可行組合 | 收益與代價 | 本案處理 |
 |---|---|---|
-| **Oracle VM 自架服務＋Cloudflare Workers Next.js** | 符合既有 VM 與指定 Web 平台；代價是單機資料／workflow 維運，以及 Workers 執行額度與 adapter 相容性要實測。 | **已選部署邊界**；先量測 VM 容量與 Workers 真實執行。 |
+| **Oracle VM Web／後端＋Cloudflare 薄入口** | 原生 Node 避免 Workers SSR 限制；增加 VM Web 負載與單機維運。 | **已選**；量測完整路徑與薄 Worker CPU。 |
 | 全部放 Cloudflare Workers／D1／Workflows | 邊緣託管減少 VM 操作，但會改寫 Python／Temporal 的執行權威與長時間工作契約；Workers Paid 另有用量超額。 | 不為部署平台推翻已確定的框架與 workflow。 |
 | Render／託管 PostgreSQL＋Temporal Cloud | 維運與恢復工具較完整，適合有月費預算；前版試算固定計算即 US$59.50／月，另有 Temporal 用量與模型費。 | 歷史替代方案，已因新預算退出本輪首選。 |
 
 這是依本案約束做的工程判斷，不是市場普及率排名。若取消費用限制，託管資料庫與 Temporal 會減少個人維運，但不改變產品 domain、API、workflow 與資料契約。單一 VM 不提供高可用性；可靠保存要靠 VM 外備份與演練，不能把「目前帳單 US$0」推論為服務等級保證。
 
-Web framework 與平台已選 **Next.js on Cloudflare Workers**，本案仍採 Next.js Web＋Python API 的責任切分。Cloudflare 目前建議新專案用 vinext，OpenNext 為既有應用或 vinext 相容缺口的替代；vinext 仍是 beta，所以 adapter 尚不宣稱定案。建立骨架時在實際 workerd runtime 驗 App Router、登入候選、AG-UI/SSE、hydration、路由與 CPU 用量，再鎖定 vinext 或 OpenNext。靜態資產交由 Workers Assets；公開頁可預先產生，私有探索與報告以 FastAPI 的 owner 驗證結果為準，不因 Next.js 有 SSR／Route Handlers 就複製產品 domain 或另建資料權威。[Cloudflare Next.js Workers 指引](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/)、[OpenNext 替代路徑](https://developers.cloudflare.com/workers/framework-guides/web-apps/opennext/)。FastAPI 適合 typed API 與 PydanticAI 共用 Python 契約；Django 在內建後台、表單及 ORM 整合優先時更有吸引力，目前沒有這項優先順序。
+Web 使用 **原生 Next.js／Node standalone**。vinext Worker SSR CPU 超過 Free 門檻，prerender 遇到 bare Node 載入 cloudflare:workers 的相容性問題；使用者選 VM，沒有選 framework patch、OpenNext 或付費升級。移除 vinext／Cloudflare Vite／RSC adapter，依[官方 self-hosting](https://nextjs.org/docs/app/guides/self-hosting)與 [standalone](https://nextjs.org/docs/app/api-reference/config/next-config-js/output)驗 Node／ARM64、Auth0、hydration、串流與資源。公開頁可在 build 產生，私有資料仍由 FastAPI owner 驗證，Web 不另建 domain／資料權威。
 
 ## 建議配套與專案結構
 
@@ -61,15 +61,15 @@ Web framework 與平台已選 **Next.js on Cloudflare Workers**，本案仍採 N
 
 | 層 | 建議 | 責任 |
 |---|---|---|
-| Web | Next.js App Router＋TypeScript，部署在 Cloudflare Workers；vinext 為首個驗證候選 | 探索畫面、帳號互動與必要的邊緣頁面回應；不執行長研究或保存私人狀態。 |
+| Web | Next.js App Router＋TypeScript，Oracle Node standalone | 頁面、登入、固定 API proxy；不執行研究或保存私人狀態。 |
 | 產品 API | FastAPI＋Pydantic | 授權、commands、查詢、公開 view；提供 OpenAPI 契約。 |
 | Agent／Worker | PydanticAI＋Temporal Python SDK | workflow 協調、Agent、activities；與 API 共用 Python domain/use cases。 |
 | 產品與 Temporal DB | 同一 Oracle VM 的 PostgreSQL cluster，隔離產品／Temporal persistence／visibility DB；SQLAlchemy 2＋psycopg 3＋Alembic 僅管理產品 schema | 一次 cluster PITR 可回到同一時間點；Temporal schema 由對應版本官方工具單獨升級，不能用產品 migration 管理。 |
 | 身分 | Auth0 Free；第一個登入方式為 Google | React client 使用 Auth0 SDK；FastAPI 依 JWKS 獨立驗 access token 與 owner。不自製密碼或平行 session 系統。 |
-| 互動與連線 | AG-UI over HTTP/SSE；Worker 同源 `/api`／`/agent` 經 Workers VPC Service 連 Oracle 私有 FastAPI | 使用產品 DB 的任務 snapshot／階段狀態重連；VPC beta、SSE flush 與 Worker CPU 必須實測。 |
+| 互動與連線 | 薄 Worker 經 VPC 連 VM Web；同源 API／AG-UI 經 Web 固定 proxy 連 FastAPI | snapshot 重連；完整 SSE、VPC、薄 Worker CPU 仍須實測。 |
 | 契約 | Pydantic／OpenAPI → openapi-typescript＋openapi-fetch | 產生 Web types/client；CI 驗證 schema、生成差異及 TypeScript，業務規則只在後端。 |
 | 驗證 | pytest、Temporal test environment／replay、真 PostgreSQL、Playwright、固定 eval | 分開驗 domain、持久工作、產品資料及使用者旅程。 |
-| 部署 | `workers.dev` 上的 Next.js＋Workers VPC Service／具名 Tunnel＋現有 Oracle ARM VM 的 FastAPI／Temporal Server／worker／PostgreSQL | API／worker 共用後端程式與 domain，以不同程序啟動；FastAPI、Temporal gRPC 與 DB 不公開。 |
+| 部署 | workers.dev 薄入口＋VPC／具名 Tunnel＋Oracle Next.js／FastAPI／Temporal／worker／PostgreSQL | API／worker 共用套件、不同程序；Web／API／Temporal／DB 不發布公網 host port。 |
 | 模型 | Cloudflare Workers AI Free 的 `@cf/zai-org/glm-4.7-flash` 為第一個評估候選 | 後端呼叫模型；須驗 PydanticAI 相容、繁中品質、tool calling、延遲與免費用量；不宣稱已選定或自動切換付費。 |
 | VM 外保存 | OCI Object Storage Always Free 額度內的加密 PostgreSQL 備份及最小撤銷紀錄，分開權限與路徑 | 與單機故障分離；bucket 容量、請求及保留政策先盤點，不用 VM 本機磁碟冒充備份。 |
 | 工具鏈 | pnpm 管 Web，uv 管 Python；各自 lockfile | 單一 repo、兩套明確工具鏈；先不加入 Nx／Turborepo 或自建套件發布平台。 |
@@ -78,12 +78,13 @@ Web framework 與平台已選 **Next.js on Cloudflare Workers**，本案仍採 N
 
 ```mermaid
 flowchart LR
-  B[Browser] --> UI[workers.dev／Next.js Worker]
+  B[Browser] --> UI[workers.dev／薄 Worker]
   B <--> A[Auth0／Google 登入]
-  UI -->|同源 API／AG-UI SSE| V[Workers VPC Service]
+  UI -->|HTTP／SSE body pass-through| V[Workers VPC Service]
   V --> E[具名 Cloudflare Tunnel／私有連線]
   subgraph O[現有 Oracle Ampere VM]
-    E --> API[FastAPI]
+    E --> WEB[Next.js／Node standalone]
+    WEB -->|固定私有 API proxy| API[FastAPI]
     API --> DB[(PostgreSQL cluster)]
     W[Python Worker] --> DB
     API --> T[Temporal Server]
@@ -165,9 +166,9 @@ API／worker 只透過 VM 內部網路連 PostgreSQL，各自有一個有上限�
 
 ### 部署邊界
 
-Next.js Web 部署於 `*.workers.dev` 的 Cloudflare Worker，靜態檔案由 Workers Assets 提供；公開 catalog 頁優先預先產生，登入後的探索畫面由 client 讀取受驗證 API，以降低 Workers Free 的動態 CPU。`workers.dev` 是 Cloudflare 提供的個人／業餘專案入口，不是自有正式網域。[workers.dev 適用範圍](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/)。現有 Oracle Ampere ARM VM 以受控容器／service 分開執行 FastAPI、Python worker、Temporal Server、PostgreSQL、`cloudflared` 及備份作業。這是**一台機器上的模組化服務**，不建立 Kubernetes 或第二套 queue。API／worker 共用後端版本與 domain，但各自是獨立程序。正式 Temporal 使用自架 server 與手動 schema migration；`temporal server start-dev` 只用於本機開發。Temporal persistence 與 advanced visibility 均用 PostgreSQL，免另架 Elasticsearch；先驗對應版本、ARM64 image／binary 及首個流程的 CPU／RAM／磁碟。[Temporal 自架部署](https://docs.temporal.io/self-hosted-guide/deployment)、[PostgreSQL visibility](https://docs.temporal.io/self-hosted-guide/visibility)。
+Next.js Web 在 Oracle 的獨立 Node container 執行，standalone build 提供頁面及 assets。薄 Worker 保留 workers.dev 公開網址，沒有 SSR／framework／私人狀態。VM 分別執行 Web、FastAPI、Python worker、Temporal Server、PostgreSQL、cloudflared 與備份；不建 Kubernetes／第二套 queue。Temporal 使用正式自架 server 與手動 schema migration，start-dev 僅開發；persistence／visibility 採 PostgreSQL，須驗 ARM64／資源。[Temporal 部署](https://docs.temporal.io/self-hosted-guide/deployment)。
 
-無自有網域時，API 不走公開 Tunnel hostname。Worker 以綁定的 [Workers VPC Service](https://developers.cloudflare.com/workers-vpc/) 對固定 VM 私有位址／port 呼叫 FastAPI；Oracle 的具名 Cloudflare Tunnel 僅提供私有連線，FastAPI、Temporal gRPC／Web UI 和 PostgreSQL 不公開。Worker 只代理允許的路徑，FastAPI 仍逐請求驗 Auth0 token 與 owner；Tunnel 不是登入。VPC 在 2026-09-28 為 beta，開放測試期免費，正式價格與 SSE 實際行為尚未驗證；`cloudflared` 須符合 VPC 版本與 QUIC 出站要求，並在真實部署驗 `Content-Type: text/event-stream` 的逐段 flush、斷線及重連。[VPC 價格](https://developers.cloudflare.com/workers-vpc/reference/pricing/)、[VPC Tunnel 條件](https://developers.cloudflare.com/workers-vpc/configuration/tunnel/)、[Tunnel SSE 行為](https://developers.cloudflare.com/cloudflare-one/troubleshooting/tunnel/)。
+無自有網域時，薄 Worker 綁定 [Workers VPC Service](https://developers.cloudflare.com/workers-vpc/) 固定 web:3417 target，具名 Tunnel 提供私有連線。Worker 轉送 body／串流並重設 forwarded origin，不接受使用者指定 upstream、不跟隨 redirect。Web API proxy 限路徑／方法、Bearer-only、manual redirect／no-store；FastAPI 驗 JWT／owner。Web／API 無 host port，Temporal／DB 不公開。VPC beta 費用及 Worker→Web→API 的 SSE／取消／重連仍須實測。[VPC 價格](https://developers.cloudflare.com/workers-vpc/reference/pricing/)、[Tunnel 條件](https://developers.cloudflare.com/workers-vpc/configuration/tunnel/)。
 
 若 VPC beta 不可用或未來超出費用邊界，先保留 FastAPI HTTP／AG-UI 契約，重新比較公開 Oracle IP＋自動更新的 HTTPS IP 憑證、購買自有網域後的正式 Tunnel，或 AG-UI 的其他 transport；不把 `trycloudflare.com` Quick Tunnel 當正式退路，它不支援 SSE。[Quick Tunnel 限制](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/)、[Let's Encrypt IP 憑證](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability)。同機若承載其他作品，先盤點現有程序與保留 CPU／RAM／磁碟，採專用資料庫、網路、服務帳號、容器名稱與備份路徑；不可藉本案更動其他作品的資料。Web 不持有 DB、模型或 Temporal 密鑰。建立帳號、bucket、設定 secrets 與部署均屬日後實作，不是本次已完成工作。
 
@@ -188,14 +189,14 @@ Next.js Web 部署於 `*.workers.dev` 的 Cloudflare Worker，靜態檔案由 Wo
 | 項目 | 本輪使用方式 | 預期新增月費 |
 |---|---|---:|
 | 現有 Oracle VM | 使用者回報 4 CPU／24 GB、目前帳單 US$0；須核對帳戶類型、A1 shape／OCPU、區域與實際免費額度，不另開 VM／磁碟 | $0 現況；長期費用未確認 |
-| Cloudflare Workers Next.js＋Workers VPC／具名 Tunnel | 以 `workers.dev` 和 Workers Free 驗證；帳戶共用每日 100,000 次動態請求額度、每次 10 ms CPU，靜態資產請求免費；VPC beta 目前免費 | $0（僅在免費額度及 beta 價格內） |
-| Temporal Server／FastAPI／worker／PostgreSQL | 自架於現有 VM；沒有 Temporal Cloud 訂閱 | $0（不計人力） |
+| Cloudflare 薄 Worker＋VPC／具名 Tunnel | workers.dev 轉送；頁面／assets 在 VM，但經 Worker 的請求仍計入 Free 額度及 CPU | $0（額度及 beta 價格內） |
+| Next.js／Temporal Server／FastAPI／worker／PostgreSQL | 自架現有 VM，無 Temporal Cloud 訂閱 | $0（不計人力） |
 | Auth0 | Free 方案，Google 登入與預設 Auth0 託管網域；不另購自有網域 | $0（方案額度內） |
 | Workers AI | Free 的每日 10,000 Neurons；超額請求失敗，不切換付費模型 | $0（額度內） |
 | OCI Object Storage | 若帳戶仍有 Always Free 物件容量／請求額度，存加密備份及最小控制紀錄 | $0（額度內） |
 | **本輪預期新增固定費** | 先不啟用 Workers Paid 或其他付費資源；OCI 帳戶權益、Workers CPU／VPC、備份容量均待驗證 | **$0／月（目標，未驗證）** |
 
-[Workers 靜態資產](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/)請求免費，動態 SSR 會計入 [Workers Free 限制](https://developers.cloudflare.com/workers/platform/limits/)；10 ms CPU 不保證容納 Next.js SSR，先在 workerd preview 與實際帳戶量測，超限即失敗而不自動升級付費。[Auth0 Free](https://auth0.com/pricing/)目前公布最多 25,000 MAU；[Workers AI Free](https://developers.cloudflare.com/workers-ai/platform/pricing/)每日 10,000 Neurons，超額會失敗。
+薄入口仍須符合 [Workers Free 限制](https://developers.cloudflare.com/workers/platform/limits/)；不由 SSR 移出就推定 CPU 通過。舊 vinext SSR 證據留於實作計畫，新路徑另量。Auth0／Workers AI 仍依免費額度，模型超額失敗，不自動切付費。
 
 [OCI A1 Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)公布每月 1,500 OCPU-hours／9,000 GB-hours；[Oracle PAYG 價目表](https://www.oracle.com/cloud/price-list/)則列 paid tenancy 每月前 3,000 OCPU-hours／18,000 GB-hours 免費。4／24 全天跑 31 天為 2,976／17,856，落在後者的 compute 額度內；額度由 tenancy 內 A1 VM、bare metal 與 container instances 共用。不能以 Free Tier 文件排除 PAYG 的 4／24，也不能由目前 US$0 帳單推論未來仍免費。帳戶類型、VM shape／OCPU、區域與成本分析須以帳戶證據核對；[帳戶類型畫面](https://docs.oracle.com/en-us/iaas/Content/GSG/Concepts/console_topic-AccountCenter-Billing.htm)可辨識。
 
@@ -297,7 +298,7 @@ Logs 記 task／workflow／run／revision、階段、latency、用量與錯誤�
 | 身分與跨語言契約 | 不同帳號不可讀／回覆；Web client 符合實際 API schema，模型不能擴張授權範圍。 |
 | 真實登入與失效 | Auth0／Google 登入後，API 的 issuer／JWKS／audience 設定正確；過期／錯誤來源 token、停用 actor 及跨帳號 IDs 均拒絕；重新整理與登出流程可用，不靠 webhook 順序建立帳號。 |
 | AG-UI 與重連 | 送出／重送同一 run 不重啟 workflow；SSE 中斷後重新驗 owner 並送最新 snapshot；已完成報告由 DB 還原，舊 revision、重複事件與失敗終態不覆寫新狀態。 |
-| Web、API 與資料部署 | Next.js 在 workerd preview／正式 Workers 下以真瀏覽器驗最終 DOM、page errors、Auth0 callback、hydration、路由與 AG-UI/SSE；動態頁量測 CPU 並符合 Free 限制。Browser → Worker → VPC Service → 具名 Tunnel → FastAPI 的逐段 SSE、關頁／重連可用；VM 內 API／worker／Temporal／DB 連線可用；個人資料不被共享快取；分開的 schema migration、pool 上限及新舊 worker 重疊經驗證。 |
+| Web、API 與資料部署 | 原生 Next.js／Node 在 ARM VM 驗 DOM、Auth0、hydration、路由、SSE。Browser→薄 Worker→VPC→Tunnel→Node Web→FastAPI 的 flush／取消／重連可用；薄 Worker CPU 及 VM Web 資源有實測。私人回應 no-store；DB／Temporal、migration／pool 與 worker 重疊各自驗證。 |
 | 還原與成本 | 核對 OCI 帳戶類型、A1 OCPU／RAM／區域與費用明細，再量測現有 VM 可用容量；從空 VM 還原整個 cluster，VM 外控制紀錄使刪除不復活；備份／WAL 新鮮度、Object Storage 配額、VPC beta 費用、Workers AI 免費用量及真正帳單有量測與告警。 |
 | 營運 | worker、Temporal service、產品 DB 各自故障可診斷；單 VM 故障時恢復與人工切換有演練紀錄。 |
 
