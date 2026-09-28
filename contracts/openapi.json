@@ -16,6 +16,47 @@
         "title": "ActorView",
         "type": "object"
       },
+      "CatalogReference": {
+        "additionalProperties": false,
+        "properties": {
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "release_id",
+          "item_id"
+        ],
+        "title": "CatalogReference",
+        "type": "object"
+      },
+      "CreatePlanInput": {
+        "additionalProperties": false,
+        "properties": {
+          "conditions": {
+            "$ref": "#/components/schemas/ResearchConditions-Input"
+          },
+          "key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "conditions"
+        ],
+        "title": "CreatePlanInput",
+        "type": "object"
+      },
       "ErrorView": {
         "additionalProperties": false,
         "properties": {
@@ -73,6 +114,76 @@
         "title": "ObserveInput",
         "type": "object"
       },
+      "PlanView": {
+        "additionalProperties": false,
+        "properties": {
+          "conditions": {
+            "$ref": "#/components/schemas/ResearchConditions-Output"
+          },
+          "conditionsRevision": {
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "conditionsRevision",
+          "conditions"
+        ],
+        "title": "PlanView",
+        "type": "object"
+      },
+      "Preference": {
+        "additionalProperties": false,
+        "properties": {
+          "certainty": {
+            "enum": [
+              "user_stated",
+              "inferred",
+              "unknown"
+            ],
+            "title": "Certainty",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "intent": {
+            "enum": [
+              "prefer",
+              "keep",
+              "change",
+              "avoid"
+            ],
+            "title": "Intent",
+            "type": "string"
+          },
+          "strength": {
+            "enum": [
+              "soft",
+              "hard"
+            ],
+            "title": "Strength",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "intent",
+          "certainty",
+          "strength"
+        ],
+        "title": "Preference",
+        "type": "object"
+      },
       "QuestionView": {
         "additionalProperties": false,
         "properties": {
@@ -105,6 +216,133 @@
           "expiresAt"
         ],
         "title": "QuestionView",
+        "type": "object"
+      },
+      "ResearchConditions-Input": {
+        "additionalProperties": false,
+        "properties": {
+          "budget_twd": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Twd"
+          },
+          "entry": {
+            "enum": [
+              "beginner",
+              "existing_bottle"
+            ],
+            "title": "Entry",
+            "type": "string"
+          },
+          "goal": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Goal",
+            "type": "string"
+          },
+          "preferences": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Preference"
+            },
+            "maxItems": 64,
+            "title": "Preferences",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "starting_bottle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "entry",
+          "goal"
+        ],
+        "title": "ResearchConditions",
+        "type": "object"
+      },
+      "ResearchConditions-Output": {
+        "additionalProperties": false,
+        "properties": {
+          "budget_twd": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Twd"
+          },
+          "entry": {
+            "enum": [
+              "beginner",
+              "existing_bottle"
+            ],
+            "title": "Entry",
+            "type": "string"
+          },
+          "goal": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Goal",
+            "type": "string"
+          },
+          "preferences": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Preference"
+            },
+            "maxItems": 64,
+            "title": "Preferences",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "starting_bottle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "entry",
+          "goal"
+        ],
+        "title": "ResearchConditions",
         "type": "object"
       },
       "TaskError": {
@@ -375,6 +613,16 @@
             },
             "description": "Not Found"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -470,6 +718,16 @@
             },
             "description": "Not Found"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -553,6 +811,16 @@
             },
             "description": "Not Found"
           },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -590,6 +858,214 @@
           }
         ],
         "summary": "Me"
+      }
+    },
+    "/api/v1/plans": {
+      "post": {
+        "operationId": "create_plan_api_v1_plans_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlanInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Create Plan"
+      }
+    },
+    "/api/v1/plans/{plan_id}": {
+      "get": {
+        "operationId": "read_plan_api_v1_plans__plan_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Plan"
       }
     },
     "/health/live": {
@@ -640,6 +1116,16 @@
               }
             },
             "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
           },
           "422": {
             "content": {

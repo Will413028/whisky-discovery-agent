@@ -55,6 +55,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create Plan */
+        post: operations["create_plan_api_v1_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Plan */
+        get: operations["read_plan_api_v1_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -87,6 +121,25 @@ export interface components {
              */
             id: string;
         };
+        /** CatalogReference */
+        CatalogReference: {
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+        };
+        /** CreatePlanInput */
+        CreatePlanInput: {
+            conditions: components["schemas"]["ResearchConditions-Input"];
+            /** Key */
+            key: string;
+        };
         /** ErrorView */
         ErrorView: {
             /** Code */
@@ -116,6 +169,37 @@ export interface components {
              */
             taskId: string;
         };
+        /** PlanView */
+        PlanView: {
+            conditions: components["schemas"]["ResearchConditions-Output"];
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+        };
+        /** Preference */
+        Preference: {
+            /**
+             * Certainty
+             * @enum {string}
+             */
+            certainty: "user_stated" | "inferred" | "unknown";
+            /** Description */
+            description: string;
+            /**
+             * Intent
+             * @enum {string}
+             */
+            intent: "prefer" | "keep" | "change" | "avoid";
+            /**
+             * Strength
+             * @enum {string}
+             */
+            strength: "soft" | "hard";
+        };
         /** QuestionView */
         QuestionView: {
             /**
@@ -132,6 +216,54 @@ export interface components {
             prompt: string;
             /** Waitingversion */
             waitingVersion: number;
+        };
+        /** ResearchConditions */
+        "ResearchConditions-Input": {
+            /** Budget Twd */
+            budget_twd?: number | string | null;
+            /**
+             * Entry
+             * @enum {string}
+             */
+            entry: "beginner" | "existing_bottle";
+            /** Goal */
+            goal: string;
+            /**
+             * Preferences
+             * @default []
+             */
+            preferences: components["schemas"]["Preference"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            starting_bottle?: components["schemas"]["CatalogReference"] | null;
+        };
+        /** ResearchConditions */
+        "ResearchConditions-Output": {
+            /** Budget Twd */
+            budget_twd?: string | null;
+            /**
+             * Entry
+             * @enum {string}
+             */
+            entry: "beginner" | "existing_bottle";
+            /** Goal */
+            goal: string;
+            /**
+             * Preferences
+             * @default []
+             */
+            preferences: components["schemas"]["Preference"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            starting_bottle?: components["schemas"]["CatalogReference"] | null;
         };
         /** TaskError */
         TaskError: {
@@ -237,6 +369,15 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorView"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
             /** @description Unprocessable Content */
             422: {
                 headers: {
@@ -306,6 +447,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -387,6 +537,187 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorView"];
                 };
             };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    create_plan_api_v1_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreatePlanInput"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_plan_api_v1_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
             /** @description Unprocessable Content */
             422: {
                 headers: {
@@ -456,6 +787,15 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
