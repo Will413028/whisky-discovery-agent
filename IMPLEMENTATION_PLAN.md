@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00／T01 本機與遠端 deterministic CI GREEN；Auth0 tenant 已登入並建立專用 SPA／API，真 callback／跨帳號瀏覽器 gate 尚未通過。T02 契約與串流基礎已有本機及遠端 CI 證據，正式 observe 與部署 gate 未完成；T03 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
+更新：2026-09-28。狀態：T00／T01 deterministic CI GREEN；真 Google callback／refresh／logout、原 Worker→VPC→API 串流／重連／多分頁限額已有證據，跨帳號等 gate 未完成。使用者已改選 Oracle VM 執行原生 Next.js／Node，T02 正在移轉薄 Worker→VPC→VM Web→API；T03 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -62,14 +62,14 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - RED→GREEN：登入返回原頁、重新整理、登出清除私人 state、token 到期重新登入；不用 localStorage 保存 token。
 - 出口：本機負面授權測試＋真 Auth0 callback／跨帳號瀏覽器測試；移除 owner filter 的 mutation 必須使隔離測試失敗。
 
-## T02 — AG-UI 與 Workers／VPC 最小入口
+## T02 — AG-UI 與 Oracle Web／Workers VPC 最小入口
 
 相依：T01。本階段只用明示的測試狀態來源，不建立完整研究流程。
 
 - RED：兩段延遲 snapshot 被緩衝到最後才抵達；EOF 被顯示為完成；interrupt 被當 success；新 run 的 resume payload 不能通過兩端 SDK schema。
 - GREEN：固定 TaskView 契約、AG-UI adapter、串流 proxy 與最小前端狀態處理；observe 僅訂閱，不執行 start／answer。
 - RED→GREEN：重複／較舊 view version、不同 task／revision 被丟棄；斷線後 observe 恢復；過期 token、慢 consumer 與多 tab 連線有界。
-- 出口：真 workerd／Workers → VPC → API 的瀏覽器 flush 時間證據、page errors、登入與重連；記錄 CPU、connection／memory 用量。SDK 相容或 VPC gate 不過就重評，不能繼續宣稱部署路線成立。
+- 出口：真 workerd／Workers 薄轉送 → VPC → VM Next.js／Node → API 的瀏覽器 flush 時間證據、page errors、登入與重連；記錄 Worker CPU、VM Web／API connection／memory 用量。SDK 相容或 VPC gate 不過就重評，不能繼續宣稱部署路線成立。2026-09-28 使用者改選 Oracle 部署 Web，原 vinext／Workers SSR 證據保留為歷史，不要求再通過已撤回的 SSR 平台。
 
 ## T03 — Reviewed catalog 與價格規則
 
@@ -314,3 +314,16 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - Auth0 CLI 1.36.0 已經使用者完成 device login；建立此專案專用 SPA／RS256 API，設定 localhost 與正式 workers.dev callback。Chrome 真 Google 登入已到 Whisky Discovery Web 首次 consent，callback／refresh／logout／雙帳號及 VPC SSE 尚待驗證。`360e0f6` 遠端 CI run `36402855031` 的 backend 與 web jobs 各自 success。
 - 後續 Google 驗收：使用者完成首次 consent 後，Chrome 正式 `/account` 顯示「帳號已連線」；reload 後先 loading，再恢复「帳號已連線」。API 的專用 users 表已有此帳號內部 UUID。尚未以這項結果代替 logout／雙帳號隔離及 SSE。
 - 隔離 probe：`deploy/entry_probe.py` 只由額外 Compose override 掛載，固定 owner／task／run／revision、2 秒兩段 synthetic snapshot、重連維持新版，沒有研究持久寫入。`test_entry_probe.py` 首次 RED 為合法請求仍回 None；GREEN 後完整 backend 57 passed、Web 51 passed、mypy／ruff／TypeScript 通過。顯式 browser harness build 與 Compose 合併設定檢查通過；常規 Web build 不包含 harness。獨立唯讀 correctness review 沒有可重現 P1／P2。live probe 尚未部署／量測，完整 gate 仍待完成。
+- Live probe 已執行，安全量測摘要見 [deploy/t02-entry-evidence.json](deploy/t02-entry-evidence.json)：Chrome→Worker→VPC→named Tunnel→API 的兩段 snapshot 在 614／2,608 ms 到達；約 62 秒只讀重連保留 v2／researching，page errors 0。兩頁持有連線時第三頁 429；停止第一頁後第三頁按退避重試成功 200。Google callback／reload／logout 均實測；跨帳號、live token expiry／slow consumer 仍待驗，不以本機測試代替。`4209109` CI run `36405523219` 的 backend／web jobs 各自 success。
+- VM 小樣本 API 69.32 MiB／0.30% CPU、DB 33.45 MiB、Tunnel 15.2 MiB；inspection 時 DB idle 1＋查詢自身 active 1，命令與限制隨 artifact 保存。Wrangler tail 的整條 60 秒 observe 樣本 CPU 8 ms；`/account` SSR 樣本 13／43 ms。GraphQL 官方 API introspection 確認 `cpuTimeP50/P99` 單位為 microseconds，最近一小時樣本亦超過 Free 10 ms；不能宣稱 Free gate 通過。參照 [官方 metrics 說明](https://developers.cloudflare.com/workers/observability/metrics-and-analytics/)，成功 outcome 不代表每次 CPU 在門檻內。
+- 原生 prerender 實驗：產物 gate 先 RED（缺 static shell），啟用 `vinext({prerender:true})` 後 build 在 bare Node 載入 `cloudflare:workers` 失敗，與 [上游 #2911](https://github.com/cloudflare/vinext/issues/2911) 相符。此相容性失敗不冒充 TDD RED；實驗設定已撤回，未 patch framework／改換綁定機制。依既定架構評估 OpenNext 替代，或由使用者選擇付費路線；T02 不標已驗收，T03 尚未開工。
+
+### T02 Oracle Web 移轉 — 2026-09-28 進行中
+
+- 使用者改選 Oracle VM 部署 Web。原生 Next.js／Node standalone 容器負責頁面與固定 API proxy；保留 `workers.dev` 公開網址，薄 Worker 只經 VPC 轉送至 Web，Auth0／AG-UI／FastAPI／Temporal 契約不變。不採 OpenNext 或付費升級。
+- 先完成：原 live probe API 已回復 normal command 且 healthy；臨時 Auth0 callback 已移除，正常 Web Worker version `542be883-e061-411f-9ac9-010dcc992ff2` 已移除合成 assets，GET `/__entry_probe` 真回 404。
+- 固定 Node API adapter 的兩項測試先 RED（沒有可用 adapter／非法設定未拒絕）；初版轉送又由 assertion 抓到 POST 被變 GET，改成明確傳遞 method／body／headers／signal／manual redirect，2 passed。這不是以既有 proxy 測試代替 Node 行為。移除 vinext 與 Cloudflare Vite runtime；原生 Next build 已產生 `/`、`/account` 靜態頁，兩個私有 routes 保持 dynamic。
+- 薄 Worker 兩項測試先 RED（轉送回 503／缺 no-store），GREEN 後 Web `pnpm --filter @whisky/web test` 55 passed；`test:e2e` 5 passed，包含真正 edge→Node→FastAPI 的重連串流。typecheck、boundary、原生 production build 與 edge dry-run 通過；薄入口 bundle 1.52 KiB。
+- ARM64 standalone image 在唯讀／non-root 容器通過頁面 200、JS asset 200、缺 API 設定 503/no-store。Oracle VM 的獨立 Web container 已 healthy、沒有 host port；新 VPC target 指向 `web:3417`，公開入口尚未切換。API 仍為 `4209109`。
+- 架構文件已對帳；fresh design-review 無設計發現，文件提醒已修正。複核未修改檔案；主 agent 查核兩個 checkout 的 status/log，未見 reviewer 的越界提交。
+- 尚須：CI、公開薄入口切換／回復驗證、真 Auth0／完整 live SSE gate 與 VM 資源量測。移轉未完成，不以本機檢查代替 live gate。

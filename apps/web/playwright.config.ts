@@ -9,6 +9,9 @@ export default defineConfig({
     reuseExistingServer: false,
     timeout: 60_000,
   }, {
+    command: "WHISKY_API_ORIGIN=http://127.0.0.1:8419 pnpm exec next start --hostname 127.0.0.1 --port 3421",
+    url: "http://127.0.0.1:3421", reuseExistingServer:false, timeout:60_000,
+  }, {
     command: "uv run --project ../../backend python ../../backend/tests/fixtures/stream_server.py --port 8419",
     url: "http://127.0.0.1:8419/health", reuseExistingServer:false, timeout:60_000,
   }, {

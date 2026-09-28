@@ -1,7 +1,9 @@
-import { env } from "cloudflare:workers";
-import { observationProxy, type ObservationUpstream } from "../../../features/research/proxy";
+import { observationProxy } from "../../../features/research/proxy";
+import { apiUpstream } from "../../../shared/api/upstream.server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export function POST(request: Request) {
-  const binding = (env as unknown as { WHISKY_API?: ObservationUpstream }).WHISKY_API;
-  return observationProxy(request, binding);
+  return observationProxy(request, apiUpstream(process.env.WHISKY_API_ORIGIN));
 }

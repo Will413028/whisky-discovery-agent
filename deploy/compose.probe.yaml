@@ -1,5 +1,8 @@
 # Explicit opt-in; the normal API command never loads this synthetic source.
 services:
+  web:
+    volumes:
+      - ./probe-public:/app/apps/web/public:ro
   api:
     command: [python, /opt/probe/entry_probe.py]
     environment:

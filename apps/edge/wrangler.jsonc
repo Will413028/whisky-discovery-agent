@@ -1,0 +1,9 @@
+{
+  "$schema":"node_modules/wrangler/config-schema.json",
+  "name":"whisky-discovery-web",
+  "main":"src/index.ts",
+  "compatibility_date":"2026-09-25",
+  "vpc_services":[
+    {"binding":"WHISKY_WEB","service_id":"01a0e779-f153-7cc0-9a6a-56f532d3ca53"}
+  ]
+}

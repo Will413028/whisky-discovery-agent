@@ -39,7 +39,7 @@ function Probe() {
     let lastVersion = 0;
     let state = initial;
     const render = (status: string) => setResult({status, connection:state.connection,
-      connected:state.connected, taskStatus:state.view?.status, version:state.view?.viewVersion,
+      connected:status === "observing" && state.connected, taskStatus:state.view?.status, version:state.view?.viewVersion,
       elapsedMs:Math.round(performance.now()-started), snapshots, requests, pageErrors});
     void observeTask({initial, runId:"00000000-0000-4000-8000-000000000004",
       token:async()=>{

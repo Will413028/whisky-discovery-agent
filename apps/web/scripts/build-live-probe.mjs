@@ -1,10 +1,10 @@
-// Run only after an explicit T02 production build; normal builds contain no probe.
-import { writeFileSync, existsSync } from "node:fs";
+// Explicit T02 assets for a read-only probe mount; normal images contain no probe.
+import { writeFileSync, mkdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
-const target = new URL("../dist/client/", import.meta.url);
-if (!existsSync(target)) throw new Error("Build the web app first");
+const target = new URL("../.artifacts/live-probe/", import.meta.url);
+mkdirSync(target,{recursive:true});
 const define = {"process.env.NODE_ENV":JSON.stringify("production")};
 for (const key of ["NEXT_PUBLIC_AUTH0_DOMAIN","NEXT_PUBLIC_AUTH0_CLIENT_ID","NEXT_PUBLIC_AUTH0_AUDIENCE"]) {
   if (!process.env[key]) throw new Error(`Missing public config: ${key}`);

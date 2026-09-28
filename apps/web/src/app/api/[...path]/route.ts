@@ -1,9 +1,11 @@
-import { env } from "cloudflare:workers";
-import { proxy, type PrivateAPI } from "../../../features/identity/proxy";
+import { proxy } from "../../../features/identity/proxy";
+import { apiUpstream } from "../../../shared/api/upstream.server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function forward(request: Request) {
-  const binding = (env as unknown as { WHISKY_API?: PrivateAPI }).WHISKY_API;
-  return proxy(request, binding);
+  return proxy(request, apiUpstream(process.env.WHISKY_API_ORIGIN));
 }
 
 export const GET = forward;

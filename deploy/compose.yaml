@@ -22,6 +22,36 @@ x-api: &api
     options: {max-size: 10m, max-file: "3"}
 
 services:
+  web:
+    image: whisky-discovery-web:${WHISKY_WEB_RELEASE:?set immutable web release tag}
+    build:
+      context: ..
+      dockerfile: deploy/web.Dockerfile
+      args:
+        NEXT_PUBLIC_AUTH0_DOMAIN: ${WHISKY_AUTH0_DOMAIN:?set Auth0 domain}
+        NEXT_PUBLIC_AUTH0_CLIENT_ID: ${WHISKY_AUTH0_CLIENT_ID:?set SPA client ID}
+        NEXT_PUBLIC_AUTH0_AUDIENCE: ${WHISKY_AUTH0_AUDIENCE:?set API audience}
+    environment:
+      WHISKY_API_ORIGIN: http://api:8417
+    networks: [private]
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+    read_only: true
+    tmpfs: ["/tmp:size=32m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    mem_limit: 512m
+    cpus: 1
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3417/').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
   db:
     image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
     environment:

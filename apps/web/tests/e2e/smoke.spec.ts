@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 
-test("observe route fails closed without a private binding in workerd", async ({ request }) => {
+test("observe route fails closed without a private API origin in Node", async ({ request }) => {
   const response = await request.post("/agent/observe", {data:{taskId:crypto.randomUUID(), runId:crypto.randomUUID(), conditionsRevision:1}});
   expect(response.status()).toBe(503);
   expect(response.headers()["cache-control"]).toBe("no-store");
   expect((await response.json()).code).toBe("PROXY_UNAVAILABLE");
 });
 
-test("workerd renders the entry and hydrates its explanation control", async ({ page }) => {
+test("Node renders the entry and hydrates its explanation control", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/");
@@ -17,7 +17,7 @@ test("workerd renders the entry and hydrates its explanation control", async ({ 
   expect(errors).toEqual([]);
 });
 
-test("unconfigured identity stays closed in workerd", async ({ page, request }) => {
+test("unconfigured identity stays closed in Node", async ({ page, request }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/account");

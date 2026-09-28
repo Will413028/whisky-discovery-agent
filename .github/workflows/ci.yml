@@ -48,6 +48,7 @@ jobs:
       - run: pnpm --filter @whisky/web test
       - run: pnpm --filter @whisky/web exec playwright install --with-deps chromium
       - run: pnpm --filter @whisky/web build
+      - run: pnpm --filter @whisky/edge check
       - run: pnpm --filter @whisky/web test:e2e
       - uses: actions/upload-artifact@v4
         if: failure()

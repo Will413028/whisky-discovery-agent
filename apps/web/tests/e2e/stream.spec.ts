@@ -18,7 +18,7 @@ test("browser reconnects observation after EOF and logout stops further requests
   expect(errors).toEqual([]);
 });
 
-test("FastAPI through workerd flushes snapshots before EOF", async ({ page }) => {
+test("FastAPI through Node and workerd flushes snapshots before EOF", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("http://127.0.0.1:3420/");

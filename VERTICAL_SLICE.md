@@ -55,7 +55,7 @@ API 用 owner scope 查詢；外部傳入的 owner、workflow 名稱、queue、�
 
 ## HTTP 與 command 契約
 
-以下為規劃路徑，尚非可呼叫 API。Worker 只轉送允許的路徑與方法；FastAPI 提供版本化產品 API，AG-UI 保留 `/agent` 入口。
+以下為規劃路徑，已實作項目與證據見 IMPLEMENTATION_PLAN。薄 Worker 僅轉送至固定 VM Web binding；Node Web API proxy 限定路徑與方法，FastAPI 提供版本化產品 API，AG-UI 保留 `/agent` 入口。
 
 | 路徑 | 用途與結果 |
 |---|---|
@@ -151,13 +151,13 @@ Update validator 做不含 I/O 的格式／等待版本檢查；handler 經冪�
 ## 開發前仍須取得的證據
 
 - OCI 帳戶、OS／磁碟／現有程序與剩餘容量；驗證所需外部帳號設定與 secrets 另按部署流程處理，本文件不授權存取憑證。
-- AG-UI、PydanticAI／Temporal 與 Workers adapter 的相容版本組合；模型 eval 與來源樣本可用性。
+- AG-UI、PydanticAI／Temporal、原生 Next.js／Node 與薄 Worker 的相容版本及完整路徑驗證；模型 eval 與來源樣本可用性。
 - 備份工具與 VM 外儲存配額、還原時間、最終保留政策；跨 VM 故障的實際告警方式。
 
 這些證據依既有 Pending 的入口→垂直流程順序收集；本文件不另立一份平行進度清單。未通過入口測試前只建立必要骨架，不展開整個 MVP。
 
 ## T01 身份入口契約
 
-此段僅描述 T01 本機契約，真 Auth0／VPC 尚未驗收。`GET /api/v1/me` 驗證 access token 後，以 `(issuer, sub)` 原子建立或讀取內部 UUID actor，回 `{id}`。`GET /api/v1/actors/{actor_id}` 只讀取目前 actor 自己的身份視圖，以 SQL owner 條件限制；非本人與不存在都回 404。兩者均拒絕 inactive actor，私有回應均 `Cache-Control: no-store`。沒有修改或管理其他帳號的 endpoint。
+`GET /api/v1/me` 驗證 access token 後，以 `(issuer, sub)` 原子建立或讀取內部 UUID actor，回 `{id}`。`GET /api/v1/actors/{actor_id}` 只讀取目前 actor 自己的身份視圖，以 SQL owner 條件限制；非本人與不存在都回 404。兩者均拒絕 inactive actor，私有回應均 `Cache-Control: no-store`。沒有修改或管理其他帳號的 endpoint。真 Auth0／VPC 各項證據及尚未完成的 gate 以 IMPLEMENTATION_PLAN 為準。
 
 401／403／404／422／503 使用 `{code, message, request_id, retryable}`；不回傳 token、claim、DB exception 或身份是否存在的細節。此身份視圖只供登入與 ownership 入口驗證，不代表探索計畫／任務資源已建立。產生的 schema 見 `contracts/openapi.json`。

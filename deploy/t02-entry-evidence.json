@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-28",
+  "scope": "Manual Chrome observation of an explicitly synthetic source through real Auth0 and Workers VPC",
+  "apiCommit": "4209109",
+  "workerVersion": "beeb8110-9a69-4a95-95e8-b582fcaf5c70",
+  "origin": "https://whisky-discovery-web.fathompod.workers.dev",
+  "identity": {"googleCallback": "passed", "reload": "passed", "logout": "passed", "crossAccount": "pending"},
+  "firstTab": {
+    "snapshotArrivalMs": [614, 2608],
+    "snapshotVersions": [1, 2],
+    "responseArrivalMs": [610, 62360],
+    "responseStatuses": [200, 200],
+    "afterReconnect": {"version": 2, "taskStatus": "researching"},
+    "pageErrors": []
+  },
+  "secondTab": {"responseArrivalMs": [192, 61671], "responseStatuses": [200, 200], "version": 2, "pageErrors": []},
+  "thirdTab": {
+    "responseArrivalMs": [140, 3036, 7490, 16168],
+    "responseStatuses": [429, 429, 429, 200],
+    "note": "First tab was stopped before the successful retry; no server restart or limit change",
+    "version": 2, "pageErrors": []
+  },
+  "safeWranglerTailSamples": [
+    {"path": "/account", "cpuTimeMs": 43, "wallTimeMs": 46, "outcome": "ok"},
+    {"path": "/account", "cpuTimeMs": 13, "wallTimeMs": 16, "outcome": "ok"},
+    {"path": "/api/v1/me", "cpuTimeMs": 7, "wallTimeMs": 120, "outcome": "ok"},
+    {"path": "/agent/observe", "cpuTimeMs": 8, "wallTimeMs": 60102, "outcome": "ok"},
+    {"path": "/agent/observe", "cpuTimeMs": 8, "wallTimeMs": 52465, "outcome": "canceled"}
+  ],
+  "resourceSample": {
+    "command": "docker stats --no-stream --format '{{.Name}} CPU={{.CPUPerc}} MEM={{.MemUsage}}' whisky-discovery-api-1 whisky-discovery-db-1 whisky-discovery-tunnel-1",
+    "api": {"cpuPercent": 0.30, "memoryMiB": 69.32},
+    "db": {"cpuPercent": 0.06, "memoryMiB": 33.45},
+    "tunnel": {"cpuPercent": 0.16, "memoryMiB": 15.2},
+    "dbConnections": {"idle": 1, "activeIncludingInspectionQuery": 1},
+    "dbQuery": "SELECT state, count(*) FROM pg_stat_activity WHERE datname = current_database() GROUP BY state"
+  },
+  "limitations": [
+    "Small manual samples, not a load test or a Free CPU pass",
+    "No live cross-account, token-expiry, or slow-consumer acceptance yet",
+    "No research workflow, durable research data, backup, or restore tested",
+    "Probe status=stopped was accurate; its connected field retained the last transport state after abort. The harness display was corrected afterward."
+  ]
+}
