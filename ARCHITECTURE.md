@@ -263,6 +263,8 @@ PITR 對帳掃描 VM 外紀錄中**整個可還原窗口**，完整讀取所有�
 
 workflow／activity／tool 名稱、payload schema、model／prompt／policy／catalog 版本均可追溯。部署要跑舊 history 的 replay；不相容變更用版本化 worker 或 SDK patching，等待中的舊工作有明確可用 executor。具體 Worker Versioning 設定在骨架驗證，不能只測新 workflow。[安全部署](https://docs.temporal.io/develop/safe-deployments)
 
+T05 本機 worker 每個 process 只綁定一組資料庫、模型與 agent 註冊，初始化後不在同程序重設；多 worker／多 agent 共處同程序前須改為固定註冊與 activity 側依賴解析。當前 prompt 或價格政策版本變動時，未完成的舊 workflow 會拒絕寫入，避免把新規則誤標為舊結果。T06 長等待與正式升版前必須配置相容舊 history 的版本化 worker／路由，並驗證舊工作可繼續，不能只依賴這個拒絕保護。
+
 ## 研究、UI 與資料治理
 
 Agent 只能查 reviewed 庫、讀指定來源、比對版本、提出問題及整理引用；不能自行放寬硬限制、改已確認偏好或發布正式 catalog。外部頁面是資料，reader 限允許的 HTTPS 來源、redirect、大小／時間及網路目的地，阻擋私有網路及任意 URL。

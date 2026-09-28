@@ -3,12 +3,16 @@ from uuid import uuid4
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
+from test_catalog_release import synthetic_release
 
 from whisky.bootstrap.api import create_app
+from whisky.modules.catalog.store import CatalogStore
 from whisky.modules.discovery.conditions import ResearchConditions
 from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess
 from whisky.modules.research.http import observation_router
+from whisky.modules.research.report import ReportCandidate, ReportClaim, ReportDraft
+from whisky.modules.research.report_store import ReportStore
 
 pytestmark = pytest.mark.integration
 
@@ -27,7 +31,11 @@ async def research_client(research_context, signed_tokens):
         ResearchConditions(entry="beginner", goal="探索果香"),
     )
     receipt = store.reserve(actor.actor_id, actor.generation, plan.id, 1, "start")
-    app = create_app(observation_router=observation_router(identity, None, store=store))
+    app = create_app(
+        observation_router=observation_router(
+            identity, None, store=store, reports=ReportStore(engine)
+        )
+    )
     async with AsyncClient(
         transport=ASGITransport(app), base_url="http://test"
     ) as client:
@@ -59,6 +67,53 @@ async def test_task_and_command_recover_pending_then_accepted(research_client):
         assert task.json()["taskId"] == str(receipt.task_id)
         assert "ownerId" not in task.json() and "workflowId" not in task.json()
         store.confirm(actor.actor_id, actor.generation, receipt.id, "test-runtime-run")
+
+
+async def test_saved_report_exposes_immutable_claims_prices_and_owner_boundary(
+    research_client,
+):
+    client, sign, engine, store, actor, receipt = research_client
+    release = synthetic_release()
+    CatalogStore(engine).publish(release)
+    store.confirm(actor.actor_id, actor.generation, receipt.id, "test-runtime-run")
+    item = release.items[0]
+    fact = item.facts[0]
+    saved = ReportStore(engine).save(
+        actor.actor_id,
+        actor.generation,
+        receipt.task_id,
+        "http-report-v1",
+        ReportDraft(
+            summary="來源可查",
+            candidates=(
+                ReportCandidate(
+                    release.id,
+                    item.id,
+                    (ReportClaim("fact", fact.field, fact.value, fact.evidence_ids),),
+                    "依官方描述探索",
+                ),
+            ),
+        ),
+        policy_version="price-30d-v1",
+        prompt_version="research-v1",
+        model_version="fixture-v1",
+    )
+    path = f"/api/v1/reports/{saved.id}"
+    own = await client.get(path, headers={"Authorization": f"Bearer {sign()}"})
+    assert own.status_code == 200
+    body = own.json()
+    assert body["id"] == str(saved.id)
+    assert body["catalogReleaseId"] == str(release.id)
+    assert body["candidates"][0]["claims"][0]["value"] == fact.value
+    assert body["candidates"][0]["claims"][0]["sources"][0]["url"]
+    assert body["candidates"][0]["prices"] == []
+    assert body["policyVersion"] == "price-30d-v1"
+    assert own.headers["cache-control"] == "no-store"
+    foreign = await client.get(
+        path, headers={"Authorization": f"Bearer {sign(sub='foreign')}"}
+    )
+    assert foreign.status_code == 404
+    assert (await client.get(path)).status_code == 401
 
 
 @pytest.mark.parametrize("resource", ["tasks", "commands"])

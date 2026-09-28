@@ -9,9 +9,24 @@ from temporalio.worker import Worker
 from test_research_start import CompletedResearchFixture, LoseFirstResponse
 
 from whisky.modules.research.acceptance import AcceptResearch
+from whisky.modules.research.report import ReportDraft
+from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.temporal_start import TemporalResearchStarter
 
 pytestmark = pytest.mark.integration
+
+
+def save_fixture_report(engine, actor, task_id):
+    return ReportStore(engine).save(
+        actor.id,
+        actor.generation,
+        task_id,
+        "fixture-final-v1",
+        ReportDraft(summary="受理對帳測試報告", candidates=()),
+        policy_version="price-30d-v1",
+        prompt_version="research-v1",
+        model_version="fixture-v1",
+    )
 
 
 async def test_committed_pending_receipt_recovers_after_interruption(research_context):
@@ -94,14 +109,7 @@ async def test_completed_receipt_retry_does_not_contact_temporal(research_contex
             assert await env.client.get_workflow_handle(
                 receipt.workflow_id
             ).result() == str(receipt.task_id)
-            with engine.begin() as connection:
-                connection.execute(
-                    text("""
-                    UPDATE research_tasks SET status = 'completed', report_id = :report,
-                        view_version = view_version + 1 WHERE id = :id
-                """),
-                    dict(id=receipt.task_id, report=uuid4()),
-                )
+            save_fixture_report(engine, actor, receipt.task_id)
 
         class UnavailableStarter:
             async def start(self, task_id):
@@ -139,18 +147,15 @@ async def test_completed_task_reconciles_pending_receipt_without_temporal(
             assert await env.client.get_workflow_handle(
                 pending.workflow_id
             ).result() == str(pending.task_id)
-            with engine.begin() as connection:
-                # Fixture stands in for T05's atomic product result commit.
-                connection.execute(
-                    text("""
-                    UPDATE research_tasks SET status = 'completed', report_id = :report,
-                        write_allowed = :write_allowed, view_version = view_version + 1
-                    WHERE id = :id
-                """),
-                    dict(
-                        id=pending.task_id, report=uuid4(), write_allowed=write_allowed
-                    ),
-                )
+            save_fixture_report(engine, actor, pending.task_id)
+            if not write_allowed:
+                with engine.begin() as connection:
+                    connection.execute(
+                        text(
+                            "UPDATE research_tasks SET write_allowed=false WHERE id=:id"
+                        ),
+                        {"id": pending.task_id},
+                    )
 
         class ForbiddenStarter:
             async def start(self, task_id):

@@ -1,5 +1,7 @@
 """Versioned public projections, independent of the execution mechanism."""
 
+from datetime import date
+from decimal import Decimal
 from typing import Any, Literal, Self
 from uuid import UUID
 
@@ -80,3 +82,52 @@ class TaskView(ViewModel):
             if (self.status == status) != (getattr(self, field) is not None):
                 raise ValueError(f"{status} requires exactly its matching payload")
         return self
+
+
+class ReportSourceView(ViewModel):
+    evidence_id: UUID
+    url: str
+    publisher: str | None
+    checked_on: date
+
+
+class ReportClaimView(ViewModel):
+    kind: Literal["fact", "tag"]
+    key: str
+    value: str
+    sources: tuple[ReportSourceView, ...]
+
+
+class ReportPriceView(ViewModel):
+    id: UUID
+    amount: Decimal | None
+    currency: str
+    market: str
+    volume_ml: int | None
+    checked_on: date | None
+    source: ReportSourceView
+
+
+class ReportCandidateView(ViewModel):
+    release_id: UUID
+    item_id: UUID
+    bottle_version_id: UUID
+    name: str
+    reason: str
+    claims: tuple[ReportClaimView, ...]
+    prices: tuple[ReportPriceView, ...]
+
+
+class ReportView(ViewModel):
+    schema_version: Literal[1]
+    id: UUID
+    task_id: UUID
+    conditions_revision: int
+    catalog_release_id: UUID | None
+    evaluated_on: date
+    policy_version: str
+    prompt_version: str
+    model_version: str
+    summary: str
+    unresolved: tuple[str, ...]
+    candidates: tuple[ReportCandidateView, ...]

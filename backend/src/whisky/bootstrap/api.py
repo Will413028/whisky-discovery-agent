@@ -24,6 +24,7 @@ from whisky.modules.identity.tokens import TokenVerifier
 from whisky.modules.research.acceptance import AcceptResearch
 from whisky.modules.research.http import observation_router as research_router
 from whisky.modules.research.observation import ObservationSource
+from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.store import ResearchStore
 from whisky.modules.research.temporal_start import ConnectingTemporalResearchStarter
 from whisky.platform.http_errors import PublicAPIError
@@ -58,6 +59,7 @@ def configured_app(
             source,
             store=research_store,
             acceptance=acceptance,
+            reports=ReportStore(engine),
         ),
         plan_router=discovery_router(
             IdentityAccess(engine, verifier), PlanStore(engine)

@@ -4,7 +4,7 @@ import {GET, POST} from "../src/app/api/[...path]/route";
 const id = "2d9300f8-e5bf-4b02-9325-c94c6b7be9af";
 afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 
-it.each(["tasks", "commands"])("forwards owner-authenticated %s reads to the fixed API", async resource => {
+it.each(["tasks", "commands", "reports"])("forwards owner-authenticated %s reads to the fixed API", async resource => {
   vi.stubEnv("WHISKY_API_ORIGIN", "http://api:8417");
   const fetcher = vi.fn(async (_request: Request) => Response.json({id}));
   vi.stubGlobal("fetch", fetcher);

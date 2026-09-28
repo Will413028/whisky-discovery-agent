@@ -7,7 +7,14 @@ from dataclasses import dataclass
 from typing import Protocol
 from uuid import UUID
 
-from ag_ui.core import RunErrorEvent, RunStartedEvent, StateSnapshotEvent
+from ag_ui.core import (
+    CustomEvent,
+    RunErrorEvent,
+    RunFinishedEvent,
+    RunFinishedSuccessOutcome,
+    RunStartedEvent,
+    StateSnapshotEvent,
+)
 from ag_ui.encoder import EventEncoder
 from fastapi import HTTPException
 from pydantic import Field
@@ -15,7 +22,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.responses import StreamingResponse
 from starlette.types import Receive, Scope, Send
 
-from whisky.modules.research.views import TaskView, ViewModel
+from whisky.modules.research.views import ReportView, TaskView, ViewModel
 
 
 class ObserveInput(ViewModel):
@@ -26,6 +33,8 @@ class ObserveInput(ViewModel):
 
 class ObservationSource(Protocol):
     async def read(self, request: ObserveInput, owner: UUID) -> TaskView | None: ...
+
+    async def report(self, report_id: UUID, owner: UUID) -> ReportView | None: ...
 
 
 @dataclass(frozen=True)
@@ -146,6 +155,10 @@ class Observer:
         yield encoder.encode(
             StateSnapshotEvent(snapshot=view.model_dump(mode="json", by_alias=True))
         )
+        if view.status in {"completed", "failed", "cancelled", "superseded"}:
+            async for frame in self.terminal_events(view, request, owner, encoder):
+                yield frame
+            return
         thread_id = view.thread_id
         version = view.view_version
         next_poll = self.clock() + self.policy.poll_seconds
@@ -189,3 +202,54 @@ class Observer:
                         snapshot=view.model_dump(mode="json", by_alias=True)
                     )
                 )
+            if view.status in {"completed", "failed", "cancelled", "superseded"}:
+                async for frame in self.terminal_events(view, request, owner, encoder):
+                    yield frame
+                return
+
+    async def terminal_events(
+        self,
+        view: TaskView,
+        request: ObserveInput,
+        owner: UUID,
+        encoder: EventEncoder,
+    ) -> AsyncGenerator[str]:
+        if view.status == "completed" and view.report_id is not None:
+            try:
+                report = await self.source.report(view.report_id, owner)
+            except SQLAlchemyError:
+                report = None
+            if report is None:
+                yield encoder.encode(
+                    RunErrorEvent(
+                        code="REPORT_UNAVAILABLE",
+                        message="暫時無法讀取已保存的報告，請重新連線。",
+                    )
+                )
+                return
+            yield encoder.encode(
+                CustomEvent(
+                    name="whisky.report",
+                    value=report.model_dump(mode="json", by_alias=True),
+                )
+            )
+            yield encoder.encode(
+                RunFinishedEvent(
+                    thread_id=str(view.thread_id),
+                    run_id=str(request.run_id),
+                    outcome=RunFinishedSuccessOutcome(),
+                )
+            )
+        elif view.status in {"failed", "cancelled", "superseded"}:
+            codes = {
+                "cancelled": ("TASK_CANCELLED", "研究已取消。"),
+                "superseded": ("TASK_SUPERSEDED", "研究條件已更新。"),
+            }
+            code, message = codes.get(
+                view.status,
+                (
+                    view.error.code if view.error else "RESEARCH_FAILED",
+                    view.error.message if view.error else "研究未完成。",
+                ),
+            )
+            yield encoder.encode(RunErrorEvent(code=code, message=message))

@@ -124,6 +124,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/{report_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Report */
+        get: operations["read_report_api_v1_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tasks/{task_id}": {
         parameters: {
             query?: never;
@@ -515,6 +532,121 @@ export interface components {
             subagentRunId?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** ReportCandidateView */
+        ReportCandidateView: {
+            /**
+             * Bottleversionid
+             * Format: uuid
+             */
+            bottleVersionId: string;
+            /** Claims */
+            claims: components["schemas"]["ReportClaimView"][];
+            /**
+             * Itemid
+             * Format: uuid
+             */
+            itemId: string;
+            /** Name */
+            name: string;
+            /** Prices */
+            prices: components["schemas"]["ReportPriceView"][];
+            /** Reason */
+            reason: string;
+            /**
+             * Releaseid
+             * Format: uuid
+             */
+            releaseId: string;
+        };
+        /** ReportClaimView */
+        ReportClaimView: {
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "fact" | "tag";
+            /** Sources */
+            sources: components["schemas"]["ReportSourceView"][];
+            /** Value */
+            value: string;
+        };
+        /** ReportPriceView */
+        ReportPriceView: {
+            /** Amount */
+            amount: string | null;
+            /** Checkedon */
+            checkedOn: string | null;
+            /** Currency */
+            currency: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Market */
+            market: string;
+            source: components["schemas"]["ReportSourceView"];
+            /** Volumeml */
+            volumeMl: number | null;
+        };
+        /** ReportSourceView */
+        ReportSourceView: {
+            /**
+             * Checkedon
+             * Format: date
+             */
+            checkedOn: string;
+            /**
+             * Evidenceid
+             * Format: uuid
+             */
+            evidenceId: string;
+            /** Publisher */
+            publisher: string | null;
+            /** Url */
+            url: string;
+        };
+        /** ReportView */
+        ReportView: {
+            /** Candidates */
+            candidates: components["schemas"]["ReportCandidateView"][];
+            /** Catalogreleaseid */
+            catalogReleaseId: string | null;
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Evaluatedon
+             * Format: date
+             */
+            evaluatedOn: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Modelversion */
+            modelVersion: string;
+            /** Policyversion */
+            policyVersion: string;
+            /** Promptversion */
+            promptVersion: string;
+            /**
+             * Schemaversion
+             * @constant
+             */
+            schemaVersion: 1;
+            /** Summary */
+            summary: string;
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+            /** Unresolved */
+            unresolved: string[];
         };
         /** ResearchCommandView */
         ResearchCommandView: {
@@ -1466,6 +1598,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PlanView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_report_api_v1_reports__report_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportView"];
                 };
             };
             /** @description Unauthorized */

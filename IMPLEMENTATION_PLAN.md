@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-29。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 已驗收本機可靠受理與對帳，T05 開始 durable Agent。T03–T04 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-29。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 已驗收本機可靠受理與對帳；T05 durable Agent 已實作，正驗本機及 CI 出口。T03–T05 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03–T04 已驗收本機出口；T05 開始；T06–T09 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03–T04 已驗收本機出口；T05 已實作、待最終本機／CI 對帳；T06–T09 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -485,3 +485,13 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - Compose 只新增可選設定，尚未部署專用 Temporal／ResearchWorkflow worker，也未部署 T03–T04 migrations。T05–T12 的 durable 執行與 live gates 仍待完成。
 - T04 出口對帳（2026-09-29）：本機真 PostgreSQL＋Temporal 驗 committed pending、並行 start、遺失回應後同 ID／run 對帳、completed 重送不重啟，以及正式 API HTTP socket 斷線後重送；未確認接受仍 pending，已確認 queued。完整本機 295、wheel 4、Web 78、E2E 5 與必要 lint／types／boundaries／build 通過。commit `2304fd1` 的 Actions runs `36448719851`、`36448727900` 各自 backend／web jobs 均 success，`gh pr checks 3` 全綠。T04 因此標為**本機已驗收**；本項不要求正式 worker 完成報告或 live 部署，兩者分屬 T05／T09。未部署的 migration 與 worker 不冒充正式環境證據。
 - 追加 CI 串流測試判別力：文件狀態 commit `6ffbe07` 的 run `36449093934` Web job 在 `stream.spec.ts` 失敗，兩份 snapshot 間隔實測 375.5ms，原門檻 `>400ms`；同 commit 另一 run `36449103397` Web job 通過。失敗 trace 中 HTTP 首次回應等待約 434ms，單靠間隔不能判定入口是否緩衝。改以測試專用 FastAPI barrier：第一份 snapshot 穿過 Node／workerd 抵達瀏覽器後，測試才呼叫 release endpoint 產生第二份；若緩衝到 EOF，第一份等待會逾時。這保留實際串流路徑且去掉猜測時間門檻。本機 `pnpm --filter @whisky/web test:e2e` → 5 passed（19.9 秒，`/tmp/whisky-t04-flush-handshake-e2e.log`），Web typecheck 與 fixture ruff 通過；本修正的 CI 結論另行記錄。
+
+### T05 — Durable Agent、來源報告與終態（2026-09-29）
+
+- 前提對帳：T04 僅有可靠受理、probe worker 與 DB 觀察，尚無研究執行或 report。使用既定 PydanticAI＋Temporal，而非在 HTTP endpoint 執行易中斷 Agent。`pydantic-ai-slim[openai,temporal]==2.51.0` 鎖版；Workers AI OpenAI 相容端點的 GLM-4.7-Flash 尚未呼叫，真模型品質屬 T08。
+- `0008_research_reports` 保存 task fence、單一 final artifact、當輪 revision／catalog／政策／prompt／模型版本與評估日；候選、逐項 claim/evidence 與合格價格觀察用關聯 FK 綁定不可變 release。報告與 task completed/view version、AG-UI turn success outcome 同交易；相同 artifact key 在 DB commit 後 activity acknowledgement 遺失時只讀回原結果。`GET /api/v1/reports/{id}` 經 owner／generation 查舊 snapshot；catalog 細節只透過 `catalog.public` 解析，Web 只轉送固定 UUID GET。
+- 受控 `FunctionModel` 真正透過 PydanticAI 發出 catalog tool call、Temporal model/tool activities、保存 typed report；模型沒查 catalog 而直接輸出空報告會被 workflow 拒絕。目錄超過 20 款的 21 款案例仍完整提供候選；worker 停在第二次模型呼叫時重啟，已完成的 catalog tool 沒有重跑。模型 response 的 `ThinkingPart` 在 activity 返回前移除；測試解碼 Temporal history 的 activity results，未見注入的私有推理字串。此測試不代表真模型品質或 provider 實際回應已驗收。
+- RED→GREEN：report claim／price 表尚不存在時 2 failed／5 passed，增 schema／保存後通過；跨候選 citation FK、tag-only／假 fact、嚴格預算、錯誤價格 ID、政策版本不符皆由真 PostgreSQL 拒絕。跳過工具的受控模型先 RED（直接完成），加已完成 tool return 守門後 GREEN；無效 claim 原先讓 task 停 `researching` 的 RED，新增 fenced failure activity 後為 `failed`，取消／已完成 task 不被覆寫。
+- 真 HTTP／Temporal／PostgreSQL 驗首份 snapshot 後 SSE socket 關閉仍完成報告；保持串流時完成送已保存 `whisky.report`、`RUN_FINISHED success`，無效模型結果送安全 `RUN_ERROR`，turn outcome 交易保存。舊 probe 測試揭示缺設定 worker 仍可在研究 queue 接任務的風險；正式 worker 缺設定 fail fast，probe 改 `--probe-only` 與 `whisky-probe-` 隔離 queue。
+- fresh design-review 的五項初始發現已處理：claim／價格來源、政策／prompt 版本、fail-closed worker、完整 catalog 覆蓋；可變 process-local agent 註冊保留單 worker／process 前提，T06 長等待或正式升版前須補相容舊 history 的版本化 executor。複查新增「research 直接 JOIN catalog 表」已改為 `catalog.public` 查詢。獨立 correctness review 的失敗終態、跳過工具、AG-UI 完成終態三項均以可重現測試修復。兩名 reviewer 均唯讀；主 agent 核對 repo status/log 與 second-brain 專案路徑，未見 reviewer 越界寫入；second-brain HEAD 另由其他 session 前進，未改其內容。
+- 本機最終驗證：`uv run --project backend pytest backend/tests -q` → 316 passed（126.25 秒）；修正 catalog 公開讀取邊界後相關整合測試 21 passed，另新增的取消／終態 fence 案例 1 passed；wheel 4 passed（migration head 0008）。ruff check／format、mypy 45 files、Python 邊界與腳本 unittest 5 passed；Web 79 passed、typecheck、邊界與 Next build 通過；staged diff whitespace check 通過。CI 結論待接續記錄；T05 不等同 T06 補充等待、T08 真模型品質或 T09 正式部署／還原 gate。
