@@ -99,6 +99,7 @@ TaskView 至少包含 `schemaVersion`、`taskId`、`threadId`、`conditionsRevis
 - 每次重新 observe 都重驗 token／owner；定期輪詢亦檢查 actor、task 存取資格，token 到期關閉連線。登出清除畫面與本機 cache，abort 連線，不取消工作。
 - 每使用者先限制兩條串流連線；多 tab／重新整理與慢 consumer 都須測試。送出佇列有上限，背壓過大關閉並讓 client 取最新 snapshot，不累積無界 RAM。
 - observe 可能重送 run 邊界與 snapshot；前端 adapter 依已知 run／view version 去重。不得把觀察流的 EOF 當成成功或自動呼叫 start。
+- observe 開啟後暫不可用以 `RUN_ERROR` code `OBSERVATION_UNAVAILABLE` 結束這次觀察串流，client 以 jitter 重連；資格失效用 `OBSERVATION_ACCESS_LOST` 並停止重連。兩者不寫入持久 task／run outcome，不把 task 改為 failed；UI 保留最新合法 TaskView。未開啟時仍用 HTTP 錯誤，401 要求重新取得有效身份，403／404 停止觀察，429／5xx 可退避重試。
 
 ## Workflow 狀態與等待
 

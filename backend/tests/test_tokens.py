@@ -12,6 +12,13 @@ def test_valid_signed_access_token_resolves_principal(signed_tokens):
     assert verifier.verify(sign()) == Principal(ISSUER, "auth0|fixture")
 
 
+def test_verified_access_preserves_signed_expiry(signed_tokens):
+    verifier, sign = signed_tokens
+    access = verifier.verify_access(sign(exp=2000000000))
+    assert access.principal == Principal(ISSUER, "auth0|fixture")
+    assert access.expires_at == 2000000000
+
+
 @pytest.mark.parametrize(
     "changes",
     [

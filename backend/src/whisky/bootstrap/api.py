@@ -17,8 +17,9 @@ from starlette.responses import Response
 
 from whisky.bootstrap.errors import ErrorView, error_response
 from whisky.bootstrap.settings import Settings
-from whisky.modules.identity.public import router
+from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.tokens import TokenVerifier
+from whisky.modules.research.http import observation_router as research_router
 
 
 def configured_app(settings: Settings | None) -> FastAPI:
@@ -30,7 +31,10 @@ def configured_app(settings: Settings | None) -> FastAPI:
     verifier = TokenVerifier(
         settings.issuer, settings.audience, settings.issuer + ".well-known/jwks.json"
     )
-    app = create_app(router(engine, verifier))
+    app = create_app(
+        router(engine, verifier),
+        research_router(IdentityAccess(engine, verifier), None),
+    )
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
@@ -43,15 +47,23 @@ def configured_app(settings: Settings | None) -> FastAPI:
     return app
 
 
-def create_app(identity_router: APIRouter | None = None) -> FastAPI:
+def create_app(
+    identity_router: APIRouter | None = None,
+    observation_router: APIRouter | None = None,
+) -> FastAPI:
     app = FastAPI(
         title="Whisky Discovery Agent",
         responses={
-            status: {"model": ErrorView} for status in (401, 403, 404, 422, 503)
+            status: {"model": ErrorView} for status in (401, 403, 404, 422, 429, 503)
         },
     )
     app.include_router(
         identity_router if identity_router is not None else router(None, None)
+    )
+    app.include_router(
+        observation_router
+        if observation_router is not None
+        else research_router(IdentityAccess(None, None), None)
     )
 
     @app.middleware("http")
@@ -65,7 +77,7 @@ def create_app(identity_router: APIRouter | None = None) -> FastAPI:
             response = error_response(
                 503, "DATABASE_UNAVAILABLE", request.state.request_id
             )
-        if request.url.path.startswith("/api/"):
+        if request.url.path.startswith(("/api/", "/agent/")):
             response.headers["Cache-Control"] = "no-store"
         return response
 
@@ -75,6 +87,7 @@ def create_app(identity_router: APIRouter | None = None) -> FastAPI:
             401: "UNAUTHENTICATED",
             403: "ACTOR_DISABLED",
             404: "NOT_FOUND",
+            429: "OBSERVATION_LIMIT",
             503: "IDENTITY_UNAVAILABLE",
         }
         return error_response(

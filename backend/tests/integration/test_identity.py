@@ -6,7 +6,7 @@ from sqlalchemy import create_engine, update
 
 from whisky.bootstrap.api import create_app
 from whisky.bootstrap.migrate import upgrade
-from whisky.modules.identity.public import router
+from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.store import IdentityStore, users
 from whisky.modules.identity.tokens import Principal
 
@@ -19,6 +19,29 @@ def identity_engine(postgres_url):
         yield engine
     finally:
         engine.dispose()
+
+
+@pytest.mark.integration
+def test_live_access_rechecks_disabled_and_deleted_actor(
+    identity_engine, signed_tokens
+):
+    from sqlalchemy import delete
+
+    from whisky.modules.identity.store import identities
+
+    verifier, sign = signed_tokens
+    actor = IdentityStore(identity_engine).resolve(verifier.verify(sign()))
+    access = IdentityAccess(identity_engine, verifier)
+    assert access.is_active(actor.id)
+    with identity_engine.begin() as connection:
+        connection.execute(
+            update(users).where(users.c.id == actor.id).values(active=False)
+        )
+    assert not access.is_active(actor.id)
+    with identity_engine.begin() as connection:
+        connection.execute(delete(identities).where(identities.c.user_id == actor.id))
+        connection.execute(delete(users).where(users.c.id == actor.id))
+    assert not access.is_active(actor.id)
 
 
 @pytest.mark.integration

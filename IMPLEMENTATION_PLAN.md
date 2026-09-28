@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00／T01 本機與遠端 deterministic CI GREEN，真 Auth0 callback／跨帳號瀏覽器 gate 尚缺 tenant。T02 契約與串流基礎已有本機證據，正式 observe 與部署 gate 未完成；T03 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
+更新：2026-09-28。狀態：T00／T01 本機與遠端 deterministic CI GREEN；Auth0 tenant 已登入並建立專用 SPA／API，真 callback／跨帳號瀏覽器 gate 尚未通過。T02 契約與串流基礎已有本機及遠端 CI 證據，正式 observe 與部署 gate 未完成；T03 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -287,3 +287,23 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 獨立複核：design 0 findings（改／記／提／駁回各 0）；一般 correctness review 1 個 P2，按 RED→GREEN 修正並回看關閉。
 
 下一個 T02 增量：正式 observe 的 typed read-only input、owner／actor／token expiry 重驗、每使用者兩條連線、60 秒 lifetime／15 秒 heartbeat、2 秒 snapshot polling、重連與多 tab 整合；之後才接真 Auth0＋Workers VPC／具名 Tunnel，量 CPU／connection／memory。這些未通過前不標 T02 已驗收，也不展開 T03。現有 FastAPI/workerd fixture 只證明本機 transport，不證明 VPC、身份隔離或正式執行能力。
+
+### T02 observe 增量進行中（2026-09-28）
+
+- `d786941` 已推送；GitHub Actions run `36399701294` 的 backend／web job 各自 success（`gh run view 36399701294 --json status,conclusion,jobs`）。
+- Auth0 CLI 1.36.0 已登入使用者選定的 tenant，建立 Whisky 專用 SPA（public client、authorization_code）與 RS256 API（900 秒 token、不開 offline access）；公開 identifiers 寫入 ignored `.env.local`。CLI read-back 已確認設定，尚不代表真 callback 或跨帳號驗收。
+- `test_verified_access_preserves_signed_expiry`：RED 到期值為 0，GREEN 從已驗證 claims 回傳 expiry；既有 Principal 介面保留。
+- `test_observation.py`：snapshot／owner／revision、只送更高版本、兩條連線上限、expired token 與 headers 前拒絕不存在 task，各自取得缺少行為的 RED 後 GREEN。heartbeat 使用可控 clock，RED 在第 16 秒仍未收到，GREEN 第 15 秒輸出 comment。取消及慢 consumer 釋放測試驗證既有 finally 防線，未宣稱另有 RED。
+- 本次命令 `uv run --project backend pytest backend/tests/test_observation.py backend/tests/test_tokens.py`：22 passed；ruff 通過；`uv run --project backend mypy backend/src`：17 source files 通過。測試為 observation adapter 的受控 source／ASGI 測試，尚未接正式 HTTP route、真 DB actor 重驗或瀏覽器重連，不能替代這些 gate。
+
+後續 HTTP／重連增量：
+
+- `IdentityAccess` 抽出既有 JWT／內部 actor mapping，提供已驗證 expiry 與 live actor eligibility。真 PostgreSQL `test_live_access_rechecks_disabled_and_deleted_actor` 先 RED（停用仍 true），再 GREEN；原有身份與 owner 測試保持通過。
+- 正式 FastAPI `/agent/observe` 與 Web 同名薄路由已掛載，input 由 OpenAPI 生成。HTTP RED 為 404／預期 200 或 401，GREEN 驗有效 JWT、跨 owner 404、額外 answer payload 422、缺設定 503／no-store。產品 source 尚未設定時 fail closed，T02 不提前建立研究持久表。
+- actor 中途停用使用真 DB 與可控 polling clock；下一次讀 source 前拒絕，沒有第二份 snapshot。串流已開啟後的 DB 故障與資格失效按既有 SSOT 使用 `RUN_ERROR`，不變更 TaskView。CUSTOM 的初稿經獨立 review 發現契約偏差後撤回；RUN_ERROR assertion 先 RED 後 GREEN。
+- `observeTask` 前端 adapter 已驗 EOF 只重新 observe、每次重取 token、暫時故障退避、資格失效停止、登出時晚到 token 不得開連線、已保存終態不重連。核心案例各取得 assertion RED 後 GREEN；登出案例是既有 abort fence 的回歸，不另宣稱 RED。尚未接產品研究 UI 或真瀏覽器重連 gate。
+- 本機 `uv run --project backend pytest backend/tests`：56 passed（RUN_ERROR 修正後受影響 15 passed）；workerd Playwright 4 passed，新增正式 observe 路由從 404 RED 到 503/no-store GREEN。E2E build 明確把三個 NEXT_PUBLIC_AUTH0_* 設為空，避免 ignored 本機 tenant 設定改變 fail-closed fixture。
+- design-review：1 項改（撤回未定義 CUSTOM、遵循既有 RUN_ERROR）、1 項記（process-local limiter 適用條件），提／駁回 0。沿用單程序計數是目前單 API process／instance 的明確選擇；增加 worker、replica 或新舊 API 重疊部署前，必須改為跨程序的原子限額並重驗多 tab gate。T02 部署不得使用多 worker／重疊 API。
+- 真 Chromium／FastAPI／workerd 重連增量：新 browser test 先 RED（沒有第二次連線），接線後又抓到 native fetch receiver 錯誤（兩次重試但没有 snapshot），將 injected fetch 作獨立 function 呼叫後 GREEN。最終 Playwright 5 passed，包含兩次只讀訂閱、每次取得 token、舊版本不倒退、停止後完成清理；仍是合成 source，不取代真 Auth0／VPC。Web 51 passed、typecheck／雙端 boundary 通過；wheel 4 passed。
+- 獨立 correctness review 未發現可重現 P1／P2；本輪仍未宣稱 T02 整體驗收。
+- 部署前提再驗：VM root 約 125 GiB 可用、available RAM 21,832 MiB（SSH `df -h /; free -m; uptime; docker ps --format ...`）；沒有重啟或變更既有服務。Cloudflare VPC service list 為空，已建立專用 remotely managed named tunnel `whisky-discovery`，尚 inactive，尚未建立 service／connector 或宣稱能通。

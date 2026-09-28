@@ -15,6 +15,12 @@ class Principal:
     subject: str
 
 
+@dataclass(frozen=True)
+class VerifiedAccess:
+    principal: Principal
+    expires_at: float
+
+
 class TokenVerifier:
     def __init__(self, issuer: str, audience: str, jwks_url: str) -> None:
         self.issuer = issuer
@@ -22,7 +28,7 @@ class TokenVerifier:
         self.jwks_url = jwks_url
         self.keys = jwt.PyJWKClient(jwks_url, timeout=5, lifespan=300)
 
-    def verify(self, token: str) -> Principal:
+    def verify_access(self, token: str) -> VerifiedAccess:
         try:
             key = self.keys.get_signing_key_from_jwt(token)
             claims = jwt.decode(
@@ -35,6 +41,11 @@ class TokenVerifier:
             )
             if not claims["sub"].strip():
                 raise InvalidToken
-            return Principal(claims["iss"], claims["sub"])
+            return VerifiedAccess(
+                Principal(claims["iss"], claims["sub"]), float(claims["exp"])
+            )
         except jwt.PyJWTError:
             raise InvalidToken from None
+
+    def verify(self, token: str) -> Principal:
+        return self.verify_access(token).principal

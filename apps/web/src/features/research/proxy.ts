@@ -1,10 +1,11 @@
 export interface ObservationUpstream { fetch(request: Request): Promise<Response> }
 
 // T02 transport composition; application authentication remains at the API boundary.
-export async function observationProxy(request: Request, upstream: ObservationUpstream): Promise<Response> {
+export async function observationProxy(request: Request, upstream?: ObservationUpstream): Promise<Response> {
   const url = new URL(request.url);
   if (url.pathname !== "/agent/observe" || url.search) return failure(404, "NOT_FOUND");
   if (request.method !== "POST") return failure(405, "METHOD_NOT_ALLOWED");
+  if (!upstream) return failure(503, "PROXY_UNAVAILABLE");
   const headers = new Headers({"Content-Type":"application/json"});
   const authorization = request.headers.get("authorization");
   if (authorization) headers.set("authorization", authorization);

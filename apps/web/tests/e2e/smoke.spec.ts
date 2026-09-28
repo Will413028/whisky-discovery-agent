@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+test("observe route fails closed without a private binding in workerd", async ({ request }) => {
+  const response = await request.post("/agent/observe", {data:{taskId:crypto.randomUUID(), runId:crypto.randomUUID(), conditionsRevision:1}});
+  expect(response.status()).toBe(503);
+  expect(response.headers()["cache-control"]).toBe("no-store");
+  expect((await response.json()).code).toBe("PROXY_UNAVAILABLE");
+});
+
 test("workerd renders the entry and hydrates its explanation control", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
