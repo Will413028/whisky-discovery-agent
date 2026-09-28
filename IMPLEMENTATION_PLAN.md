@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00 本機骨架 GREEN；遠端 CI 因帳戶 billing 限制未能啟動 jobs。T01 本機 GREEN，真 Auth0 callback／跨帳號瀏覽器 gate 尚缺 tenant。T02 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
+更新：2026-09-28。狀態：T00／T01 本機與遠端 deterministic CI GREEN，真 Auth0 callback／跨帳號瀏覽器 gate 尚缺 tenant。T02 契約與串流基礎已有本機證據，正式 observe 與部署 gate 未完成；T03 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -8,7 +8,7 @@
 
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
-| 技術入口 | T00–T02 | T00、T01 本機 GREEN；外部 gate 未通過；T02 未開始 |
+| 技術入口 | T00–T02 | T00／T01 deterministic GREEN；T02 契約／串流基礎本機 GREEN，正式 observe／外部 gate 未完成 |
 | 持久研究骨架與樣本 | T03–T09 | 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
@@ -254,3 +254,36 @@ Owner mutation：暫時移除 `users.c.id == owner`，執行 `uv run --project b
 獨立複核：design-review 檢查 ID、transaction、schema、JWT/JWKS、cache、proxy、Auth0、migration、錯誤與契約生成，0 design findings（改／記／提／駁回均 0）。另一般 code review 提出 callback 重試 1 個 P2，已按 RED→GREEN 修正並由原複核者唯讀回看確認關閉。
 
 尚缺：專用 Auth0 tenant domain／SPA client ID／API audience，真 callback、重新整理、跨帳號瀏覽器驗收；VPC／具名 Tunnel 與真部署仍屬 T02。T01 只標本機 GREEN，未標已驗收。沒有新增外部登入、設定 secrets 或改動 VM。
+
+### T01 遠端 CI／T02 契約與串流基礎 — 2026-09-28
+
+T01 commit `70c1c75` 已推送 `feat/t01-identity-entry`。repo 改為 public 後，[run 36394778639](https://github.com/Will413028/whisky-discovery-agent/actions/runs/36394778639) 與 [run 36394777273](https://github.com/Will413028/whisky-discovery-agent/actions/runs/36394777273) 的 backend／web jobs 各自 conclusion 均為 success；以 `gh run view <run> --json jobs` 查驗，不只看 run 層級。先前 billing 阻擋不再阻擋這次公開 repo 的執行，未修改帳戶 billing。
+
+T02 工作分支 `feat/t02-agui-entry`，基線 `70c1c75`。本增量先完成可獨立驗證的 schema、projection、transport 與本機跨程序 fixture，不建立持久研究或假登入。正式產品 API 尚未掛載 `/agent/observe`，fixture server 僅位於 tests 並綁定 loopback。
+
+SDK 前提：Python `ag-ui-protocol==0.1.22`、TS `@ag-ui/core==0.0.59` 的 interrupt／新 run resume 雙向往返保留欄位。隔離環境以 `uv run --no-project --python 3.13 --with 'pydantic-ai-slim[ag-ui,temporal]==2.51.0' --with ag-ui-protocol==0.1.22 python -c '<import AGUIAdapter 與 durable_exec.temporal>'` 成功解析依賴及 import；這不是模型／durable agent 執行驗收。PydanticAI 尚未加入產品依賴。
+
+Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF frame；已安裝 source map 的 `src/transform/sse.ts` 只以 `/\n\n/` 分隔，且自行 subscribe 的 teardown 未回傳外層。選項為限制 LF、獨立 parser、升級 SDK 組合；使用者明確選擇獨立 parser。移除 client dependency，保留 AG-UI schema，採 `eventsource-parser==4.1.1` 的 Web Streams parser，不自行重寫 SSE 語法。[parser 官方說明](https://github.com/rexxars/eventsource-parser)、[AG-UI interrupt 契約](https://docs.ag-ui.com/concepts/interrupts)。
+
+| 案例／命令（repo root） | 真實 RED | GREEN／證據 |
+|---|---|---|
+| `uv run --project backend pytest backend/tests/test_agui_contract.py -q` | waiting adapter 只送普通 RUN_FINISHED，outcome 為 None | 明確 interrupt outcome 與 question correlation ID；TS/Python 雙向解析通過 |
+| `uv run --project backend pytest backend/tests/test_task_view.py -q` | needs_input／completed／failed 缺少對應 payload 仍通過，3 個 DID NOT RAISE | Pydantic 與生成 JSON Schema 共用 status/payload 規則；TaskView 不接受未知 schemaVersion、非法版本或不一致終態 |
+| `pnpm --filter @whisky/web exec vitest run tests/research-state.test.ts` | 首次 snapshot 被丟棄；後續另一輪 6 個 foreign／stale／connection／payload cases 失敗 | 同 task/thread/revision、遞增 viewVersion、connection generation 保護；EOF 只改 connected，不製造成功 |
+| `… vitest run tests/research-transport.test.ts` | 最初整份 text() 無法在 EOF 前觸發 callback；換原 SDK 後 CRLF 仍失敗 | parser 對逐 byte UTF-8、CRLF、heartbeat 即時解析；非法 JSON/schema、過大 frame、截斷 EOF 回歸通過 |
+| 同 transport suite 的 cancel/auth/consumer | abort 未取消 upstream；401 缺少安全分類；慢 consumer 尚未完成就收到第 2 個 event | abort 傳播與 reader cleanup、AUTH_REQUIRED、逐事件 await；單 frame 65,536 字元與單輸入 chunk 1 MiB 上限，非全系統容量承諾 |
+| `… vitest run tests/research-proxy.test.ts` | cookie／Set-Cookie 被轉送、錯誤 path/method 放行、302 被照送 | 固定 POST `/agent/observe`／upstream、16 KiB request body 上限、Bearer-only forwarding、manual redirect、no-store；response body 串流傳遞 |
+| `pnpm --filter @whisky/web exec playwright test tests/e2e/stream.spec.ts` | proxy 使用 response.text()，相隔 800ms 的兩 snapshot 在瀏覽器僅隔約 0.1ms | 改為 body pass-through；最後一次 API→本機 workerd→Chromium gap 790.5ms（門檻 >400ms），EOF 仍 needs_input；`stream-timing` attachment 與 test output 的 `stream-timing.json` 保存 152.3／942.8ms 時點 |
+| 獨立 review 的 I/O error regression | 初始 fetch failure 洩出 raw TypeError；snapshot 後 body error 被標 INVALID_STREAM／不可重試 | I/O 邊界回安全 OBSERVATION_UNAVAILABLE／可重試，payload 格式錯誤與 caller abort 各自保留語意；review 回看關閉 |
+
+既有 SDK 的空 interrupt 拒絕、其他 schema 保護與 fixture browser smoke 都記為回歸／整合驗證，不假造首次 RED。跨 Python subprocess 的測試使用 30 秒 test timeout、15 秒單次程序 timeout；一次 5 秒 test timeout 不算行為 RED。
+
+契約生成：`uv run --project backend python scripts/export_openapi.py` 產生 OpenAPI＋TaskView JSON Schema；`pnpm --filter @whisky/web generate:contracts` 產生 TS 與 bundled standalone validator。Ajv 在 build-time 編譯，瀏覽器／Worker 不執行 schema compiler 或 eval。CI 從兩端重新生成並查 drift；生成兩次的內容 hash 相同。`rg -l 'TaskView|readEvents|observationProxy|waiting_event' backend/src backend/tests apps/web/src apps/web/tests scripts` 核對 production adapter、fixture、測試與 generator consumers。
+
+版本 fence mutation：暫將 `state.view !== null && value.viewVersion <= state.view.viewVersion` 改為 false，`research-state.test.ts` exit 1；finally 還原後完整 suite 通過。
+
+本機驗證：`uv run --project backend pytest backend/tests -q` 39 passed；Web Vitest 47 passed；production build 與 Playwright 3 passed；wheel 4 passed；ruff／format／mypy／TS／boundary／peers／actionlint 1.7.12 通過。過程中磁碟暫時不可寫，確認恢復後才重跑；Docker daemon 後來停止，因此 actionlint 改用本機同版本 binary，未啟停其他服務。本增量證據隨 T02 契約／串流基礎提交保存；遠端 CI 結果另記。
+
+獨立複核：design 0 findings（改／記／提／駁回各 0）；一般 correctness review 1 個 P2，按 RED→GREEN 修正並回看關閉。
+
+下一個 T02 增量：正式 observe 的 typed read-only input、owner／actor／token expiry 重驗、每使用者兩條連線、60 秒 lifetime／15 秒 heartbeat、2 秒 snapshot polling、重連與多 tab 整合；之後才接真 Auth0＋Workers VPC／具名 Tunnel，量 CPU／connection／memory。這些未通過前不標 T02 已驗收，也不展開 T03。現有 FastAPI/workerd fixture 只證明本機 transport，不證明 VPC、身份隔離或正式執行能力。

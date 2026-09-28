@@ -84,6 +84,71 @@ export interface components {
             /** Retryable */
             retryable: boolean;
         };
+        /** QuestionView */
+        QuestionView: {
+            /**
+             * Expiresat
+             * Format: date-time
+             */
+            expiresAt: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Prompt */
+            prompt: string;
+            /** Waitingversion */
+            waitingVersion: number;
+        };
+        /** TaskError */
+        TaskError: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+            /** Retryable */
+            retryable: boolean;
+        };
+        /** TaskView */
+        TaskView: {
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            error: components["schemas"]["TaskError"] | null;
+            /**
+             * Observedat
+             * Format: date-time
+             */
+            observedAt: string;
+            question: components["schemas"]["QuestionView"] | null;
+            /** Reportid */
+            reportId: string | null;
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
+            /** Stage */
+            stage: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "acceptance_pending" | "queued" | "researching" | "needs_input" | "completed" | "failed" | "cancelled" | "superseded";
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+            /**
+             * Threadid
+             * Format: uuid
+             */
+            threadId: string;
+            /** Viewversion */
+            viewVersion: number;
+        } & (unknown & unknown & unknown);
     };
     responses: never;
     parameters: never;

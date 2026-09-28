@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "generate:contracts": "openapi-typescript ../../contracts/openapi.json -o ../../contracts/api.d.ts && node scripts/generate-task-validator.mjs",
     "dev": "vite --host 127.0.0.1 --port 3417 --strictPort",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1 --port 3418 --strictPort",
@@ -12,7 +13,9 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
+    "@ag-ui/core": "0.0.59",
     "@auth0/auth0-react": "2.27.0",
+    "eventsource-parser": "4.1.1",
     "next": "16.3.6",
     "openapi-fetch": "0.17.0",
     "react": "19.3.0",
@@ -30,6 +33,9 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
     "@vitejs/plugin-rsc": "0.5.35",
+    "ajv": "8.17.1",
+    "ajv-formats": "3.0.1",
+    "esbuild": "0.28.1",
     "jsdom": "30.1.1",
     "openapi-typescript": "7.13.0",
     "typescript": "5.9.3",
