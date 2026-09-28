@@ -444,3 +444,12 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 完整驗證：`uv run --project backend pytest backend/tests -q` → 254 passed（89.74 秒）；`pnpm --filter @whisky/web test` → 77 passed；`python3 scripts/test_wheel.py` → 4 passed（6.35 秒）；`pnpm --filter @whisky/web test:e2e` → 5 passed（11.5 秒）。ruff／format、mypy、Python／Web 邊界、typecheck 與清空公開 Auth0 fixture build vars 的 Next build 通過。
 - t04_plan_http_design 唯讀 correctness review 未發現缺陷：覆蓋 owner／generation、真實 pending／accepted、HTTP authentication、固定 origin Web forwarding。此段僅沿用已審查的 read-store／HTTP／proxy 結構，沒有新 transaction、schema migration 或執行機制。主 agent 已核對 diff 與 repo／second-brain status／log，未見 reviewer 越界修改。
 - 前段 `7a72622` 的 push／PR runs `36442509642`、`36442517530`，backend／web jobs 均 SUCCESS。T04 仍未驗收、未部署；接續 agent_turns mapping、AG-UI start 與 production observation source，再驗真 DB／Temporal／HTTP 接受出口。
+
+### T04 第七段 — typed start envelope 與跨層恢復證據
+
+- 前提差異已交由使用者決定：既有 store 由伺服器產生 thread UUID；標準 RunAgentInput 首輪必帶 threadId。選項為預先向伺服器配發、接受 client UUID 後綁定、另存雙 ID 映射；建議接受 client UUID 並驗 owner／永久 task 綁定，task／workflow ID 仍由伺服器產生。此決定尚未收到回覆，未修改 thread 建立與 DB mapping。
+- 不依賴 ID 配發選擇的 typed envelope 已實作：只解析 forwardedProps 中 type=start、key、planId、conditionsRevision；拒絕額外 owner／workflowId／taskQueue／conditions、空白或過長 key、無效 UUID／revision，並拒絕 start 搭配 resume／parentRunId。messages／state 不作權威條件或工具指令，parse 不啟動執行。
+- RED→GREEN：`uv run --project backend pytest backend/tests/test_start_command.py -q`，15 failed（明確未實作的 parser）→15 passed。resume fixture 已依 installed AG-UI 0.1.22 的 ResumeEntry 必填 status 修正後才計算行為 RED，schema fixture 錯誤不算通過或 RED 證據。
+- 追加既有恢復能力的跨層驗收：`uv run --project backend pytest backend/tests/integration/test_research_reads.py -k actual_temporal -q` → 2 passed。真 PostgreSQL／Temporal 建立研究，HTTP 查詢一般受理與遺失回應後的 pending；同 key 對帳後 command=accepted、task=queued，task ID／Temporal run 保持相同。這是既有受理能力追加驗證，不冒稱本次才取得該能力的行為 RED，也不代表正式 Agent／worker 執行完成。
+- 前段 `72cabcb` 的 push／PR runs `36443243528`、`36443251228`，backend／web jobs 均 SUCCESS。
+- 完整後端驗證：`uv run --project backend pytest backend/tests -q` → 271 passed（56.91 秒）；`python3 scripts/test_wheel.py` → 4 passed（5.81 秒）；ruff／format、mypy 與 Python 邊界通過。本段未改 Web 或公開 HTTP schema；parser 尚未接 `/agent`，T04 保持進行中。

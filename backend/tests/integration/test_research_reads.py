@@ -93,3 +93,50 @@ async def test_research_reads_hide_previous_identity_generation(
             headers={"Authorization": f"Bearer {sign()}"},
         )
         assert response.status_code == status
+
+
+@pytest.mark.parametrize("lose_response", [False, True])
+async def test_http_recovers_actual_temporal_acceptance(research_client, lose_response):
+    from temporalio.client import Client
+    from temporalio.testing import WorkflowEnvironment
+    from test_research_start import LoseFirstResponse
+
+    from whisky.modules.research.acceptance import AcceptResearch
+    from whisky.modules.research.temporal_start import TemporalResearchStarter
+
+    client, sign, engine, store, actor, _ = research_client
+    plan = PlanStore(engine).create(
+        actor.actor_id,
+        actor.generation,
+        "temporal-read-plan",
+        ResearchConditions(entry="beginner", goal="真服務接受後恢復"),
+    )
+    headers = {"Authorization": f"Bearer {sign()}"}
+    async with await WorkflowEnvironment.start_local() as env:
+        temporal = (
+            Client(**{**env.client.config(), "interceptors": [LoseFirstResponse()]})
+            if lose_response
+            else env.client
+        )
+        service = AcceptResearch(
+            store, TemporalResearchStarter(temporal, f"test-{uuid4()}")
+        )
+        first = await service.execute(
+            actor.actor_id, actor.generation, plan.id, 1, "http-recovery"
+        )
+        original = await env.client.get_workflow_handle(first.workflow_id).describe()
+        pending = await client.get(f"/api/v1/commands/{first.id}", headers=headers)
+        assert pending.json()["acceptance"] == (
+            "acceptance_pending" if lose_response else "accepted"
+        )
+        recovered = await service.execute(
+            actor.actor_id, actor.generation, plan.id, 1, "http-recovery"
+        )
+        assert recovered.id == first.id and recovered.task_id == first.task_id
+        assert (
+            await env.client.get_workflow_handle(first.workflow_id).describe()
+        ).run_id == original.run_id
+        command = await client.get(f"/api/v1/commands/{first.id}", headers=headers)
+        task = await client.get(f"/api/v1/tasks/{first.task_id}", headers=headers)
+        assert command.json()["acceptance"] == "accepted"
+        assert task.json()["status"] == "queued"
