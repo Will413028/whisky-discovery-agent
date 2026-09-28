@@ -58,6 +58,7 @@ class PlanStore:
                 SELECT id, owner_id, generation, conditions_revision, conditions,
                     updated_at FROM plans
                 WHERE owner_id = :owner AND generation = :generation
+                  AND deleted_at IS NULL
             """
                     + after
                     + " ORDER BY updated_at DESC, id DESC LIMIT :limit"
@@ -174,6 +175,7 @@ class PlanStore:
                 """
             SELECT id, owner_id, generation, conditions_revision, conditions
             FROM plans WHERE id = :id AND owner_id = :owner
+              AND deleted_at IS NULL
         """
                 + (" FOR UPDATE" if lock else "")
             ),
