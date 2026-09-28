@@ -15,6 +15,7 @@ from whisky.modules.catalog.public import (
     published_price_detail,
     published_source,
     report_candidate_bottle,
+    reviewed_version_in_release,
     taiwan_date,
 )
 from whisky.modules.discovery.public import locked_plan
@@ -22,6 +23,7 @@ from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.report import ReportDraft
 from whisky.modules.research.store import ResearchConflict
 from whisky.modules.research.views import (
+    ClarifiedBottleView,
     ReportCandidateView,
     ReportClaimView,
     ReportPriceView,
@@ -175,6 +177,16 @@ class ReportStore:
                 summary=content["summary"],
                 unresolved=tuple(content["unresolved"]),
                 candidates=tuple(candidates),
+                clarified_bottle=(
+                    ClarifiedBottleView(
+                        question_id=report["clarification_id"],
+                        bottle_version_id=report["selected_version_id"],
+                        name=report["selected_label"],
+                        reviewed_in_release=report["selected_item_id"] is not None,
+                    )
+                    if report["clarification_id"] is not None
+                    else None
+                ),
             )
 
     def save(
@@ -188,6 +200,8 @@ class ReportStore:
         policy_version: str,
         prompt_version: str,
         model_version: str,
+        clarification_id: UUID | None = None,
+        selected_version_id: UUID | None = None,
     ) -> SavedReport:
         versions = (artifact_key, policy_version, prompt_version, model_version)
         if any(not value.strip() or len(value) > 128 for value in versions):
@@ -244,6 +258,39 @@ class ReportStore:
                 or task["status"] not in {"acceptance_pending", "queued", "researching"}
             ):
                 raise ResearchConflict("TASK_NOT_WRITABLE")
+            answered = (
+                connection.execute(
+                    text("""
+                    SELECT id,answer,choices FROM clarifications
+                    WHERE task_id=:task AND owner_id=:owner AND status='answered'
+                    ORDER BY waiting_version DESC LIMIT 1
+                    """),
+                    dict(task=task_id, owner=owner),
+                )
+                .mappings()
+                .first()
+            )
+            if answered is None:
+                if clarification_id is not None or selected_version_id is not None:
+                    raise ResearchConflict("CLARIFICATION_MISMATCH")
+                selected_label = None
+            else:
+                if (
+                    clarification_id != answered["id"]
+                    or selected_version_id is None
+                    or str(selected_version_id) != answered["answer"]
+                ):
+                    raise ResearchConflict("CLARIFICATION_MISMATCH")
+                selected_label = next(
+                    (
+                        choice["label"]
+                        for choice in answered["choices"]
+                        if choice["id"] == answered["answer"]
+                    ),
+                    None,
+                )
+                if selected_label is None:
+                    raise ResearchConflict("CLARIFICATION_MISMATCH")
             release_ids = {candidate.release_id for candidate in draft.candidates}
             item_refs = {
                 (candidate.release_id, candidate.item_id)
@@ -252,6 +299,21 @@ class ReportStore:
             if len(release_ids) > 1 or len(item_refs) != len(draft.candidates):
                 raise ResearchConflict("INVALID_CANDIDATE")
             catalog_release = current_release_id(connection)
+            selected_current = (
+                reviewed_version_in_release(
+                    connection, catalog_release, selected_version_id
+                )
+                if catalog_release is not None and selected_version_id is not None
+                else None
+            )
+            if selected_version_id is not None and selected_current is None:
+                draft = ReportDraft(
+                    "所選版本目前不在已覆核酒款資料中，無法確認這個版本。",
+                    (),
+                    tuple(draft.unresolved)
+                    + ("所選版本不在目前 reviewed catalog；請重新核對版本。",),
+                )
+                release_ids = set()
             if release_ids and release_ids != {catalog_release}:
                 raise ResearchConflict("INVALID_CANDIDATE")
             evaluated_on = taiwan_date(datetime.now(UTC))
@@ -283,9 +345,11 @@ class ReportStore:
                 INSERT INTO research_reports
                     (id,task_id,owner_id,generation,conditions_revision,
                      artifact_key,catalog_release_id,evaluated_on,policy_version,
-                     prompt_version,model_version,schema_version,content)
+                     prompt_version,model_version,schema_version,content,
+                     clarification_id,selected_version_id,selected_label,selected_item_id)
                 VALUES (:id,:task,:owner,:generation,:revision,:key,:release,:evaluated,
-                        :policy,:prompt,:model,1,CAST(:content AS jsonb))
+                        :policy,:prompt,:model,1,CAST(:content AS jsonb),
+                        :clarification,:selected_version,:selected_label,:selected_item)
                 """),
                 dict(
                     id=report_id,
@@ -299,6 +363,14 @@ class ReportStore:
                     policy=policy_version,
                     prompt=prompt_version,
                     model=model_version,
+                    clarification=clarification_id,
+                    selected_version=selected_version_id,
+                    selected_label=selected_current.name
+                    if selected_current
+                    else selected_label,
+                    selected_item=selected_current.item_id
+                    if selected_current
+                    else None,
                     content=json.dumps(
                         dict(summary=draft.summary, unresolved=draft.unresolved),
                         ensure_ascii=False,

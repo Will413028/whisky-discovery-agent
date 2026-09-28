@@ -22,6 +22,8 @@ from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.tokens import TokenVerifier
 from whisky.modules.research.acceptance import AcceptResearch
+from whisky.modules.research.answer import AnswerResearch
+from whisky.modules.research.clarification import ClarificationStore
 from whisky.modules.research.http import observation_router as research_router
 from whisky.modules.research.observation import ObservationSource
 from whisky.modules.research.report_store import ReportStore
@@ -43,15 +45,18 @@ def configured_app(
     )
     research_store = ResearchStore(engine)
     acceptance = None
+    answers = None
     if settings.temporal is not None:
+        temporal_client = ConnectingTemporalResearchStarter(
+            settings.temporal.address,
+            settings.temporal.namespace,
+            settings.temporal.task_queue,
+        )
         acceptance = AcceptResearch(
             research_store,
-            ConnectingTemporalResearchStarter(
-                settings.temporal.address,
-                settings.temporal.namespace,
-                settings.temporal.task_queue,
-            ),
+            temporal_client,
         )
+        answers = AnswerResearch(ClarificationStore(engine), temporal_client)
     app = create_app(
         router(engine, verifier),
         research_router(
@@ -59,6 +64,7 @@ def configured_app(
             source,
             store=research_store,
             acceptance=acceptance,
+            answers=answers,
             reports=ReportStore(engine),
         ),
         plan_router=discovery_router(

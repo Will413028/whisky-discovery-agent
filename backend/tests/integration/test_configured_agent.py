@@ -151,12 +151,21 @@ async def test_http_observer_gets_terminal_report_or_recovers_after_disconnect(
         model_started.set()
         await allow_model.wait()
         response = controlled_model(messages, info)
+        if any(
+            isinstance(part, ToolReturnPart)
+            for message in messages
+            for part in message.parts
+        ):
+            response.parts[0].args = {
+                "report": response.parts[0].args,
+                "clarification": None,
+            }
         if invalid and any(
             isinstance(part, ToolReturnPart)
             for message in messages
             for part in message.parts
         ):
-            response.parts[0].args["candidates"][0]["claims"][0]["value"] = (
+            response.parts[0].args["report"]["candidates"][0]["claims"][0]["value"] = (
                 "沒有來源的事實"
             )
         return response

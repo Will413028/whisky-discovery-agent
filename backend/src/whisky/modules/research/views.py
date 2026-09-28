@@ -33,18 +33,25 @@ class ViewModel(BaseModel):
     )
 
 
+class QuestionChoiceView(ViewModel):
+    id: UUID
+    label: str = Field(min_length=1, max_length=160)
+
+
 class QuestionView(ViewModel):
     id: UUID
     prompt: str = Field(min_length=1, max_length=2000)
     waiting_version: int = Field(ge=1)
     expires_at: AwareDatetime
+    choices: tuple[QuestionChoiceView, ...] = ()
 
 
 class ResearchCommandView(ViewModel):
     id: UUID
     task_id: UUID
-    scope: Literal["research.start"] = "research.start"
-    acceptance: Literal["acceptance_pending", "accepted"]
+    scope: Literal["research.start", "research.answer"] = "research.start"
+    acceptance: Literal["acceptance_pending", "accepted", "rejected"]
+    code: str | None = None
 
 
 class TaskError(ViewModel):
@@ -75,6 +82,7 @@ class TaskView(ViewModel):
     report_id: UUID | None
     error: TaskError | None
     observed_at: AwareDatetime
+    active_run_id: UUID | None = None
 
     @model_validator(mode="after")
     def status_payload(self) -> Self:
@@ -118,6 +126,13 @@ class ReportCandidateView(ViewModel):
     prices: tuple[ReportPriceView, ...]
 
 
+class ClarifiedBottleView(ViewModel):
+    question_id: UUID
+    bottle_version_id: UUID
+    name: str
+    reviewed_in_release: bool
+
+
 class ReportView(ViewModel):
     schema_version: Literal[1]
     id: UUID
@@ -130,4 +145,5 @@ class ReportView(ViewModel):
     model_version: str
     summary: str
     unresolved: tuple[str, ...]
+    clarified_bottle: ClarifiedBottleView | None = None
     candidates: tuple[ReportCandidateView, ...]

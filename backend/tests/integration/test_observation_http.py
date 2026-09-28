@@ -49,6 +49,9 @@ def setup(postgres_url, signed_tokens):
                 return view
             return None
 
+        async def outcome(self, _request, _actor_id):
+            return None
+
     source = Source()
     app = create_app(
         observation_router=observation_router(

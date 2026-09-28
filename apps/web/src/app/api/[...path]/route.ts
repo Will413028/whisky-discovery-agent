@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 function forward(request: Request) {
   const pathname = new URL(request.url).pathname;
   const adapter = pathname === "/api/v1/plans" || pathname.startsWith("/api/v1/plans/") ? planProxy
-    : pathname.startsWith("/api/v1/tasks/") || pathname.startsWith("/api/v1/commands/") || pathname.startsWith("/api/v1/reports/") ? researchReadProxy : proxy;
+    : pathname === "/api/v1/tasks" || pathname.startsWith("/api/v1/tasks/") || pathname.startsWith("/api/v1/commands/") || pathname.startsWith("/api/v1/reports/") ? researchReadProxy : proxy;
   return adapter(request, apiUpstream(process.env.WHISKY_API_ORIGIN));
 }
 

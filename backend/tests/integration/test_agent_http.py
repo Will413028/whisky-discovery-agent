@@ -1,20 +1,29 @@
 import json
-from uuid import uuid4
+from datetime import UTC, datetime, timedelta
+from uuid import UUID, uuid4
 
 import pytest
+from ag_ui.core import RunAgentInput
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
+from test_catalog_release import synthetic_versioned_release
 from test_research_start import LoseFirstResponse
 
 from whisky.bootstrap.api import create_app
+from whisky.modules.catalog.store import CatalogStore
 from whisky.modules.discovery.conditions import ResearchConditions
 from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess
 from whisky.modules.research.acceptance import AcceptResearch
+from whisky.modules.research.answer import AnswerResearch
+from whisky.modules.research.clarification import ClarificationStore
+from whisky.modules.research.commands import parse_start
+from whisky.modules.research.decision import ClarificationDraft
 from whisky.modules.research.http import observation_router
 from whisky.modules.research.observation import ObservationPolicy
+from whisky.modules.research.run_store import ResearchRunStore
 from whisky.modules.research.temporal_start import TemporalResearchStarter
 
 pytestmark = pytest.mark.integration
@@ -157,3 +166,71 @@ async def test_agent_validates_auth_and_command_before_start(agent_context):
         assert (
             await client.post("/agent", json=invalid, headers=headers)
         ).status_code == 422
+
+
+async def test_agent_resume_binds_new_run_to_original_task(agent_context):
+    engine, store, identity, actor, sign, payload = agent_context
+    start = parse_start(RunAgentInput.model_validate(payload))
+    receipt = store.reserve_turn(actor.actor_id, actor.generation, start)
+    store.confirm(actor.actor_id, actor.generation, receipt.id, str(uuid4()))
+    context = ResearchRunStore(engine).begin(receipt.task_id)
+    clarifications = ClarificationStore(engine)
+    release = synthetic_versioned_release()
+    CatalogStore(engine).publish(release)
+    choices = tuple(str(item.bottle.version_id) for item in release.items)
+    question = clarifications.publish(
+        context,
+        1,
+        ClarificationDraft("哪個版本？", choices),
+        datetime.now(UTC) + timedelta(days=7),
+    )
+
+    class Answerer:
+        async def answer(self, command):
+            return clarifications.accept_answer(command)
+
+    app = create_app(
+        observation_router=observation_router(
+            identity,
+            None,
+            ObservationPolicy(lifetime_seconds=0.05, poll_seconds=10),
+            store=store,
+            answers=AnswerResearch(clarifications, Answerer()),
+        )
+    )
+    resumed = {
+        **payload,
+        "runId": str(uuid4()),
+        "forwardedProps": {
+            "type": "answer",
+            "key": "resume-version",
+            "taskId": str(receipt.task_id),
+            "conditionsRevision": 1,
+            "waitingVersion": 1,
+        },
+        "resume": [
+            {
+                "interruptId": str(question.id),
+                "status": "resolved",
+                "payload": {"answer": choices[1]},
+            }
+        ],
+    }
+    async with AsyncClient(
+        transport=ASGITransport(app), base_url="http://test"
+    ) as client:
+        response = await client.post(
+            "/agent",
+            json=resumed,
+            headers={"Authorization": f"Bearer {sign()}"},
+        )
+    assert response.status_code == 200
+    assert response.headers["x-command-id"]
+    stream = events(response)
+    assert stream[0]["runId"] == resumed["runId"]
+    assert stream[1]["snapshot"]["taskId"] == str(receipt.task_id)
+    assert stream[1]["snapshot"]["status"] == "researching"
+    assert (
+        store.observed_task(receipt.task_id, UUID(resumed["runId"]), actor.actor_id)
+        is not None
+    )

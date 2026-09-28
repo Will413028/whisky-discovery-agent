@@ -239,14 +239,48 @@ class ResearchStore:
             return None
         return self.task(identifier, owner)
 
+    def turn_outcome(self, identifier: UUID, run_id: UUID, owner: UUID) -> dict | None:
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            if generation is None:
+                return None
+            result = connection.execute(
+                text("""
+                SELECT a.outcome FROM agent_turns a
+                JOIN research_tasks t
+                  ON t.id=a.task_id AND t.owner_id=a.owner_id
+                WHERE a.task_id=:task AND a.run_id=:run AND a.owner_id=:owner
+                  AND t.generation=:generation
+                """),
+                dict(task=identifier, run=run_id, owner=owner, generation=generation),
+            ).scalar()
+            return result if isinstance(result, dict) else None
+
     def command(self, identifier: UUID, owner: UUID) -> ResearchCommandView | None:
         with self.engine.connect() as connection:
             generation = actor_generation(connection, owner)
-            row = self._receipt(connection, owner, identifier=identifier)
+            row = (
+                connection.execute(
+                    text("""
+                    SELECT c.* FROM research_commands c
+                    JOIN research_tasks t
+                      ON t.id=c.task_id AND t.owner_id=c.owner_id
+                    WHERE c.id=:id AND c.owner_id=:owner
+                      AND t.generation=:generation
+                    """),
+                    dict(id=identifier, owner=owner, generation=generation),
+                )
+                .mappings()
+                .first()
+            )
             if row is None or generation is None or row["generation"] != generation:
                 return None
             return ResearchCommandView(
-                id=row["id"], task_id=row["task_id"], acceptance=row["status"]
+                id=row["id"],
+                task_id=row["task_id"],
+                scope=row["scope"],
+                acceptance=row["status"],
+                code=row["result"].get("code") if row["result"] else None,
             )
 
     def task(self, identifier: UUID, owner: UUID) -> TaskView | None:
@@ -255,8 +289,13 @@ class ResearchStore:
             row = (
                 connection.execute(
                     text("""
-                SELECT * FROM research_tasks
-                WHERE id = :id AND owner_id = :owner AND generation = :generation
+                SELECT t.*, (
+                    SELECT a.run_id FROM agent_turns a
+                    WHERE a.task_id=t.id AND a.owner_id=t.owner_id AND a.outcome IS NULL
+                    LIMIT 1
+                ) AS active_run_id
+                FROM research_tasks t
+                WHERE t.id = :id AND t.owner_id = :owner AND t.generation = :generation
             """),
                     dict(id=identifier, owner=owner, generation=generation),
                 )
@@ -265,20 +304,49 @@ class ResearchStore:
             )
             if row is None:
                 return None
-            return TaskView.model_validate(
-                dict(
-                    task_id=row["id"],
-                    thread_id=row["thread_id"],
-                    conditions_revision=row["conditions_revision"],
-                    view_version=row["view_version"],
-                    status=row["status"],
-                    stage=row["stage"],
-                    question=row["question"],
-                    report_id=row["report_id"],
-                    error=row["error"],
-                    observed_at=datetime.now(UTC),
-                )
+            return self._task_view(row)
+
+    def list_open(self, owner: UUID) -> tuple[TaskView, ...]:
+        """Recover unfinished owned work after a browser or response is lost."""
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            if generation is None:
+                return ()
+            rows = connection.execute(
+                text("""
+                SELECT t.*, (
+                    SELECT a.run_id FROM agent_turns a
+                    WHERE a.task_id=t.id AND a.owner_id=t.owner_id AND a.outcome IS NULL
+                    LIMIT 1
+                ) AS active_run_id
+                FROM research_tasks t
+                WHERE t.owner_id=:owner AND t.generation=:generation
+                  AND t.status IN (
+                    'acceptance_pending','queued','researching','needs_input'
+                  )
+                ORDER BY t.updated_at DESC, t.id DESC LIMIT 20
+                """),
+                dict(owner=owner, generation=generation),
+            ).mappings()
+            return tuple(self._task_view(row) for row in rows)
+
+    @staticmethod
+    def _task_view(row: RowMapping) -> TaskView:
+        return TaskView.model_validate(
+            dict(
+                task_id=row["id"],
+                thread_id=row["thread_id"],
+                conditions_revision=row["conditions_revision"],
+                view_version=row["view_version"],
+                status=row["status"],
+                stage=row["stage"],
+                question=row["question"],
+                report_id=row["report_id"],
+                error=row["error"],
+                observed_at=datetime.now(UTC),
+                active_run_id=row["active_run_id"],
             )
+        )
 
     @staticmethod
     def _identity(connection: Connection, owner: UUID, generation: int) -> None:

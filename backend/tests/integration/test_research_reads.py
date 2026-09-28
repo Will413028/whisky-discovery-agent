@@ -69,6 +69,61 @@ async def test_task_and_command_recover_pending_then_accepted(research_client):
         store.confirm(actor.actor_id, actor.generation, receipt.id, "test-runtime-run")
 
 
+async def test_open_task_list_recovers_owned_work_across_browser_sessions(
+    research_client,
+):
+    client, sign, engine, store, actor, receipt = research_client
+    headers = {"Authorization": f"Bearer {sign()}"}
+    foreign = {"Authorization": f"Bearer {sign(sub='foreign')}"}
+    own = await client.get("/api/v1/tasks", headers=headers)
+    assert own.status_code == 200
+    assert own.headers["cache-control"] == "no-store"
+    assert [row["taskId"] for row in own.json()] == [str(receipt.task_id)]
+    assert own.json()[0]["stage"] == "等待受理確認"
+    assert (await client.get("/api/v1/tasks", headers=foreign)).json() == []
+    assert (await client.get("/api/v1/tasks")).status_code == 401
+    with engine.begin() as connection:
+        connection.execute(
+            text(
+                "UPDATE research_tasks SET status='cancelled',stage='done',"
+                "write_allowed=false WHERE id=:id"
+            ),
+            {"id": receipt.task_id},
+        )
+    assert (await client.get("/api/v1/tasks", headers=headers)).json() == []
+
+
+async def test_task_exposes_only_its_open_agui_run_for_reconnection(research_client):
+    client, sign, engine, store, actor, receipt = research_client
+    view = store.task(receipt.task_id, actor.actor_id)
+    assert view is not None
+    run_id = uuid4()
+    with engine.begin() as connection:
+        connection.execute(
+            text("""
+            INSERT INTO agent_turns (owner_id,task_id,thread_id,run_id,command_id)
+            VALUES (:owner,:task,:thread,:run,:command)
+        """),
+            dict(
+                owner=actor.actor_id,
+                task=receipt.task_id,
+                thread=view.thread_id,
+                run=run_id,
+                command=receipt.id,
+            ),
+        )
+    headers = {"Authorization": f"Bearer {sign()}"}
+    active = await client.get(f"/api/v1/tasks/{receipt.task_id}", headers=headers)
+    assert active.json()["activeRunId"] == str(run_id)
+    with engine.begin() as connection:
+        connection.execute(
+            text("UPDATE agent_turns SET outcome='{}'::jsonb WHERE run_id=:run"),
+            {"run": run_id},
+        )
+    closed = await client.get(f"/api/v1/tasks/{receipt.task_id}", headers=headers)
+    assert closed.json()["activeRunId"] is None
+
+
 async def test_saved_report_exposes_immutable_claims_prices_and_owner_boundary(
     research_client,
 ):

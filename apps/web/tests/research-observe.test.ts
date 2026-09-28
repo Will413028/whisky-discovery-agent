@@ -68,3 +68,21 @@ test("saved terminal snapshot stops reconnecting without inferring success from 
   expect(sleep).not.toHaveBeenCalled();
   expect(states.at(-1)?.view?.status).toBe("completed");
 });
+
+test("durable input wait ends this turn's observation instead of reconnecting forever", async () => {
+  const waiting = {schemaVersion:1, taskId:initial.taskId, threadId:initial.threadId,
+    conditionsRevision:1, viewVersion:3, status:"needs_input", stage:"等待版本補充",
+    question:{id:runId,prompt:"哪個版本？",waitingVersion:1,expiresAt:"2026-10-06T00:00:00Z",
+      choices:[{id:runId,label:"15 年"}]}, reportId:null,error:null,observedAt:"2026-09-29T00:00:00Z"};
+  const fetch = vi.fn<typeof globalThis.fetch>().mockResolvedValue(new Response(
+    `data: ${JSON.stringify({type:"RUN_STARTED",threadId:initial.threadId,runId})}\n\n` +
+    `data: ${JSON.stringify({type:"STATE_SNAPSHOT",snapshot:waiting})}\n\n`,
+    {headers:{"Content-Type":"text/event-stream"}},
+  ));
+  const sleep = vi.fn(async () => {throw new Error("input wait must not reconnect");});
+  const states: ResearchState[] = [];
+  await observeTask({initial,runId,token:async()=>"token",fetch,sleep,random:()=>0,signal:new AbortController().signal,onState:state=>states.push(state)});
+  expect(fetch).toHaveBeenCalledTimes(1);
+  expect(sleep).not.toHaveBeenCalled();
+  expect(states.at(-1)?.view?.status).toBe("needs_input");
+});

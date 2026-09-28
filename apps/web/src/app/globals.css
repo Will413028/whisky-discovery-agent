@@ -5,3 +5,10 @@ h1 { font-size: clamp(2rem, 6vw, 3.5rem); letter-spacing: .06em; }
 p { line-height: 1.8; }
 button { font: inherit; color: white; background: #614627; border: 0; border-radius: .4rem; padding: .8rem 1.2rem; cursor: pointer; }
 button:focus-visible { outline: 3px solid #926d38; outline-offset: 4px; }
+button:disabled { opacity: .55; cursor: wait; }
+input { font: inherit; padding: .6rem; margin: .4rem 0 1.2rem; box-sizing: border-box; }
+form > label { display: block; }
+form > label input { display: block; width: min(100%, 32rem); }
+fieldset { border: 1px solid #aa9880; border-radius: .4rem; margin-bottom: 1rem; }
+.choice { display: block; padding: .4rem; }
+.choice input { margin: 0 .6rem 0 0; }

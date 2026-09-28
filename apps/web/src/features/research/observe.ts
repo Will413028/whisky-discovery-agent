@@ -53,7 +53,7 @@ export async function observeTask(options: ObserveOptions): Promise<void> {
         options.onState(state);
       }
     }
-    if (state.view && ["completed", "failed", "cancelled", "superseded"].includes(state.view.status)) return;
+    if (state.view && ["needs_input", "completed", "failed", "cancelled", "superseded"].includes(state.view.status)) return;
     try {
       await options.sleep(Math.min(30_000, 1000 * 2 ** failures) + options.random() * 1000, options.signal);
     } catch (error) {
