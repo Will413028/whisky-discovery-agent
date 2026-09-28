@@ -1,4 +1,5 @@
 import json
+import os
 import subprocess
 import threading
 import time
@@ -70,6 +71,16 @@ IMAGE = (
 
 @pytest.fixture(scope="session")
 def postgres_server_url():
+    existing = os.environ.get("WHISKY_TEST_POSTGRES_URL")
+    if existing is not None:
+        if not existing.startswith(
+            "postgresql+psycopg://postgres@127.0.0.1:"
+        ) or not existing.endswith("/whisky_test"):
+            raise ValueError(
+                "External test PostgreSQL must be a dedicated loopback database"
+            )
+        yield existing
+        return
     name = f"whisky-test-{uuid4().hex}"
     subprocess.run(
         [
@@ -97,7 +108,7 @@ def postgres_server_url():
             .strip()
             .rsplit(":", 1)[1]
         )
-        deadline = time.monotonic() + 30
+        deadline = time.monotonic() + 90
         while True:
             try:
                 connection = psycopg.connect(

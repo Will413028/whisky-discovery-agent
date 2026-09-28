@@ -58,6 +58,20 @@ class IdentityStore:
             ).first()
             return Actor(row.id, row.active, row.generation) if row else None
 
+    def lookup(self, principal: Principal) -> Actor | None:
+        """Read an existing identity without creating a replacement account."""
+        query = (
+            select(users.c.id, users.c.active, users.c.generation)
+            .join(identities)
+            .where(
+                identities.c.issuer == principal.issuer,
+                identities.c.subject == principal.subject,
+            )
+        )
+        with self.engine.connect() as connection:
+            row = connection.execute(query).first()
+            return Actor(row.id, row.active, row.generation) if row else None
+
     def resolve(self, principal: Principal) -> Actor | None:
         query = (
             select(users.c.id, users.c.active, users.c.generation)

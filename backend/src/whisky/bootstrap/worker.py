@@ -20,6 +20,13 @@ from temporalio.worker.workflow_sandbox import (
 )
 
 from whisky.bootstrap.probe import BootstrapProbe
+from whisky.modules.control.activities import (
+    ControlActivities,
+    TemporalResearchCanceller,
+)
+from whisky.modules.control.journal import ControlJournal
+from whisky.modules.control.store import ControlStore
+from whisky.modules.control.workflow import ControlWorkflow
 from whisky.modules.research.activities import ResearchActivities
 from whisky.modules.research.agent import configure_research_agent
 from whisky.modules.research.agent_v2 import configure_research_agent_v2
@@ -58,11 +65,23 @@ def cloudflare_model(account_id: str, token: str) -> OpenAIChatModel:
 
 
 def research_worker(
-    client: Client, task_queue: str, engine: Engine, model: Model
+    client: Client,
+    task_queue: str,
+    engine: Engine,
+    model: Model,
+    *,
+    control_journal: ControlJournal | None = None,
 ) -> Worker:
     configure_research_agent(engine, model)
     configure_research_agent_v2(engine, model)
     db = ResearchActivities(engine)
+    control = (
+        ControlActivities(
+            ControlStore(engine), control_journal, TemporalResearchCanceller(client)
+        )
+        if control_journal is not None
+        else None
+    )
     runner = SandboxedWorkflowRunner(
         restrictions=SandboxRestrictions.default.with_passthrough_modules(
             "whisky.modules.research.agent",
@@ -72,7 +91,12 @@ def research_worker(
     return Worker(
         client,
         task_queue=task_queue,
-        workflows=[BootstrapProbe, ResearchWorkflow, ResearchWorkflowV2],
+        workflows=[
+            BootstrapProbe,
+            ResearchWorkflow,
+            ResearchWorkflowV2,
+            *([ControlWorkflow] if control is not None else []),
+        ],
         activities=[
             db.begin_research,
             db.begin_research_v2,
@@ -81,6 +105,16 @@ def research_worker(
             db.publish_question,
             db.accept_answer,
             db.expire_question,
+            *(
+                [
+                    control.persist_intent,
+                    control.apply_effect,
+                    control.persist_result,
+                    control.notify_research,
+                ]
+                if control is not None
+                else []
+            ),
         ],
         workflow_runner=runner,
     )

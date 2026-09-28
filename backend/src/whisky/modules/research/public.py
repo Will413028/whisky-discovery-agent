@@ -2,6 +2,15 @@
 
 from ag_ui.core import Interrupt, RunFinishedEvent, RunFinishedInterruptOutcome
 
+from whisky.modules.research.control_public import cancel_task as cancel_task
+from whisky.modules.research.control_public import (
+    close_actor_tasks as close_actor_tasks,
+)
+from whisky.modules.research.control_public import close_plan_tasks as close_plan_tasks
+from whisky.modules.research.control_public import (
+    controlled_workflow_ids as controlled_workflow_ids,
+)
+from whisky.modules.research.control_public import task_plan as task_plan
 from whisky.modules.research.views import QuestionChoiceView
 from whisky.modules.research.views import TaskView as TaskView
 

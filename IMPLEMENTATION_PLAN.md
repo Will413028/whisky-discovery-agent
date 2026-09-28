@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-29。狀態：T00–T05 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；T03 catalog／人工覆核、T04 可靠受理及 T05 durable Agent 已通過各自本機與 CI 出口。T06 等待補充、跨程序恢復與 UI 已通過本機驗證，待 CI 對帳。T03–T06 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-29。狀態：T00–T06 已驗收，T07 本機 GREEN、待 CI。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；T03 catalog／人工覆核、T04 可靠受理、T05 durable Agent 與 T06 等待補充／跨程序恢復已通過各自本機與 CI 出口。T03–T06 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03–T05 已驗收；T06 本機 GREEN、待 CI；T07–T09 未完成 |
+| 持久研究骨架與樣本 | T03–T09 | T03–T06 已驗收；T07 本機 GREEN、待 CI；T08–T09 未完成 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -502,4 +502,25 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - RED→GREEN：問題 publish stub、答覆 reserve／expire stub、V2 原 final-only workflow、Observer interrupt、REST answer、AG-UI resume、Web answer proxy／UI 均先驗到行為 RED；真資料的版本選項及 owner-scoped 未完成 task 清單亦先驗無綁定／404，再改到 GREEN。測試以 barrier 證明 publish commit 與 wait 之間的答覆不遺失，以 time-skipping 驗 7 日過期；同 key 重送、不同答案競爭、過期 receipt 拒絕、已保存問題跨 catalog release／期限重送由真 DB／Temporal 分層驗證。合成瀏覽器 fixture 只驗 UI／傳輸，不冒充真 Auth0／live 模型。
 - 版本選項只能引用目前 reviewed catalog 的穩定 `bottle_version_id`，顯示名稱由資料庫產生；報告 commit 須匹配已接受的 clarification／版本，並重新解析當前 release。若版本已撤出，報告明示無法確認、候選為空，不讓模型以別款替代。Web 從 `GET /api/v1/tasks` 找回自己的未完成委託，對仍開啟的 run 使用 AG-UI observe 重連，REST GET 保留為 cold start／補答後恢復；關頁後重新登入、從清單進入、答覆與報告的 Playwright 旅程已通過。
 - fresh design-review 的四項發現均「改」：V2 對 V1 全域 DB 的隱性依賴、版本文字未綁 reviewed ID、產品頁未接 AG-UI observe、跨瀏覽器只靠舊 deep link。版本消失與重試跨 catalog release 另加回歸；沒有留下待定項。設計審查者唯讀，主 agent 已核對本 worktree 與 second-brain 的 status／log，未見越界寫入。
-- 本機驗證：`uv run --project backend pytest backend/tests -q` → 343 passed（177.72 秒）；後續問題 replay 期限加固的定向案例 1 passed。wheel 4 passed（migration head 0009），ruff check／format、mypy 50 files、Python 邊界、腳本 unittest 5 passed；Web Vitest 88 passed、typecheck、邊界、Next build，Playwright 6 passed；`git diff --cached --check` 通過。T06 CI／PR 尚待對帳，正式 VM／VPC 研究 worker、真模型品質與備份還原分屬 T08–T09。
+- 本機驗證：`uv run --project backend pytest backend/tests -q` → 343 passed（177.72 秒）；後續問題 replay 期限加固的定向案例 1 passed。wheel 4 passed（migration head 0009），ruff check／format、mypy 50 files、Python 邊界、腳本 unittest 5 passed；Web Vitest 88 passed、typecheck、邊界、Next build，Playwright 6 passed；`git diff --cached --check` 通過。push／PR runs `36471600845`／`36471642801` 的 backend／web jobs 與 GitGuardian 均 SUCCESS；PR #5 已合併為 `4cb6817`，T06 已驗收。正式 VM／VPC 研究 worker、真模型品質與備份還原分屬 T08–T09。
+
+### T07 — 控制命令、撤銷防線與晚到結果（2026-09-29，本機 GREEN）
+
+- 前提對帳：T06 的研究／報告已有 owner、generation、revision 與 `write_allowed`；Oracle Web、產品 DB 與 Temporal 仍採既定部署，整個 cluster 的 PITR 會一起倒退，故 T07 沿用 ARCHITECTURE 的 VM 外最小控制紀錄。T07 只用可控的不可變記憶體 adapter 驗流程；正式 OCI Object Storage 的新增／讀取／列舉權限、完整還原對帳與實際資料清除在 T09／T11 驗收。未接正式 adapter 時 configured app 的控制 POST 回 503，不把本機 fixture 稱為可用的正式刪除。
+- 沿用盤點（供獨立設計審查驗證）：
+
+  | 機制 | 原約束 | 今天是否成立 | 若從零設計與重評條件 |
+  |---|---|---|---|
+  | actor UUID＋generation、plan instance UUID＋revision | T01 身分隔離與 T04 重送／條件快照 | 成立；PRODUCT_SPEC 的跨帳號、重新收藏與修改條件仍要求區分實體與版本 | 保留不透明 instance ID、單調 generation／revision；若身份 provider 或資料模型改為多租戶，再重評 scope |
+  | task `write_allowed`＋狀態和 report transaction guard | T05 late activity／重送可在取消後到達 | 成立；ARCHITECTURE 要求 DB fence 先於 Temporal cancel | 同一 DB transaction 鎖 identity→plan→task，最後 UPDATE 再驗 guard；若執行權威或 DB 拆分，重評鎖序與原子性 |
+  | Temporal workflow＋產品 DB receipt＋VM 外 append-only intent/result | T04 持久受理及同 cluster PITR 無法保住取消證據 | 成立；ARCHITECTURE 第 248–260 行明定跨 cluster 還原 | 仍採 durable workflow 協調、產品 DB 當日常狀態、獨立保存可重套的最小控制證據；條件變更的 intent/result 額外保存新條件快照，不保存被刪原文或 token。T09 換真 adapter 並驗權限、加密、保留期與還原 |
+  | deterministic workflow ID、UUIDv4 command key／payload hash | T04 重送與 Temporal 回應遺失 | 同 key 同 payload 去重仍成立；審查發現「同 target／revision 只能提出一次」不是舊約束 | workflow ID 加 receipt ID，保留同 key 重送與 DB revision 比對；不同 key 可競爭，同 revision 最多一次 effect 成功，已拒絕者可修正再提 |
+  | plan `deleted_at` tombstone | T07 先撤銷 child 寫入並隱藏計畫；T11 才涵蓋完整清除 | 成立，但不是正式資料刪除 | 保留短期 tombstone 作 fence；T11 必須定義 DB／history／trace／備份清除與保存期後才能提供正式刪除承諾 |
+
+- TDD RED→GREEN：控制 store／journal／workflow／HTTP 與 Web allowlist 的新行為在尚無模組或接線時先失敗；新增 older-generation、舊 AG-UI interrupt 與取消通知案例曾驗到具體行為失敗，再加 fence／終態收斂。actor 刪除最後一步注入 `IDENTITY_CHANGED` 時，原本沒有回滾整筆子項變更的 RED（`test_actor_delete_rolls_back_all_descendants_if_identity_final_step_fails`），現改為交易異常回滾；停用 actor 後仍可 GET 舊控制收據的 RED（`test_deleted_actor_can_reconcile_only_its_delete_command`），現只允許原刪除收據對帳。條件變更另驗 pending clarification 轉 closed、task superseded、完成報告保持歷史。
+- 真 PostgreSQL 的兩條獨立連線與 barrier 逼出取消先取得 identity／plan／task 鎖、晚到 report 才嘗試 commit，後者因 `TASK_NOT_WRITABLE` 失敗，報告數為 0；Temporal local server 的控制 workflow 在結果物件寫入被 barrier 阻住時 DB 仍為 `effect_applied`，放行後才是 `completed`。結果寫入前失敗與寫入後遺失 ack 均由同 command／物件 key 重試，不新增 effect；revision 不符保存 `rejected` 外部結果而非顯示成功。暫時移除 report 的 `write_allowed`／status 兩道 guard 後，`test_cancel_requires_confirmed_external_intent_and_fences_late_report` 實際 1 failed（晚到報告不再被拒）；已還原原 guard 並重跑驗證。
+- `0010_control_commands` 增 typed receipt、唯一 scope 與 plan tombstone；跨模組 effect 只走 `identity.public`、`discovery.public`、`research.public`。HTTP 提供 cancel／conditions／plan delete／actor delete 與 owner-scoped receipt，Web 只允許固定路徑與 Bearer／no-store。此階段的 plan／actor delete 是寫入防線與隱藏，不是 T11 的完整資料清除；取消通知晚於 DB fence，Temporal 停止屬協作式。
+- fresh design-review 3 項發現均**改**：外部 intent/result 原缺 command key 與可重套的條件內容，現用 UUIDv4 key 並讓兩份物件各自含新條件快照；單 target／revision 唯一鍵原會讓被拒絕的條件變更無法修正，現只以同 key 去重並靠 revision transaction 決定勝者；跨模組原以 `str(ValueError)` 判 durable rejection，現改用帶穩定 code 的 `DomainRejection`，未預期例外使整筆 DB effect 回滾。這三項各有原行為 RED，修正後有 PostgreSQL／Temporal 與 journal 回歸測試。審查者唯讀，主 agent 已核對工作樹與 second-brain status／log，無審查者越界寫入；second-brain HEAD 由其他 session 前進。
+- 另以故障注入證明 typed rejection 若發生在條件 revision 已更新、子任務尚未關閉之間，原實作會提交半筆 effect；`ControlStore.apply` 現以 savepoint 回滾局部寫入後才記 `effect_rejected`。獨立 correctness/security review 檢查 owner／generation／revision、交易鎖序、外部紀錄／重試、Temporal 與 Web／API 權限，`NO CONFIRMED DEFECTS`；T09 的真 OCI／PITR 不冒充本次證據。審查者唯讀，主 agent 再核對兩個共享樹的 status／log，無越界寫入。
+- 條件快照在 T09 正式 adapter 啟用後會進入 VM 外有限期控制紀錄，這是跨備份點重套條件變更所需的個人資料；啟用前必須完成 OCI 存取／加密／retention 與 T11 刪除說明驗證，不能把本機記憶體 adapter 當成隱私或還原證據。
+- 本機最終驗證：於 `/tmp/whisky-t07-controls` 使用獨立 loopback PostgreSQL fixture 執行 `uv run --project backend pytest backend/tests -q` → **364 passed**（201.11 秒，`/tmp/whisky-t07-backend-savepoint.log`）；真 Temporal local server、兩 DB connection barrier 及 mutation 各有上述反例。`python3 scripts/test_wheel.py` → 4 passed（migration head 0010）；ruff check／format、mypy 60 source files、Python 邊界與 scripts unittest 5 passed。Web Vitest 99 passed、typecheck／邊界／Next build、Playwright 6 passed，edge `wrangler deploy --dry-run` 通過；OpenAPI／TypeScript 契約重生後無 drift，staged diff whitespace 檢查通過。Docker 初次建立新 PostgreSQL 容器在本機負載下超過原 30 秒，屬環境錯誤，改用專用測試 DB 並把 fixture readiness 上限設 90 秒，沒有計為行為 RED。commit／CI 對帳待補；正式 OCI 權限、PITR 還原及資料清除尚未由 T07 宣稱通過。

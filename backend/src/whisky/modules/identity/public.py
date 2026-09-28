@@ -40,6 +40,34 @@ def actor_generation(
     return int(value) if value is not None else None
 
 
+def control_actor_state(
+    connection: Connection, actor_id: UUID, *, lock: bool = False
+) -> tuple[int, bool] | None:
+    """Control commands must also reconcile a now-disabled actor."""
+    query = select(users.c.generation, users.c.active).where(users.c.id == actor_id)
+    if lock:
+        query = query.with_for_update()
+    row = connection.execute(query).first()
+    return (int(row.generation), bool(row.active)) if row is not None else None
+
+
+def disable_actor(connection: Connection, actor_id: UUID, generation: int) -> None:
+    """Advance identity generation as the final step of an actor delete effect."""
+    from sqlalchemy import update
+
+    changed = connection.execute(
+        update(users)
+        .where(
+            users.c.id == actor_id,
+            users.c.generation == generation,
+            users.c.active.is_(True),
+        )
+        .values(active=False, generation=generation + 1)
+    )
+    if changed.rowcount != 1:
+        raise ValueError("IDENTITY_CHANGED")
+
+
 class IdentityAccess:
     """Public authentication and live actor eligibility contract."""
 
@@ -69,6 +97,25 @@ class IdentityAccess:
         actor = self.store.resolve(access.principal)
         assert actor is not None
         if not actor.active:
+            raise HTTPException(403, "ACTOR_DISABLED")
+        return AccessSession(actor.id, access.expires_at, actor.generation)
+
+    def authenticate_control_reconciliation(self, token: str | None) -> AccessSession:
+        """A disabled actor may read/retry its original delete receipt only."""
+        if self.store is None or self.verifier is None:
+            raise HTTPException(503, "IDENTITY_UNAVAILABLE")
+        if token is None:
+            raise HTTPException(
+                401, "UNAUTHENTICATED", headers={"WWW-Authenticate": "Bearer"}
+            )
+        try:
+            access = self.verifier.verify_access(token)
+        except InvalidToken:
+            raise HTTPException(
+                401, "UNAUTHENTICATED", headers={"WWW-Authenticate": "Bearer"}
+            ) from None
+        actor = self.store.lookup(access.principal)
+        if actor is None:
             raise HTTPException(403, "ACTOR_DISABLED")
         return AccessSession(actor.id, access.expires_at, actor.generation)
 
