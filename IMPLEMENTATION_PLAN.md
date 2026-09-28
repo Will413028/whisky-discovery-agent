@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 開始可靠接受研究。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-29。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 已驗收本機可靠受理與對帳，T05 開始 durable Agent。T03–T04 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03 已驗收；T04 開始；T05–T09 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03–T04 已驗收本機出口；T05 開始；T06–T09 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -482,4 +482,5 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 正式 app factory RED：`pytest backend/tests/integration/test_configured_agent.py -q` → 1 failed（503，缺少 acceptance wiring）。GREEN：bootstrap 組合共用 lazy Client adapter，真 PostgreSQL、Temporal local server、uvicorn TCP socket 與 HTTP client 驗到 queued；關閉 SSE socket 後重送找回相同 command／task／Temporal run，GET task 可恢復。僅 JWKS verifier 使用簽章 fixture；DB／Temporal／HTTP 不 mock。此案例斷線點在首份 snapshot 之後，不宣稱已驗到 Agent 完成（T05）。
 - 設定與受理相關測試按目錄分組執行 → 25 passed（14.77 秒）；先前交錯指定 parent／child 目錄時 7 個 fixture lookup errors 不算行為 RED。完整 `uv run --project backend pytest backend/tests -q` → 295 passed（125.08 秒，`/tmp/whisky-t04-configured-full.log`）；wheel → 4 passed（9.75 秒）。ruff／format、mypy 37 source files、Python boundaries、diff whitespace 通過。
 - fresh design-review `/root/t04_config_review` 檢查設定、composition、client lifetime、adapter、deadline、交易、ID／去重、錯誤與部署邊界，NO DESIGN FINDINGS（改 0／記 0／提 0／駁回 0）；核對兩個 shared trees status／log，無 reviewer 寫入。前段 0780428 的 runs 36447286553／36447282183，backend 與 web jobs 均 success。
-- Compose 只新增可選設定，尚未部署專用 Temporal／ResearchWorkflow worker，也未部署 T03–T04 migrations。T04 待整體出口對帳後結案；T05–T12 尚未開始。
+- Compose 只新增可選設定，尚未部署專用 Temporal／ResearchWorkflow worker，也未部署 T03–T04 migrations。T05–T12 的 durable 執行與 live gates 仍待完成。
+- T04 出口對帳（2026-09-29）：本機真 PostgreSQL＋Temporal 驗 committed pending、並行 start、遺失回應後同 ID／run 對帳、completed 重送不重啟，以及正式 API HTTP socket 斷線後重送；未確認接受仍 pending，已確認 queued。完整本機 295、wheel 4、Web 78、E2E 5 與必要 lint／types／boundaries／build 通過。commit `2304fd1` 的 Actions runs `36448719851`、`36448727900` 各自 backend／web jobs 均 success，`gh pr checks 3` 全綠。T04 因此標為**本機已驗收**；本項不要求正式 worker 完成報告或 live 部署，兩者分屬 T05／T09。未部署的 migration 與 worker 不冒充正式環境證據。
