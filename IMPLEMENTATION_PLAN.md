@@ -453,3 +453,24 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 追加既有恢復能力的跨層驗收：`uv run --project backend pytest backend/tests/integration/test_research_reads.py -k actual_temporal -q` → 2 passed。真 PostgreSQL／Temporal 建立研究，HTTP 查詢一般受理與遺失回應後的 pending；同 key 對帳後 command=accepted、task=queued，task ID／Temporal run 保持相同。這是既有受理能力追加驗證，不冒稱本次才取得該能力的行為 RED，也不代表正式 Agent／worker 執行完成。
 - 前段 `72cabcb` 的 push／PR runs `36443243528`、`36443251228`，backend／web jobs 均 SUCCESS。
 - 完整後端驗證：`uv run --project backend pytest backend/tests -q` → 271 passed（56.91 秒）；`python3 scripts/test_wheel.py` → 4 passed（5.81 秒）；ruff／format、mypy 與 Python 邊界通過。本段未改 Web 或公開 HTTP schema；parser 尚未接 `/agent`，T04 保持進行中。
+
+### T04 第八段 — AG-UI turn 原子映射
+
+- 前段 thread ID 問題尚未收到選項回答；它是尚未部署的可逆入口選擇，依使用者本 session「不需要再問」的既有授權採建議方案繼續，不把等待回覆當成授權缺口，也不記為使用者已明確選定 client UUID。client thread/run 只作關聯，task/workflow 仍由伺服器產生；不同 owner 可使用相同 client UUID。
+- 0007 migration 將 task thread 唯一性改為 owner 範圍，增加 agent_turns 的 owner/thread/run 主鍵、command 唯一性與 task／command／owner／thread 複合 FK。outcome 初始 null；終結回合的寫入仍由後續執行接線完成。
+- reserve_turn 在 identity lock 的同一 transaction 內驗既有綁定、共用 reserve 邏輯、保存 task／receipt／turn。相同回合回放原 receipt；變更 key、run、thread 或 payload 拒絕，不多建 task；插入 turn 失敗整筆回滾。
+- 真 DB RED→GREEN：`uv run --project backend pytest backend/tests/integration/test_agent_turns.py -q` → 8 failed（6.54 秒）→8 passed（3.94 秒）；RED 前先建 schema，避免把缺表當行為 RED。測試涵蓋並行、owner 隔離、綁定衝突與第三筆插入失敗回滾。
+- fresh design-review 嘗試 t04_turn_design 遭 host thread limit，尚未完成此 gate；不以作者自查或舊 reviewer 的 correctness 取代。現有 t04_plan_http_design 另做唯讀 correctness review；未提交／未推送／未部署本段。
+- 完整驗證：`uv run --project backend pytest backend/tests -q` → 279 passed（94.58 秒）；`python3 scripts/test_wheel.py` → 4 passed（7.19 秒，migration head 0007）；ruff／format、mypy、Python 邊界通過。首次 full command 在 mypy 的 SQL scalar 型別註記被擋，補 UUID annotation 後才執行上述全套，不算行為 RED。
+- t04_plan_http_design 的獨立 correctness review 未發現缺陷；核對 scope／generation、唯一性、identity lock 序列化、兩組複合 FK、交易與 migration/wheel。主 agent 核對 repo／second-brain status／log，無 reviewer 越界寫入。fresh design-review 仍受 host thread limit 阻擋，未聲稱此 gate 通過；接續 `/agent` 與 observe 接線可先在未提交工作區推進。
+
+### T04 第九段 — AG-UI HTTP 與 DB 觀察接線
+
+- HTTP RED `uv run --project backend pytest backend/tests/integration/test_agent_http.py -q` → 3 failed（5.47 秒，/agent 尚不存在）；GREEN → 3 passed（9.66 秒）。真 DB／Temporal 驗一般 queued、接受後回應遺失的 pending、同回合重送找回原 task／command、正確 run observe、跨 owner／錯 run／錯 revision 404，以及換 run 的 409。未確認執行完成時不發 RUN_FINISHED。
+- AcceptResearch.execute_turn 與原 execute 共用同一受理邏輯；DBObservationSource 先驗持久 turn 關聯，再讀 owner／active generation 的 TaskView。configured_app 的 store 路徑已可使用 DB source，但 Temporal client／settings 尚未 wiring，正式 start 目前仍 fail closed 503，不宣稱已完成正式入口。
+- Web RED `vitest run tests/research-proxy.test.ts` → 1 failed／5 passed（start 被拒絕）；GREEN 後全 Web 78 passed，typecheck／邊界／Next build 與 E2E 5 passed（45.6 秒）。共用 researchStreamProxy 只接受 /agent 與 /agent/observe 的 POST，保持有界 body、固定 origin、no-store／redirect 拒絕，加入公開 X-Command-Id；RunAgentInput／API 契約重新生成。
+- 完整 backend 首輪出現 3 failed；在已確認失敗後以 SIGINT 結束該測試程序取得摘要（66 passed／349.03 秒），沒有因觀察逾時重啟。真 DB 當時沒有 lock wait。原因是 HTTP fixture 的 200 ms 與舊 observe fixture 的 80 ms lifetime 先到期，讓授權／回放測試拿到合法 503。調整整合 fixture 為 2 秒／1 秒；production 60 秒政策與專門的期限／取消測試未改。這是驗證前提修正，不冒稱產品 regression。
+- fresh native reviewer 因 host thread limit 無法建立後，以 codex exec --sandbox read-only --ephemeral 啟動全新 CLI reviewer，未繼承作者對話；使用 design-review 原文提示與相同材料。其 session 01a0e8b2-7833-74e3-9e0c-8a61a6ba0fea 完成，提出 2 項；主 agent 核對 repo／second-brain status／log，無 reviewer 寫入。原先 fresh gate 的 host 阻擋已用此獨立程序解決。
+- 分流：A（外部 ID 沿用 UUID）→「記」：現有 ObserveInput／TaskView／validator 已使用 UUID，第一版本專案 client 可控制 ID 生成，從零設計同一範圍仍採 UUID；不宣稱 AG-UI 普遍要求 UUID。改接任意外部 client 前重評所有 consumer。B（turn FK 指向 start-only scope 的 receipt）→「記」：採納定稿前決定 receipt 形狀的要求；research_commands 已有 scope／key／payload／task／result 欄位；T06 可 ALTER scope check 擴充 research.answer，owner／task FK 不需拆除。已明定同研究模組共用此 receipt 表，避免未來另建表後繞過 FK。兩項具體決定與重評條件已補 VERTICAL_SLICE；改 0／記 2／提 0／駁回 0。
+- 既有 t04_plan_http_design 另做 correctness 複核，無確認缺陷；指出 server acceptance 本身尚未設定應用 deadline，70 秒僅是 Web transport，下一段正式 Temporal wiring 一併處理。真 HTTP client 中途斷線尚未新增跨層驗收，不以既有 cancellation unit gate 冒充此證據。
+- 最終完整 backend：`uv run --project backend pytest backend/tests -q` → 282 passed（77.70 秒）；wheel → 4 passed（6.20 秒，head 0007）；ruff／format、mypy、Python 邊界通過。Web 78／E2E 5、typecheck／Web 邊界／Next build 已於本增量通過。fresh design-review gate 已完成並分流全部 finding；第八／九段可提交，但 T04 保持進行中、未部署，下一段處理正式 Temporal settings/client、受理 deadline 與真 client 斷線證據。

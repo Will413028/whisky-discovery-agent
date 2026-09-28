@@ -52,7 +52,7 @@ def setup(postgres_url, signed_tokens):
     source = Source()
     app = create_app(
         observation_router=observation_router(
-            access, source, ObservationPolicy(lifetime_seconds=0.08)
+            access, source, ObservationPolicy(lifetime_seconds=1)
         )
     )
     payload = {

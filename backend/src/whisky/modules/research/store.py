@@ -11,6 +11,7 @@ from sqlalchemy import Connection, Engine, RowMapping, text
 
 from whisky.modules.discovery.public import locked_plan
 from whisky.modules.identity.public import actor_generation
+from whisky.modules.research.commands import StartTurn
 from whisky.modules.research.domain import workflow_id_for
 from whisky.modules.research.views import ResearchCommandView, TaskView
 
@@ -31,8 +32,85 @@ class ResearchStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
 
+    def reserve_turn(
+        self, owner: UUID, generation: int, turn: StartTurn
+    ) -> StartReceipt:
+        with self.engine.begin() as connection:
+            self._identity(connection, owner, generation)
+            existing = self._receipt(connection, owner, key=turn.command.key)
+            bound_task = connection.execute(
+                text(
+                    "SELECT id FROM research_tasks "
+                    "WHERE owner_id = :owner AND thread_id = :thread"
+                ),
+                dict(owner=owner, thread=turn.thread_id),
+            ).scalar()
+            if bound_task is not None and (
+                existing is None or bound_task != existing["task_id"]
+            ):
+                raise ResearchConflict("TURN_CONFLICT")
+            if existing is not None:
+                prior = connection.execute(
+                    text(
+                        "SELECT thread_id, run_id FROM agent_turns "
+                        "WHERE command_id = :command AND owner_id = :owner"
+                    ),
+                    dict(command=existing["id"], owner=owner),
+                ).first()
+                if prior is not None and (
+                    prior.thread_id != turn.thread_id or prior.run_id != turn.run_id
+                ):
+                    raise ResearchConflict("TURN_CONFLICT")
+            command = turn.command
+            receipt = self._reserve(
+                connection,
+                owner,
+                generation,
+                command.plan_id,
+                command.conditions_revision,
+                command.key,
+                turn.thread_id,
+            )
+            actual_thread: UUID = connection.execute(
+                text(
+                    "SELECT thread_id FROM research_tasks "
+                    "WHERE id = :task AND owner_id = :owner"
+                ),
+                dict(task=receipt.task_id, owner=owner),
+            ).scalar_one()
+            if actual_thread != turn.thread_id:
+                raise ResearchConflict("TURN_CONFLICT")
+            connection.execute(
+                text("""INSERT INTO agent_turns
+                        (owner_id, task_id, thread_id, run_id, command_id)
+                        VALUES (:owner, :task, :thread, :run, :command)
+                        ON CONFLICT (command_id) DO NOTHING"""),
+                dict(
+                    owner=owner,
+                    task=receipt.task_id,
+                    thread=turn.thread_id,
+                    run=turn.run_id,
+                    command=receipt.id,
+                ),
+            )
+            return receipt
+
     def reserve(
         self, owner: UUID, generation: int, plan_id: UUID, revision: int, key: str
+    ) -> StartReceipt:
+        with self.engine.begin() as connection:
+            self._identity(connection, owner, generation)
+            return self._reserve(connection, owner, generation, plan_id, revision, key)
+
+    def _reserve(
+        self,
+        connection: Connection,
+        owner: UUID,
+        generation: int,
+        plan_id: UUID,
+        revision: int,
+        key: str,
+        thread_id: UUID | None = None,
     ) -> StartReceipt:
         if not key.strip() or len(key) > 128 or revision < 1:
             raise ValueError("Invalid research command key or revision")
@@ -41,70 +119,69 @@ class ResearchStore:
                 dict(plan_id=str(plan_id), revision=revision), sort_keys=True
             ).encode()
         ).hexdigest()
-        with self.engine.begin() as connection:
-            self._identity(connection, owner, generation)
-            existing = self._receipt(connection, owner, key=key)
-            if existing is not None:
-                if existing["payload_hash"] != digest:
-                    raise ResearchConflict("IDEMPOTENCY_CONFLICT")
-                if existing["generation"] != generation:
-                    raise ResearchConflict("IDENTITY_CHANGED")
-                if existing["status"] == "accepted":
-                    return self._view(existing)
-                if existing["task_status"] == "completed":
-                    return self._save_acceptance(
-                        connection, existing, existing["temporal_run_id"]
-                    )
-            plan = locked_plan(connection, plan_id, owner)
-            if plan is None or plan.generation != generation:
-                raise ResearchConflict("NOT_FOUND")
-            if plan.conditions_revision != revision:
-                raise ResearchConflict("REVISION_CONFLICT")
-            if existing is not None:
-                if not existing["write_allowed"]:
-                    raise ResearchConflict("TASK_NOT_WRITABLE")
+        existing = self._receipt(connection, owner, key=key)
+        if existing is not None:
+            if existing["payload_hash"] != digest:
+                raise ResearchConflict("IDEMPOTENCY_CONFLICT")
+            if existing["generation"] != generation:
+                raise ResearchConflict("IDENTITY_CHANGED")
+            if existing["status"] == "accepted":
                 return self._view(existing)
-            task_id, command_id, thread_id = uuid4(), uuid4(), uuid4()
-            workflow_id = workflow_id_for(task_id)
-            connection.execute(
-                text("""
-                INSERT INTO research_tasks
-                    (id, owner_id, plan_id, generation, conditions_revision,
-                     conditions_schema_version, conditions, workflow_id, thread_id,
-                     status, stage, view_version, write_allowed)
-                VALUES (:id, :owner, :plan, :generation, :revision, 1,
-                        CAST(:conditions AS jsonb), :workflow, :thread,
-                        'acceptance_pending', '等待受理確認', 1, true)
-            """),
-                dict(
-                    id=task_id,
-                    owner=owner,
-                    plan=plan_id,
-                    generation=generation,
-                    revision=revision,
-                    conditions=plan.conditions.canonical_json(),
-                    workflow=workflow_id,
-                    thread=thread_id,
-                ),
-            )
-            connection.execute(
-                text("""
-                INSERT INTO research_commands
-                    (id, owner_id, generation, scope, key, payload_hash,
-                     task_id, status)
-                VALUES (:id, :owner, :generation, 'research.start', :key, :hash,
-                        :task, 'acceptance_pending')
-            """),
-                dict(
-                    id=command_id,
-                    owner=owner,
-                    generation=generation,
-                    key=key,
-                    hash=digest,
-                    task=task_id,
-                ),
-            )
-            return StartReceipt(command_id, task_id, workflow_id, "acceptance_pending")
+            if existing["task_status"] == "completed":
+                return self._save_acceptance(
+                    connection, existing, existing["temporal_run_id"]
+                )
+        plan = locked_plan(connection, plan_id, owner)
+        if plan is None or plan.generation != generation:
+            raise ResearchConflict("NOT_FOUND")
+        if plan.conditions_revision != revision:
+            raise ResearchConflict("REVISION_CONFLICT")
+        if existing is not None:
+            if not existing["write_allowed"]:
+                raise ResearchConflict("TASK_NOT_WRITABLE")
+            return self._view(existing)
+        task_id, command_id = uuid4(), uuid4()
+        thread_id = thread_id or uuid4()
+        workflow_id = workflow_id_for(task_id)
+        connection.execute(
+            text("""
+            INSERT INTO research_tasks
+                (id, owner_id, plan_id, generation, conditions_revision,
+                 conditions_schema_version, conditions, workflow_id, thread_id,
+                 status, stage, view_version, write_allowed)
+            VALUES (:id, :owner, :plan, :generation, :revision, 1,
+                    CAST(:conditions AS jsonb), :workflow, :thread,
+                    'acceptance_pending', '等待受理確認', 1, true)
+        """),
+            dict(
+                id=task_id,
+                owner=owner,
+                plan=plan_id,
+                generation=generation,
+                revision=revision,
+                conditions=plan.conditions.canonical_json(),
+                workflow=workflow_id,
+                thread=thread_id,
+            ),
+        )
+        connection.execute(
+            text("""
+            INSERT INTO research_commands
+                (id, owner_id, generation, scope, key, payload_hash,
+                 task_id, status)
+            VALUES (:id, :owner, :generation, 'research.start', :key, :hash,
+                    :task, 'acceptance_pending')
+        """),
+            dict(
+                id=command_id,
+                owner=owner,
+                generation=generation,
+                key=key,
+                hash=digest,
+                task=task_id,
+            ),
+        )
+        return StartReceipt(command_id, task_id, workflow_id, "acceptance_pending")
 
     def confirm(
         self, owner: UUID, generation: int, command_id: UUID, run_id: str
@@ -146,6 +223,21 @@ class ResearchStore:
             if changed is None:
                 raise ResearchConflict("TASK_NOT_WRITABLE")
             return self._save_acceptance(connection, row, run_id)
+
+    def observed_task(
+        self, identifier: UUID, run_id: UUID, owner: UUID
+    ) -> TaskView | None:
+        with self.engine.connect() as connection:
+            bound = connection.execute(
+                text(
+                    "SELECT 1 FROM agent_turns "
+                    "WHERE task_id = :task AND run_id = :run AND owner_id = :owner"
+                ),
+                dict(task=identifier, run=run_id, owner=owner),
+            ).first()
+        if bound is None:
+            return None
+        return self.task(identifier, owner)
 
     def command(self, identifier: UUID, owner: UUID) -> ResearchCommandView | None:
         with self.engine.connect() as connection:

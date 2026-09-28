@@ -96,7 +96,9 @@ def create_app(
             response = error_response(
                 503, "DATABASE_UNAVAILABLE", request.state.request_id
             )
-        if request.url.path.startswith(("/api/", "/agent/")):
+        if request.url.path == "/agent" or request.url.path.startswith(
+            ("/api/", "/agent/")
+        ):
             response.headers["Cache-Control"] = "no-store"
         return response
 

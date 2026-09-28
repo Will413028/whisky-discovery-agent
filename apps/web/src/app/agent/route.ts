@@ -1,5 +1,5 @@
-import { researchStreamProxy } from "../../../features/research/proxy";
-import { apiUpstream } from "../../../shared/api/upstream.server";
+import { researchStreamProxy } from "../../features/research/proxy";
+import { apiUpstream } from "../../shared/api/upstream.server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";

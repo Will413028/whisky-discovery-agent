@@ -79,6 +79,10 @@ API 用 owner scope 查詢；外部傳入的 owner、workflow 名稱、queue、�
 
 `RunAgentInput` 的 messages／state／forwarded properties 都是 client input。後端只讀 allowlist 內的 typed command envelope，載入 DB 權威條件；不允許 client 改 owner、工具權限或既有報告。首輪建立 task/thread mapping，收到 runId 重送時先驗 mapping 與 hash。
 
+第一版的 Web／API 應用契約使用 UUID 格式的 AG-UI threadId／runId；client 提供關聯鍵，server 驗證並綁定 owner／task／command，不把 ID 當授權。這是本專案的輸入限制，並非 AG-UI 規格要求所有 ID 都是 UUID。若新增會產生其他 ID 格式的外部 client，整合前須一起重評儲存、ObserveInput、TaskView 與生成 validator，不只放寬 start parser。
+
+研究模組的 command receipts 以 `research_commands` 承接 start 與後續 answer；T04 只啟用已實作的 research.start scope，T06 以 migration 擴充該 scope 約束及 typed result。agent_turns 保留指向同一研究 command 表的 owner／task 複合 FK，無須為 resume 拆除 owner 約束或建立另一套回合 receipt。
+
 TaskView 至少包含 `schemaVersion`、`taskId`、`threadId`、`conditionsRevision`、`viewVersion`、`status`、`stage`、`question`、`reportId`、`error`、`observedAt`。前端只接受相同 task 與期望 revision，且 `viewVersion` 更新的 snapshot；相同版本冪等，舊連線不得覆蓋新頁面。修改條件後重讀 plan，不把舊 task 的 revision 更新成本輪。
 
 ### 互動回合
