@@ -23,6 +23,7 @@ from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.tokens import TokenVerifier
 from whisky.modules.research.http import observation_router as research_router
 from whisky.modules.research.observation import ObservationSource
+from whisky.modules.research.store import ResearchStore
 from whisky.platform.http_errors import PublicAPIError
 
 
@@ -39,7 +40,9 @@ def configured_app(
     )
     app = create_app(
         router(engine, verifier),
-        research_router(IdentityAccess(engine, verifier), source),
+        research_router(
+            IdentityAccess(engine, verifier), source, store=ResearchStore(engine)
+        ),
         plan_router=discovery_router(
             IdentityAccess(engine, verifier), PlanStore(engine)
         ),

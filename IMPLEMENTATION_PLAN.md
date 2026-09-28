@@ -435,3 +435,12 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 驗證命令：`uv run --project backend pytest backend/tests -q` → 249 passed（63.24 秒）；`pnpm --filter @whisky/web test` → 71 passed；`pnpm --filter @whisky/web test:e2e` → 5 passed（13.8 秒）。ruff／format、mypy、Python／Web 邊界、Web typecheck、Next build 通過；build 按既有 fixture 指令清空三個公開 Auth0 build vars。
 - fresh t04_pagination_design：NO DESIGN FINDINGS；覆蓋 ID／索引、keyset、cursor encoding、generation、唯讀交易、query 驗證、shared transport、其他 consumer 與生成契約；改／記／提／駁回均 0。主 agent 核對最終 diff 與兩個共享 tree 的 status／log，無 reviewer 越界修改。
 - 前段 head `2f63910` 的 push／PR runs `36441049266`、`36441057207`，backend／web jobs 均 SUCCESS。本段尚未部署；T04 繼續研究 task／command 查詢、production observation source 與 AG-UI start mapping。
+
+### T04 第六段 — task／command 恢復查詢
+
+- HTTP 行為 RED：`uv run --project backend pytest backend/tests/integration/test_research_reads.py -q` → 4 failed／1 passed；缺少路由讓合法恢復、401 與停用 actor 的 403 失敗。最早 fixture 傳入尚未存在的 store 參數是接線錯誤，不算 RED，已改為既有 router 後取得上述行為證據。
+- GREEN：GET task 讀既有 owner／generation 限定的 TaskView；GET command 讀 research.start receipt，驗 owner／當前 active generation，回公開 command ID、task ID、scope、acceptance。兩者不啟動／重試 Temporal，也不將 pending 改成 accepted；不存在與跨 owner 同為 404。configured_app 接上 ResearchStore，未配置 store 明確 503。
+- Web RED：`vitest run tests/research-reads.test.ts` → 3 failed／3 passed；GREEN 6 passed。catch-all route 轉送受限的 UUID GET task／command；拒絕 query／額外路徑／mutation，沿用固定 origin、Bearer-only、安全 response header 與 no-store。OpenAPI／TypeScript 由 Pydantic 生成。
+- 完整驗證：`uv run --project backend pytest backend/tests -q` → 254 passed（89.74 秒）；`pnpm --filter @whisky/web test` → 77 passed；`python3 scripts/test_wheel.py` → 4 passed（6.35 秒）；`pnpm --filter @whisky/web test:e2e` → 5 passed（11.5 秒）。ruff／format、mypy、Python／Web 邊界、typecheck 與清空公開 Auth0 fixture build vars 的 Next build 通過。
+- t04_plan_http_design 唯讀 correctness review 未發現缺陷：覆蓋 owner／generation、真實 pending／accepted、HTTP authentication、固定 origin Web forwarding。此段僅沿用已審查的 read-store／HTTP／proxy 結構，沒有新 transaction、schema migration 或執行機制。主 agent 已核對 diff 與 repo／second-brain status／log，未見 reviewer 越界修改。
+- 前段 `7a72622` 的 push／PR runs `36442509642`、`36442517530`，backend／web jobs 均 SUCCESS。T04 仍未驗收、未部署；接續 agent_turns mapping、AG-UI start 與 production observation source，再驗真 DB／Temporal／HTTP 接受出口。

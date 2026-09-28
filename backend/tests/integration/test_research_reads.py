@@ -1,0 +1,95 @@
+from uuid import uuid4
+
+import pytest
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
+
+from whisky.bootstrap.api import create_app
+from whisky.modules.discovery.conditions import ResearchConditions
+from whisky.modules.discovery.store import PlanStore
+from whisky.modules.identity.public import IdentityAccess
+from whisky.modules.research.http import observation_router
+
+pytestmark = pytest.mark.integration
+
+
+@pytest.fixture
+async def research_client(research_context, signed_tokens):
+    engine, store, _, _ = research_context
+    verifier, sign = signed_tokens
+    identity = IdentityAccess(engine, verifier)
+    token = sign()
+    actor = identity.authenticate(token)
+    plan = PlanStore(engine).create(
+        actor.actor_id,
+        actor.generation,
+        "read-plan",
+        ResearchConditions(entry="beginner", goal="探索果香"),
+    )
+    receipt = store.reserve(actor.actor_id, actor.generation, plan.id, 1, "start")
+    app = create_app(observation_router=observation_router(identity, None, store=store))
+    async with AsyncClient(
+        transport=ASGITransport(app), base_url="http://test"
+    ) as client:
+        yield client, sign, engine, store, actor, receipt
+
+
+async def test_task_and_command_recover_pending_then_accepted(research_client):
+    client, sign, _, store, actor, receipt = research_client
+    headers = {"Authorization": f"Bearer {sign()}"}
+    for acceptance, status in [
+        ("acceptance_pending", "acceptance_pending"),
+        ("accepted", "queued"),
+    ]:
+        command = await client.get(f"/api/v1/commands/{receipt.id}", headers=headers)
+        task = await client.get(f"/api/v1/tasks/{receipt.task_id}", headers=headers)
+        assert command.status_code == task.status_code == 200
+        assert (
+            command.headers["cache-control"]
+            == task.headers["cache-control"]
+            == "no-store"
+        )
+        assert command.json() == {
+            "id": str(receipt.id),
+            "taskId": str(receipt.task_id),
+            "scope": "research.start",
+            "acceptance": acceptance,
+        }
+        assert task.json()["status"] == status
+        assert task.json()["taskId"] == str(receipt.task_id)
+        assert "ownerId" not in task.json() and "workflowId" not in task.json()
+        store.confirm(actor.actor_id, actor.generation, receipt.id, "test-runtime-run")
+
+
+@pytest.mark.parametrize("resource", ["tasks", "commands"])
+async def test_research_reads_authenticate_and_hide_foreign_resources(
+    research_client, resource
+):
+    client, sign, _, _, _, receipt = research_client
+    identifier = receipt.task_id if resource == "tasks" else receipt.id
+    path = f"/api/v1/{resource}/{identifier}"
+    assert (await client.get(path)).status_code == 401
+    headers = {"Authorization": f"Bearer {sign(sub='foreign')}"}
+    foreign = await client.get(path, headers=headers)
+    missing = await client.get(f"/api/v1/{resource}/{uuid4()}", headers=headers)
+    assert foreign.status_code == missing.status_code == 404
+    assert foreign.json()["code"] == missing.json()["code"] == "NOT_FOUND"
+
+
+@pytest.mark.parametrize(
+    "change,status", [("generation = generation + 1", 404), ("active = false", 403)]
+)
+async def test_research_reads_hide_previous_identity_generation(
+    research_client, change, status
+):
+    client, sign, engine, _, actor, receipt = research_client
+    with engine.begin() as connection:
+        connection.execute(
+            text(f"UPDATE users SET {change} WHERE id = :id"), {"id": actor.actor_id}
+        )
+    for resource, identifier in [("tasks", receipt.task_id), ("commands", receipt.id)]:
+        response = await client.get(
+            f"/api/v1/{resource}/{identifier}",
+            headers={"Authorization": f"Bearer {sign()}"},
+        )
+        assert response.status_code == status

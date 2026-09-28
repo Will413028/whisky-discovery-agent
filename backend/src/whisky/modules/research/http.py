@@ -14,7 +14,9 @@ from whisky.modules.research.observation import (
     ObserveInput,
     Observer,
 )
-from whisky.modules.research.views import TaskView
+from whisky.modules.research.store import ResearchStore
+from whisky.modules.research.views import ResearchCommandView, TaskView
+from whisky.platform.http_errors import PublicAPIError
 
 
 class AuthorizedSource:
@@ -36,6 +38,8 @@ def observation_router(
     identity: IdentityAccess,
     source: ObservationSource | None,
     policy: ObservationPolicy = ObservationPolicy(),
+    *,
+    store: ResearchStore | None = None,
 ) -> APIRouter:
     routes = APIRouter()
     observer = Observer(AuthorizedSource(identity, source), policy)
@@ -45,6 +49,28 @@ def observation_router(
         credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     ) -> AccessSession:
         return identity.authenticate(credentials.credentials if credentials else None)
+
+    @routes.get("/api/v1/tasks/{task_id}", response_model=TaskView)
+    def read_task(
+        task_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> TaskView:
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = store.task(task_id, session.actor_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
+
+    @routes.get("/api/v1/commands/{command_id}", response_model=ResearchCommandView)
+    def read_command(
+        command_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> ResearchCommandView:
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = store.command(command_id, session.actor_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
 
     @routes.post("/agent/observe", response_class=StreamingResponse)
     async def observe(

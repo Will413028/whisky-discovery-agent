@@ -12,7 +12,7 @@ from sqlalchemy import Connection, Engine, RowMapping, text
 from whisky.modules.discovery.public import locked_plan
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.domain import workflow_id_for
-from whisky.modules.research.views import TaskView
+from whisky.modules.research.views import ResearchCommandView, TaskView
 
 
 class ResearchConflict(ValueError):
@@ -146,6 +146,16 @@ class ResearchStore:
             if changed is None:
                 raise ResearchConflict("TASK_NOT_WRITABLE")
             return self._save_acceptance(connection, row, run_id)
+
+    def command(self, identifier: UUID, owner: UUID) -> ResearchCommandView | None:
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            row = self._receipt(connection, owner, identifier=identifier)
+            if row is None or generation is None or row["generation"] != generation:
+                return None
+            return ResearchCommandView(
+                id=row["id"], task_id=row["task_id"], acceptance=row["status"]
+            )
 
     def task(self, identifier: UUID, owner: UUID) -> TaskView | None:
         with self.engine.connect() as connection:
