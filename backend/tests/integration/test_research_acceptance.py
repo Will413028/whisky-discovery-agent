@@ -170,3 +170,25 @@ async def test_completed_task_reconciles_pending_receipt_without_temporal(
                 == "accepted"
             )
         assert store.task(pending.task_id, actor.id).status == "completed"
+
+
+async def test_start_deadline_preserves_committed_pending_receipt(research_context):
+    _, store, (actor, _), plan = research_context
+    cancelled = asyncio.Event()
+
+    class SlowStarter:
+        async def start(self, task_id):
+            try:
+                await asyncio.sleep(30)
+                return "late"
+            finally:
+                cancelled.set()
+
+    service = AcceptResearch(store, SlowStarter(), start_timeout=0.02)
+    async with asyncio.timeout(3):
+        receipt = await service.execute(
+            actor.id, actor.generation, plan.id, 1, "deadline"
+        )
+    assert receipt.acceptance == "acceptance_pending"
+    assert store.task(receipt.task_id, actor.id).status == "acceptance_pending"
+    assert cancelled.is_set()

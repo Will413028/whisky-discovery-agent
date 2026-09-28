@@ -1,5 +1,6 @@
 """Temporal acceptance adapter; inputs come from a persisted research task."""
 
+import asyncio
 from uuid import UUID
 
 from temporalio.client import Client
@@ -7,6 +8,26 @@ from temporalio.common import WorkflowIDConflictPolicy, WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from whisky.modules.research.domain import workflow_id_for
+
+
+class ConnectingTemporalResearchStarter:
+    """Share a lazy client without making API startup depend on Temporal."""
+
+    def __init__(self, address: str, namespace: str, task_queue: str) -> None:
+        self.address = address
+        self.namespace = namespace
+        self.task_queue = task_queue
+        self._client: Client | None = None
+        self._lock = asyncio.Lock()
+
+    async def start(self, task_id: UUID) -> str:
+        async with self._lock:
+            if self._client is None:
+                self._client = await Client.connect(
+                    self.address, namespace=self.namespace, lazy=True
+                )
+            client = self._client
+        return await TemporalResearchStarter(client, self.task_queue).start(task_id)
 
 
 class TemporalResearchStarter:

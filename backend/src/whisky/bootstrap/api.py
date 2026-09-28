@@ -21,9 +21,11 @@ from whisky.modules.discovery.http import plan_router as discovery_router
 from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.tokens import TokenVerifier
+from whisky.modules.research.acceptance import AcceptResearch
 from whisky.modules.research.http import observation_router as research_router
 from whisky.modules.research.observation import ObservationSource
 from whisky.modules.research.store import ResearchStore
+from whisky.modules.research.temporal_start import ConnectingTemporalResearchStarter
 from whisky.platform.http_errors import PublicAPIError
 
 
@@ -38,10 +40,24 @@ def configured_app(
     verifier = TokenVerifier(
         settings.issuer, settings.audience, settings.issuer + ".well-known/jwks.json"
     )
+    research_store = ResearchStore(engine)
+    acceptance = None
+    if settings.temporal is not None:
+        acceptance = AcceptResearch(
+            research_store,
+            ConnectingTemporalResearchStarter(
+                settings.temporal.address,
+                settings.temporal.namespace,
+                settings.temporal.task_queue,
+            ),
+        )
     app = create_app(
         router(engine, verifier),
         research_router(
-            IdentityAccess(engine, verifier), source, store=ResearchStore(engine)
+            IdentityAccess(engine, verifier),
+            source,
+            store=research_store,
+            acceptance=acceptance,
         ),
         plan_router=discovery_router(
             IdentityAccess(engine, verifier), PlanStore(engine)

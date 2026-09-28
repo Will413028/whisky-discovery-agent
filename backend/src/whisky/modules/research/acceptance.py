@@ -1,6 +1,7 @@
 """Reconcile a committed product receipt with Temporal service acceptance."""
 
 import asyncio
+import math
 from typing import Protocol
 from uuid import UUID
 
@@ -15,9 +16,14 @@ class ResearchStarter(Protocol):
 
 
 class AcceptResearch:
-    def __init__(self, store: ResearchStore, starter: ResearchStarter) -> None:
+    def __init__(
+        self, store: ResearchStore, starter: ResearchStarter, start_timeout: float = 10
+    ) -> None:
+        if not math.isfinite(start_timeout) or start_timeout <= 0:
+            raise ValueError("Temporal start timeout must be positive and finite")
         self.store = store
         self.starter = starter
+        self.start_timeout = start_timeout
 
     async def execute(
         self, owner: UUID, generation: int, plan_id: UUID, revision: int, key: str
@@ -41,7 +47,8 @@ class AcceptResearch:
         if receipt.acceptance == "accepted":
             return receipt
         try:
-            run_id = await self.starter.start(receipt.task_id)
+            async with asyncio.timeout(self.start_timeout):
+                run_id = await self.starter.start(receipt.task_id)
         except TimeoutError:
             return receipt
         except RPCError as error:
