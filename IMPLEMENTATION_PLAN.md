@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 純規則與不可變 publication 進行中，T04 起待依序實作。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 開始可靠接受研究。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03 純規則／不可變 publication 進行中；T04–T09 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03 已驗收；T04 開始；T05–T09 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -375,3 +375,10 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - `uv run --project backend pytest backend/tests -q`：171 passed（23.82s）；真 DB catalog tests 20 passed，另補 legacy-null metadata 可解析但不可重新發布的 test，1 passed。`python3 scripts/test_wheel.py`：4 passed，打包 migration head 為 `0004_catalog_provenance`；ruff／mypy 23 source files 通過。
 - 原 T03 兩次 fresh design-review 無設計發現；本次欄位補全由未參與實作的既有 reviewer 追加獨立 correctness／SSOT 對帳，無新增缺陷與阻擋出口缺口。嘗試新 reviewer 遇 host thread limit，沒有冒稱此次另啟 fresh agent，也沒有由作者扮演獨立 reviewer。
 - 人工覆核、30 日政策、真 DB／mutation／不可變引用／draft 隔離出口已有證據；本次提交 CI 成功後可驗收 T03，接續 T04，不把 T03 當作完整產品或 live deployment 驗收。
+
+- T03 最終 CI：head `84c7bb3` 的 push run `36434196560` 與 PR run `36434203958`，各 backend／web job 均 SUCCESS，GitGuardian SUCCESS。PR #2 已合併為 `ec3ff9b`。T03 已驗收；開始 T04。T03 migration／資料尚未部署到 VM，該工作隨後續持久研究部署驗證進行，沒有宣稱 live catalog 已上線。
+
+### T04 前提盤點 — 2026-09-28
+
+- 沿用 ARCHITECTURE 的 DB receipt＋穩定 workflow ID、Temporal 接受確認與明確 running/closed ID 政策；這是跨 DB／Temporal 的非原子邊界，不自建 queue 或 scheduler。完成後重送仍由既有 receipt 返回，不依賴 Temporal retention 永遠保留 history。
+- 已核對 [Temporal workflow ID／run ID](https://docs.temporal.io/workflow-execution/workflowid-runid) 與 [Python Client.start_workflow](https://python.temporal.io/temporalio.client.Client.html#start_workflow)；實際 policy 與 start response loss 將用已固定 SDK 和真 Temporal 驗證，不以文件或 mock 當通過。
