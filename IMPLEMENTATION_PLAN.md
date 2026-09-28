@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：規劃完成、尚未執行。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
+更新：2026-09-28。狀態：T00 本機骨架 GREEN，CI 設定已建立、遠端尚未執行；T01 起未開始。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作；保留 Next.js／AG-UI／PydanticAI／Temporal、業務模組與 `backend/src/whisky/`。本文件管理細項執行證據，既有主待辦管理產品優先順序，不建立另一份 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -8,13 +8,13 @@
 
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
-| 技術入口 | T00–T02 | 未開始 |
+| 技術入口 | T00–T02 | T00 本機 GREEN；T01–T02 未開始 |
 | 持久研究骨架與樣本 | T03–T09 | 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
 
-狀態可為未開始、RED、GREEN、REFACTOR、已驗收、受阻。只有本階段的必要自動化與外部 gate 均通過才標已驗收；blocked 的整合不得用 mock 結果代替。此輪只規劃，不建立應用目錄、下載依賴、開通服務或存取 secrets。
+狀態可為未開始、RED、GREEN、REFACTOR、已驗收、受阻。只有本階段的必要自動化與外部 gate 均通過才標已驗收；blocked 的整合不得用 mock 結果代替。規劃階段已結束，現依 T00 開始實作；下載、登入與部署授權仍依當次工作範圍處理。
 
 ## 每個增量的 RED → GREEN → REFACTOR
 
@@ -178,4 +178,44 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 ## 執行證據
 
-尚無。此文件僅完成計畫整理；第一個執行項為 T00，不能將文件連結／Markdown 檢查寫成應用的 RED 或 GREEN。
+### T00 — 2026-09-28 本機骨架
+
+基線：`git status --short` 為乾淨，`git log -5 --oneline` 起點 `7d2a7df`。以下命令以 repo 根目錄為工作目錄；實際執行使用絕對路徑。產物為本增量的 source、lockfiles、測試及 `.github/workflows/ci.yml`，沒有部署 artifact 或業務完成宣告。
+
+| 案例／測試路徑 | 首次 RED 命令與實際原因 | GREEN／驗證 |
+|---|---|---|
+| wheel API：`backend/tests/test_installed.py::test_installed_api_answers_liveness` | `python3 scripts/test_wheel.py`：wheel 安裝成功、repo 外可 import，但 `create_app()` 回 None，assertion 失敗 | 加入 FastAPI 與 `/health/live` 後相同命令通過；後續改用 httpx ASGI transport 消除 TestClient deprecation，保持相同斷言 |
+| wheel worker CLI：同檔 `test_installed_worker_entrypoint` | 同上：`whisky-worker --help` 空輸出，缺少 `--task-queue` | 實作 CLI 後通過；不以 help 當真正執行證據 |
+| worker 程序：`backend/tests/integration/test_temporal.py::test_worker_process_executes_bootstrap_probe` | `uv run --project backend pytest backend/tests/integration/test_temporal.py -q`：真 server 接受 workflow 後 worker 提早 exit 0，assertion `worker exited before processing a workflow` | 註冊基礎設施用 BootstrapProbe、啟動 Worker poll 後通過；wheel 測試亦從 repo 外啟動獨立 worker 並完成相同工作 |
+| Web：`apps/web/src/app/page.test.tsx` | `pnpm --filter @whisky/web test`：空 main 找不到「威士忌探索」heading | 加上入口及未完成提示後通過 |
+| workerd hydration：`apps/web/tests/e2e/smoke.spec.ts` | build 後 `pnpm --filter @whisky/web test:e2e`：真頁面有 heading，但找不到「了解探索方式」button | 加入 welcome client component 後按鈕可展開說明，pageerror 為空，1 passed |
+| Python domain/framework：`scripts/tests/test_python_boundaries.py` | `python3 -m unittest discover -s scripts/tests -t scripts`：4 個 framework 違規 fixtures 回傳空錯誤 | AST gate 拒絕 SQLAlchemy／FastAPI／Temporal／PydanticAI；合法 domain imports 通過 |
+| Python 跨模組內部引用：同檔 | 同上：絕對、相對、from package import 三種引用形式及跨 domain 共 4 個反例未攔下 | gate 只允許跨模組 `public` 契約；同模組與合法公開 import 通過 |
+| Python domain 經本地層接入 infrastructure：同檔 | 同上：adapters／platform／bootstrap 3 個反例未攔下 | domain 對專案內依賴限同模組 domain，4 個 test methods 全數通過 |
+| 複核回歸 `domain.py`：同檔 `test_single_file_domain_obeys_same_boundaries` | 同上：單檔 domain 引入 SQLAlchemy／platform 2 個反例未攔下 | 依去除副檔名後的模組層判定，單檔／目錄同規則；5 個 methods 通過，獨立複核確認修正 |
+| Web shared→feature：`apps/web/tests/boundaries.test.ts` | Vitest：import／re-export／dynamic literal import 3 個違規 fixtures 未攔下 | Babel AST gate 拒絕；app 組合公開 feature 通過 |
+| Web 跨 feature 內部引用：同檔 | Vitest：alias／相對路徑 2 個違規 fixtures 未攔下 | gate 拒絕內部引用，公開 index 與同 feature 通過；含首頁共 10 tests passed |
+
+純設定／真環境 smoke（不冒充 RED）：
+
+- `uv run --project backend pytest backend/tests -q`：5 passed；PostgreSQL 18 digest 固定，獨立 UUID 容器／隨機 loopback port，驗真 UUID 欄位與 SQL 往返，finally 只停止自己的容器。沒有產品 migration，不能當 schema／交易競爭驗收。
+- Temporal SDK 1.33.0 的 local server 實測 CLI 1.9.1／Server 1.32.0；macOS ARM64 可啟動 time-skipping，七天 timer 實際跳時通過。這是 SDK smoke，不是 worker crash、history replay 或 PostgreSQL persistence／restore 驗收。
+- `python3 scripts/test_wheel.py`：乾淨 venv、非 editable wheel、repo 外 cwd、移除 PYTHONPATH，執行 API、CLI、獨立 worker 與 timer 共 4 個案例。
+- `ruff check`、`ruff format --check`、`mypy backend/src`、Web `typecheck`、兩端實際 source 邊界掃描、`pnpm peers check`、production build 皆作本機驗證。依賴下載與最初 unittest discovery 問題未計入 RED。
+- `.github/workflows/ci.yml` 使用相同命令；尚未 push／觸發 GitHub Actions。未實作的契約生成、replay、恢復及 live gates 不列假成功 jobs。
+
+版本與相容性：
+
+| 層 | 實測／候選 |
+|---|---|
+| Python／API | Python 3.13.13、uv 0.12.9、FastAPI 0.141.1、Pydantic 2.13.5；`backend/uv.lock` |
+| Worker／DB 測試 | Temporal SDK 1.33.0、psycopg 3.3.6、PostgreSQL 18.6 多平台 image index digest（本機使用 ARM64）；`docker buildx imagetools inspect postgres@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873 --raw` 確認含 linux/amd64、linux/arm64，未在 VM 安裝 |
+| Web | Node 26.8.1、pnpm 11.2.2、Next 16.3.6、React 19.3.0、vinext 1.0.0-beta.13、Vite 8.3.1、Cloudflare Vite plugin 1.61.0、Wrangler 4.142.0；`pnpm-lock.yaml` |
+| 測試工具 | pytest 9.1.1、Vitest 5.0.2、Playwright 1.63.0、TypeScript 7.0.2 |
+| Agent／AG-UI 候選 | PyPI metadata：PydanticAI slim 2.51.0 支援 Python ≥3.10、Temporal ≥1.27；其 AG-UI extra 要求 `ag-ui-protocol>=0.1.10,<1`，相容範圍最新 0.1.22。Python／TS AG-UI 最新均為 1.0.0，不能直接混裝最新版本。尚未加入產品依賴；T02 選定能通過 interrupt／resume round-trip 的組合，若不成立則重評。metadata 不等於整合成功。 |
+
+前提盤點：已授權的唯讀 SSH 查得 Ubuntu 24.04.4 ARM64、4 CPU、RAM total 23,974 MiB／available 21,902 MiB、root available 128 GiB、load 0.16／0.16／0.17（2026-09-28 本輪快照）。主機另有 workload；此刻餘裕不等於新增 stack 的容量驗收。帳戶既有查核紀錄為 PAYG，Oracle [公開價目表](https://www.oracle.com/cloud/price-list/)的 paid tenancy A1 額度為每月 3,000 OCPU-hours／18,000 GB-hours；與 Free Tier 的 1,500／9,000 不可混用。未重新查 OCI Usage API、未改動 VM；個人 inventory／查核來源位置留於 ignored local context。
+
+尚未驗證：GitHub Actions、Linux／Oracle ARM 安裝產物與新增 workload 量測、Agent／AG-UI 組合、真 Auth0／VPC／SSE、備份還原。T00 保持 GREEN 而非整體技術入口已驗收；T01–T12 未開始。
+
+獨立複核：1 個 P2 finding（單檔 domain gate）已依 RED→GREEN 修正並回看；PostgreSQL ARM-only 疑點經 registry index 證據排除。主程序另以 `docker run --rm -v "$PWD:/repo:ro" -w /repo rhysd/actionlint:1.7.12 .github/workflows/ci.yml` 驗 CI YAML 通過；不等同 Actions job 已執行。

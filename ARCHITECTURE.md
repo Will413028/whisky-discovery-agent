@@ -1,6 +1,6 @@
 # Whisky Discovery Agent 技術架構
 
-更新：2026-09-28。第一版採 **Cloudflare Workers 上的 Next.js、AG-UI、PydanticAI＋Python 後端與 Temporal**；無自有網域時以 `workers.dev`、Auth0 Free 與 Workers VPC Service 連接既有 Oracle VM 作為實作基準。Oracle Ampere ARM VM（使用者回報 4 CPU／24 GB）目前帳單 US$0，但其免費資格與可用容量尚未核對；Cloudflare 優先 Free，最多考慮 Workers Paid 的 US$5 基本費，不新增其他持續付費服務。Workers adapter、VPC/SSE、登入、VM 額度與還原仍須實測，尚未建立應用。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
+更新：2026-09-28。第一版採 **Cloudflare Workers 上的 Next.js、AG-UI、PydanticAI＋Python 後端與 Temporal**；無自有網域時以 `workers.dev`、Auth0 Free 與 Workers VPC Service 連接既有 Oracle VM 作為實作基準。Oracle Ampere ARM VM 以 4 CPU／24 GB、目前帳單 US$0 為基準；免費資格須按 PAYG／Free Tier 類型及總用量分別核對。Cloudflare 優先 Free，最多考慮 Workers Paid 的 US$5 基本費，不新增其他持續付費服務。入口、額度與還原仍須實測；目前實作證據見 IMPLEMENTATION_PLAN。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
 
 ## 已確定與待選項
 
@@ -13,7 +13,7 @@
 | Web／互動協定 | Next.js 部署在 Cloudflare Workers；AG-UI 是 Agent 互動的前後端協定。vinext 優先驗證，仍需實測。 |
 | 身分與入口 | 無自有網域；訪客可看公開 catalog，私人探索使用 Auth0 Free 登入；Web 先用 `workers.dev`。 |
 | API／產品保存 | FastAPI、PostgreSQL＋SQLAlchemy／psycopg／Alembic 為第一版實作基準；與 Temporal、備份的容量和恢復仍待實測。 |
-| 託管與預算 | 現有 Oracle VM 帳單 US$0，但官方現行 A1 免費額度與回報的 4 CPU／24 GB 不一致；先查帳戶與 shape，不把現況當未來保證。Cloudflare Free 優先，Workers Paid US$5 基本費不是用量硬上限。 |
+| 託管與預算 | 現有 Oracle VM 帳單 US$0；A1 的 PAYG 與 Free Tier 公開免費時數不同，按實際帳戶與總用量核對，不把現況當未來保證。Cloudflare Free 優先，Workers Paid US$5 基本費不是用量硬上限。 |
 | 既有技術 | ADK、LangGraph、Agent Server 及全 TypeScript 都不是限制；舊版只有文件，沒有應用歷史要相容遷移。 |
 | 後續功能 | 定期追蹤、通知及自動發布仍未納入 MVP。 |
 
@@ -195,7 +195,11 @@ Next.js Web 部署於 `*.workers.dev` 的 Cloudflare Worker，靜態檔案由 Wo
 | OCI Object Storage | 若帳戶仍有 Always Free 物件容量／請求額度，存加密備份及最小控制紀錄 | $0（額度內） |
 | **本輪預期新增固定費** | 先不啟用 Workers Paid 或其他付費資源；OCI 帳戶權益、Workers CPU／VPC、備份容量均待驗證 | **$0／月（目標，未驗證）** |
 
-[Workers 靜態資產](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/)請求免費，動態 SSR 會計入 [Workers Free 限制](https://developers.cloudflare.com/workers/platform/limits/)；10 ms CPU 不保證容納 Next.js SSR，先在 workerd preview 與實際帳戶量測，超限即失敗而不自動升級付費。[Auth0 Free](https://auth0.com/pricing/)目前公布最多 25,000 MAU；[Workers AI Free](https://developers.cloudflare.com/workers-ai/platform/pricing/)每日 10,000 Neurons，超額會失敗。[OCI A1 Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)現公布每月 1,500 OCPU-hours／9,000 GB-hours，約等於 2 OCPU／12 GB；若使用者回報的 4 CPU 是 4 OCPU，超出現行公開額度，不能由目前 US$0 帳單推論未來仍免費。先在 OCI Console 核對帳戶是 Always Free、Trial 或 Pay As You Go、VM shape／OCPU、home region 與成本分析；[帳戶類型畫面](https://docs.oracle.com/en-us/iaas/Content/GSG/Concepts/console_topic-AccountCenter-Billing.htm)可辨識。Object Storage 公布的免費容量依帳戶類型不同，且與既有用量共用；啟用備份前查剩餘額度、預估 base backup／WAL、保留期並實測還原，超額就不能宣稱零新增月費。若 OCI 物件額度不足，[Cloudflare R2 Standard 免費額度](https://developers.cloudflare.com/r2/pricing/)可比較，但超額也可能計費，不能未盤點就改接。Cloudflare Workers Paid 的 [US$5 基本費](https://developers.cloudflare.com/workers/platform/pricing/)還有額外用量費，因此**不能視為 US$5 帳單硬上限**；本輪先不開通。模型候選 [GLM-4.7-Flash](https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/)具多語與 function calling，[官方免費模型公告](https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/)仍將它列在 Workers Free；實際 PydanticAI 相容與威士忌任務品質仍需固定語料測試。後端對每個研究設模型呼叫／token 上限、每日總量與超額狀態，不能悄悄改用付費 API。
+[Workers 靜態資產](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/)請求免費，動態 SSR 會計入 [Workers Free 限制](https://developers.cloudflare.com/workers/platform/limits/)；10 ms CPU 不保證容納 Next.js SSR，先在 workerd preview 與實際帳戶量測，超限即失敗而不自動升級付費。[Auth0 Free](https://auth0.com/pricing/)目前公布最多 25,000 MAU；[Workers AI Free](https://developers.cloudflare.com/workers-ai/platform/pricing/)每日 10,000 Neurons，超額會失敗。
+
+[OCI A1 Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)公布每月 1,500 OCPU-hours／9,000 GB-hours；[Oracle PAYG 價目表](https://www.oracle.com/cloud/price-list/)則列 paid tenancy 每月前 3,000 OCPU-hours／18,000 GB-hours 免費。4／24 全天跑 31 天為 2,976／17,856，落在後者的 compute 額度內；額度由 tenancy 內 A1 VM、bare metal 與 container instances 共用。不能以 Free Tier 文件排除 PAYG 的 4／24，也不能由目前 US$0 帳單推論未來仍免費。帳戶類型、VM shape／OCPU、區域與成本分析須以帳戶證據核對；[帳戶類型畫面](https://docs.oracle.com/en-us/iaas/Content/GSG/Concepts/console_topic-AccountCenter-Billing.htm)可辨識。
+
+Object Storage 公布的免費容量依帳戶類型不同，且與既有用量共用；啟用備份前查剩餘額度、預估 base backup／WAL、保留期並實測還原，超額就不能宣稱零新增月費。若 OCI 物件額度不足，[Cloudflare R2 Standard 免費額度](https://developers.cloudflare.com/r2/pricing/)可比較，但超額也可能計費，不能未盤點就改接。Cloudflare Workers Paid 的 [US$5 基本費](https://developers.cloudflare.com/workers/platform/pricing/)還有額外用量費，因此**不能視為 US$5 帳單硬上限**；本輪先不開通。模型候選 [GLM-4.7-Flash](https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/)具多語與 function calling，[官方免費模型公告](https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/)仍將它列在 Workers Free；實際 PydanticAI 相容與威士忌任務品質仍需固定語料測試。後端對每個研究設模型呼叫／token 上限、每日總量與超額狀態，不能悄悄改用付費 API。
 
 ## 資料與執行權威
 

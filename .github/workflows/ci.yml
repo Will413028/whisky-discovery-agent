@@ -1,0 +1,48 @@
+name: T00 deterministic checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.12.9"
+      - run: uv sync --project backend --frozen
+      - run: uv run --project backend ruff check backend scripts
+      - run: uv run --project backend ruff format --check backend scripts
+      - run: uv run --project backend mypy backend/src
+      - run: python3 -m unittest discover -s scripts/tests -t scripts
+      - run: python3 scripts/check_python_boundaries.py backend/src
+      - run: uv run --project backend pytest backend/tests -q
+      - run: python3 scripts/test_wheel.py
+
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "26.8.1"
+      - run: npm install --global pnpm@11.2.2
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @whisky/web typecheck
+      - run: pnpm --filter @whisky/web check:boundaries
+      - run: pnpm --filter @whisky/web test
+      - run: pnpm --filter @whisky/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @whisky/web build
+      - run: pnpm --filter @whisky/web test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: whisky-workerd-failure
+          path: apps/web/test-results

@@ -1,0 +1,1 @@
+"""Whisky Discovery application package."""

@@ -1,0 +1,10 @@
+{
+  "name": "whisky-discovery-workspace",
+  "private": true,
+  "packageManager": "pnpm@11.2.2",
+  "scripts": {
+    "test:web": "pnpm --filter @whisky/web test",
+    "build:web": "pnpm --filter @whisky/web build",
+    "typecheck": "pnpm --filter @whisky/web typecheck"
+  }
+}

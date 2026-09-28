@@ -19,3 +19,10 @@ test-results/
 *.log
 *.tsbuildinfo
 .DS_Store
+__pycache__/
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.egg-info/
+.wrangler/
