@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-29。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 已驗收本機可靠受理與對帳；T05 durable Agent 已實作，正驗本機及 CI 出口。T03–T05 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-29。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 已驗收本機 catalog／真 DB／人工覆核出口；T04 已驗收本機可靠受理與對帳；T05 durable Agent 已驗收本機及 CI 出口。T03–T05 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03–T04 已驗收本機出口；T05 已實作、待最終本機／CI 對帳；T06–T09 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03–T05 已驗收本機出口，T05 CI 全綠；T06–T09 未完成 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -494,4 +494,4 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - RED→GREEN：report claim／price 表尚不存在時 2 failed／5 passed，增 schema／保存後通過；跨候選 citation FK、tag-only／假 fact、嚴格預算、錯誤價格 ID、政策版本不符皆由真 PostgreSQL 拒絕。跳過工具的受控模型先 RED（直接完成），加已完成 tool return 守門後 GREEN；無效 claim 原先讓 task 停 `researching` 的 RED，新增 fenced failure activity 後為 `failed`，取消／已完成 task 不被覆寫。
 - 真 HTTP／Temporal／PostgreSQL 驗首份 snapshot 後 SSE socket 關閉仍完成報告；保持串流時完成送已保存 `whisky.report`、`RUN_FINISHED success`，無效模型結果送安全 `RUN_ERROR`，turn outcome 交易保存。舊 probe 測試揭示缺設定 worker 仍可在研究 queue 接任務的風險；正式 worker 缺設定 fail fast，probe 改 `--probe-only` 與 `whisky-probe-` 隔離 queue。
 - fresh design-review 的五項初始發現已處理：claim／價格來源、政策／prompt 版本、fail-closed worker、完整 catalog 覆蓋；可變 process-local agent 註冊保留單 worker／process 前提，T06 長等待或正式升版前須補相容舊 history 的版本化 executor。複查新增「research 直接 JOIN catalog 表」已改為 `catalog.public` 查詢。獨立 correctness review 的失敗終態、跳過工具、AG-UI 完成終態三項均以可重現測試修復。兩名 reviewer 均唯讀；主 agent 核對 repo status/log 與 second-brain 專案路徑，未見 reviewer 越界寫入；second-brain HEAD 另由其他 session 前進，未改其內容。
-- 本機最終驗證：`uv run --project backend pytest backend/tests -q` → 316 passed（126.25 秒）；修正 catalog 公開讀取邊界後相關整合測試 21 passed，另新增的取消／終態 fence 案例 1 passed；wheel 4 passed（migration head 0008）。ruff check／format、mypy 45 files、Python 邊界與腳本 unittest 5 passed；Web 79 passed、typecheck、邊界與 Next build 通過；staged diff whitespace check 通過。CI 結論待接續記錄；T05 不等同 T06 補充等待、T08 真模型品質或 T09 正式部署／還原 gate。
+- 本機最終驗證：`uv run --project backend pytest backend/tests -q` → 316 passed（126.25 秒）；修正 catalog 公開讀取邊界後相關整合測試 21 passed，另新增的取消／終態 fence 案例 1 passed；wheel 4 passed（migration head 0008）。ruff check／format、mypy 45 files、Python 邊界與腳本 unittest 5 passed；Web 79 passed、typecheck、邊界與 Next build 通過；staged diff whitespace check 通過。commit `dad8445` 的 push run `36458432254` 與 PR run `36458465361` 各自 backend／web jobs 均 success，`gh pr checks 4` 全綠；T05 因此標為**本機與 CI 已驗收**。T06 補充等待、T08 真模型品質及 T09 正式部署／還原各有獨立 gate。
