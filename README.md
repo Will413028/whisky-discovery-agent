@@ -10,7 +10,7 @@
 
 ## 開發方向
 
-- [技術架構](ARCHITECTURE.md) 已確定 PydanticAI＋Python 後端＋Temporal；Temporal 管任務生命週期，PydanticAI 管模型與工具協調。預算改為沿用現有帳單 US$0 的 Oracle Ampere VM，Cloudflare 最多考慮 Workers Paid US$5 基本費。待核定配套為 Cloudflare Pages 靜態 React、VM 上的 FastAPI／PostgreSQL／Temporal、Clerk Hobby、Workers AI Free 候選及 VM 外備份；未開通服務，容量與還原仍待實測。
+- [技術架構](ARCHITECTURE.md) 採 Cloudflare Workers 上的 Next.js、AG-UI Agent 互動、Oracle VM 上的 FastAPI／PostgreSQL／PydanticAI＋Temporal。無自有網域時，前端先用 `workers.dev`、登入採 Auth0 Free、同源 API 經 Workers VPC Service／具名 Tunnel 連私有後端；逐階段狀態與報告由產品 DB 支援重連。vinext、VPC/SSE、Workers CPU、Oracle 免費資格及備份還原仍待實測；目前帳單 US$0 不等於長期免費額度已確認，尚未開通新服務。
 - 這是可獨立開發與部署的產品；不依賴其他作品的執行環境。
 - 第一個垂直流程驗證委託研究、查證、等待補充、跨程序恢復與保存；另測 worker crash、Update 重送、取消與舊 history replay，再擴展完整探索 UI。
 - 展示採用小型、人工查證的真實酒款庫，保留版本、來源與查核日期；合成資料限於明確標示並隔離的測試情境。

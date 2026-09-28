@@ -1,6 +1,6 @@
 # Whisky Discovery Agent 技術架構
 
-更新：2026-09-28。**已確定採 PydanticAI＋Python 後端＋Temporal**：使用者先選第三條執行路線，再確認 PydanticAI。部署預算改為沿用現有帳單 US$0 的 Oracle Ampere ARM VM（4 CPU／24 GB），Cloudflare 最多接受 Workers Paid 的 US$5 基本費，不新增其他持續付費服務；以下配套仍是待驗證提案，尚未建立應用。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
+更新：2026-09-28。第一版採 **Cloudflare Workers 上的 Next.js、AG-UI、PydanticAI＋Python 後端與 Temporal**；無自有網域時以 `workers.dev`、Auth0 Free 與 Workers VPC Service 連接既有 Oracle VM 作為實作基準。Oracle Ampere ARM VM（使用者回報 4 CPU／24 GB）目前帳單 US$0，但其免費資格與可用容量尚未核對；Cloudflare 優先 Free，最多考慮 Workers Paid 的 US$5 基本費，不新增其他持續付費服務。Workers adapter、VPC/SSE、登入、VM 額度與還原仍須實測，尚未建立應用。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
 
 ## 已確定與待選項
 
@@ -10,9 +10,11 @@
 | 執行權威 | Temporal 管工作派送、等待、重試及恢復；Agent framework 管模型與工具協調。 |
 | 產品範圍 | 個人探索計畫、可交辦研究，沿用雙入口、六項基礎能力、小型 reviewed catalog、台灣參考價格及可靠記憶。 |
 | Agent framework | 已選 PydanticAI＋Python 後端，使用官方 Temporal 整合；Mastra TypeScript 留作替代紀錄。 |
-| Web／產品保存 | 新配套提案：Vite／React 靜態 Web、FastAPI、Clerk Hobby、PostgreSQL＋SQLAlchemy／psycopg／Alembic；尚待核定。 |
-| 託管與預算 | 沿用使用者現有 Oracle VM，帳單目前 US$0；Cloudflare Free 優先，Workers Paid US$5 基本費是可接受上限而非用量硬上限。自架 Temporal 與產品 DB 的營運／恢復須實測。 |
-| 既有技術 | ADK、AG-UI、LangGraph、Agent Server 及全 TypeScript 都不是限制；舊版只有文件，沒有應用歷史要相容遷移。 |
+| Web／互動協定 | Next.js 部署在 Cloudflare Workers；AG-UI 是 Agent 互動的前後端協定。vinext 優先驗證，仍需實測。 |
+| 身分與入口 | 無自有網域；訪客可看公開 catalog，私人探索使用 Auth0 Free 登入；Web 先用 `workers.dev`。 |
+| API／產品保存 | FastAPI、PostgreSQL＋SQLAlchemy／psycopg／Alembic 為第一版實作基準；與 Temporal、備份的容量和恢復仍待實測。 |
+| 託管與預算 | 現有 Oracle VM 帳單 US$0，但官方現行 A1 免費額度與回報的 4 CPU／24 GB 不一致；先查帳戶與 shape，不把現況當未來保證。Cloudflare Free 優先，Workers Paid US$5 基本費不是用量硬上限。 |
+| 既有技術 | ADK、LangGraph、Agent Server 及全 TypeScript 都不是限制；舊版只有文件，沒有應用歷史要相容遷移。 |
 | 後續功能 | 定期追蹤、通知及自動發布仍未納入 MVP。 |
 
 ## 執行路線的決策
@@ -41,32 +43,33 @@
 
 ## 配套選型的前提與替代
 
-真實限制是 Python Agent 後端、Temporal、可跨裝置找回探索紀錄、小型人工覆核 catalog、個人維護，以及沿用現有 Oracle VM／Cloudflare、持續費用 US$0 優先且最多考慮 Cloudflare Workers Paid US$5 基本費。TypeScript 全棧、Next.js、Render、Temporal Cloud、既有資料遷移、微服務與本機保存都不是限制。這是選型與預算邊界，不是開通服務的授權。
+真實限制是已選 Cloudflare Workers 上的 Next.js、AG-UI、Python Agent 後端、Temporal、可跨裝置找回探索紀錄、小型人工覆核 catalog、個人維護、無自有網域，以及沿用現有 Oracle VM／Cloudflare、持續費用 US$0 優先且最多考慮 Cloudflare Workers Paid US$5 基本費。TypeScript 全棧、每頁 SSR、Render、Temporal Cloud、既有資料遷移、微服務與本機保存都不是限制。這是選型與預算邊界，不是開通服務的授權。
 
 | 可行組合 | 收益與代價 | 本案處理 |
 |---|---|---|
-| **Oracle VM 自架服務＋Cloudflare 靜態前端** | 符合現有零費用 VM 與 Python／Temporal 常駐需求；代價是單機故障、升級、備份及還原由自己負責。 | **本輪首選**；先量測磁碟、實際共用負載與 ARM 相容性。 |
+| **Oracle VM 自架服務＋Cloudflare Workers Next.js** | 符合既有 VM 與指定 Web 平台；代價是單機資料／workflow 維運，以及 Workers 執行額度與 adapter 相容性要實測。 | **已選部署邊界**；先量測 VM 容量與 Workers 真實執行。 |
 | 全部放 Cloudflare Workers／D1／Workflows | 邊緣託管減少 VM 操作，但會改寫 Python／Temporal 的執行權威與長時間工作契約；Workers Paid 另有用量超額。 | 不為部署平台推翻已確定的框架與 workflow。 |
 | Render／託管 PostgreSQL＋Temporal Cloud | 維運與恢復工具較完整，適合有月費預算；前版試算固定計算即 US$59.50／月，另有 Temporal 用量與模型費。 | 歷史替代方案，已因新預算退出本輪首選。 |
 
 這是依本案約束做的工程判斷，不是市場普及率排名。若取消費用限制，託管資料庫與 Temporal 會減少個人維運，但不改變產品 domain、API、workflow 與資料契約。單一 VM 不提供高可用性；可靠保存要靠 VM 外備份與演練，不能把「目前帳單 US$0」推論為服務等級保證。
 
-Web 比較 **Vite／React SPA** 與 **Next.js**：前者可純靜態部署到 Pages Free，直接呼叫受驗證的 Python API；後者可集中 SSR／BFF，但本產品尚無 SEO／SSR 需求，會增加 Node runtime 與成本。本輪改選 Vite／React。FastAPI 適合 typed API 與 PydanticAI 共用 Python 契約；Django 在內建後台、表單及 ORM 整合優先時更有吸引力，目前沒有這項優先順序。[Pages 靜態請求](https://developers.cloudflare.com/pages/functions/pricing/)免費；加入 Pages Functions 才計入 Workers 用量。
+Web framework 與平台已選 **Next.js on Cloudflare Workers**，本案仍採 Next.js Web＋Python API 的責任切分。Cloudflare 目前建議新專案用 vinext，OpenNext 為既有應用或 vinext 相容缺口的替代；vinext 仍是 beta，所以 adapter 尚不宣稱定案。建立骨架時在實際 workerd runtime 驗 App Router、登入候選、AG-UI/SSE、hydration、路由與 CPU 用量，再鎖定 vinext 或 OpenNext。靜態資產交由 Workers Assets；公開頁可預先產生，私有探索與報告以 FastAPI 的 owner 驗證結果為準，不因 Next.js 有 SSR／Route Handlers 就複製產品 domain 或另建資料權威。[Cloudflare Next.js Workers 指引](https://developers.cloudflare.com/workers/framework-guides/web-apps/nextjs/)、[OpenNext 替代路徑](https://developers.cloudflare.com/workers/framework-guides/web-apps/opennext/)。FastAPI 適合 typed API 與 PydanticAI 共用 Python 契約；Django 在內建後台、表單及 ORM 整合優先時更有吸引力，目前沒有這項優先順序。
 
 ## 建議配套與專案結構
 
-以下整套配套均為 **待核定提案**；已確定的仍只有 PydanticAI＋Python＋Temporal。先確認架構邊界，骨架再鎖定通過相容性驗證的穩定版本。
+以下是第一版**實作基準**，不是已驗證的部署。已選 Next.js／AG-UI／PydanticAI／Temporal；Auth0、VPC、資料庫與備份依無網域和費用限制收斂，骨架須通過相容、額度與還原驗證後才鎖定實際版本或宣稱可上線。
 
 | 層 | 建議 | 責任 |
 |---|---|---|
-| Web | Vite＋React＋TypeScript，Cloudflare Pages Free 靜態資產 | 探索畫面、帳號互動；不執行長研究或保存私人狀態。 |
+| Web | Next.js App Router＋TypeScript，部署在 Cloudflare Workers；vinext 為首個驗證候選 | 探索畫面、帳號互動與必要的邊緣頁面回應；不執行長研究或保存私人狀態。 |
 | 產品 API | FastAPI＋Pydantic | 授權、commands、查詢、公開 view；提供 OpenAPI 契約。 |
 | Agent／Worker | PydanticAI＋Temporal Python SDK | workflow 協調、Agent、activities；與 API 共用 Python domain/use cases。 |
 | 產品與 Temporal DB | 同一 Oracle VM 的 PostgreSQL cluster，隔離產品／Temporal persistence／visibility DB；SQLAlchemy 2＋psycopg 3＋Alembic 僅管理產品 schema | 一次 cluster PITR 可回到同一時間點；Temporal schema 由對應版本官方工具單獨升級，不能用產品 migration 管理。 |
-| 身分 | Clerk Hobby；第一個登入方式為 Google | React 與 Python 使用官方 SDK；FastAPI 獨立驗 token 及 owner，不自製密碼或 token 系統。Hobby 免費額度是候選前提。 |
+| 身分 | Auth0 Free；第一個登入方式為 Google | React client 使用 Auth0 SDK；FastAPI 依 JWKS 獨立驗 access token 與 owner。不自製密碼或平行 session 系統。 |
+| 互動與連線 | AG-UI over HTTP/SSE；Worker 同源 `/api`／`/agent` 經 Workers VPC Service 連 Oracle 私有 FastAPI | 使用產品 DB 的任務 snapshot／階段狀態重連；VPC beta、SSE flush 與 Worker CPU 必須實測。 |
 | 契約 | Pydantic／OpenAPI → openapi-typescript＋openapi-fetch | 產生 Web types/client；CI 驗證 schema、生成差異及 TypeScript，業務規則只在後端。 |
 | 驗證 | pytest、Temporal test environment／replay、真 PostgreSQL、Playwright、固定 eval | 分開驗 domain、持久工作、產品資料及使用者旅程。 |
-| 部署 | 現有 Oracle ARM VM 的 FastAPI／Temporal Server／worker／PostgreSQL＋Cloudflare Pages／Tunnel | API／worker 共用後端程式與 domain，以不同程序啟動；Temporal gRPC 與 DB 僅在私有網路。 |
+| 部署 | `workers.dev` 上的 Next.js＋Workers VPC Service／具名 Tunnel＋現有 Oracle ARM VM 的 FastAPI／Temporal Server／worker／PostgreSQL | API／worker 共用後端程式與 domain，以不同程序啟動；FastAPI、Temporal gRPC 與 DB 不公開。 |
 | 模型 | Cloudflare Workers AI Free 的 `@cf/zai-org/glm-4.7-flash` 為第一個評估候選 | 後端呼叫模型；須驗 PydanticAI 相容、繁中品質、tool calling、延遲與免費用量；不宣稱已選定或自動切換付費。 |
 | VM 外保存 | OCI Object Storage Always Free 額度內的加密 PostgreSQL 備份及最小撤銷紀錄，分開權限與路徑 | 與單機故障分離；bucket 容量、請求及保留政策先盤點，不用 VM 本機磁碟冒充備份。 |
 | 工具鏈 | pnpm 管 Web，uv 管 Python；各自 lockfile | 單一 repo、兩套明確工具鏈；先不加入 Nx／Turborepo 或自建套件發布平台。 |
@@ -75,9 +78,10 @@ Web 比較 **Vite／React SPA** 與 **Next.js**：前者可純靜態部署到 Pa
 
 ```mermaid
 flowchart LR
-  B[Browser] --> UI[Cloudflare Pages／靜態 React]
-  B <--> A[Clerk／Google 登入]
-  UI -->|Bearer session token| E[Cloudflare Tunnel／公開 API hostname]
+  B[Browser] --> UI[workers.dev／Next.js Worker]
+  B <--> A[Auth0／Google 登入]
+  UI -->|同源 API／AG-UI SSE| V[Workers VPC Service]
+  V --> E[具名 Cloudflare Tunnel／私有連線]
   subgraph O[現有 Oracle Ampere VM]
     E --> API[FastAPI]
     API --> DB[(PostgreSQL cluster)]
@@ -93,7 +97,7 @@ flowchart LR
 ```
 
 ```text
-apps/web/                 # Vite／React 靜態站
+apps/web/                 # Next.js App Router；Cloudflare Workers adapter 待驗證
 backend/
   src/whisky/
     api/                  # HTTP、auth adapter、commands、views
@@ -117,20 +121,20 @@ Domain 不 import FastAPI、PydanticAI、Temporal 或 ORM；活動與 API 都呼
 
 ### 登入與授權
 
-1. Clerk Hobby 候選負責 Google OAuth 與 session；React 採官方 SDK，從登入 session 取得短效 token，以 `Authorization: Bearer` 呼叫公開 FastAPI。Browser 只連固定 API origin，不可選任意 upstream URL；應用不自行把 token 存入 localStorage 或寫入 URL。
-2. Python 以官方 SDK 驗簽、固定可信 issuer／key 來源、token 類型、期限與 `authorized_parties`；若 API 配置 audience，發行與驗證兩端一起核定。只解碼 JWT、相信 `X-User-Id` 或相信 Tunnel 來源都不構成使用者驗證。CORS 僅允許正式 Web origin；CORS 不是授權，仍需逐請求驗 token。
-3. 由已驗證的 `(issuer, subject)` 對應內部 `user_id`，首次登入可交易式建立，避免依賴 webhook 到達順序。不用 email 當 owner，也不把 Clerk ID 散布成所有業務主鍵。
+1. 訪客可看公開 catalog 與示例；個人探索、研究任務、收藏及匯出／刪除須登入。Auth0 Free 負責 Google OAuth；Next.js client component 使用 Auth0 React SDK 的 Authorization Code＋PKCE，向指定 API audience 取得 access token，以 `Authorization: Bearer` 呼叫同源 `/api`／`/agent`。SDK 在記憶體管理 token；應用不把 token 放入 localStorage、URL 或 Temporal history。重新整理後若無可用 session，重新導向登入，不以保存 refresh token 到 localStorage 解決。
+2. Worker 只把允許的 API 路徑與方法經 VPC Service 轉到固定 FastAPI origin，不接受使用者提供 upstream URL；保留 Bearer header 並串流轉送 SSE，不緩衝整份回應。FastAPI 以 Auth0 JWKS 驗簽，核對固定 issuer、API audience、期限及允許的演算法；不能只解碼 JWT、相信 `X-User-Id` 或相信 Tunnel 來源。同源代理無須對 browser 開跨源 API；若日後改直接跨源存取才設定精確 CORS，CORS 仍非授權。
+3. 由已驗證的 `(issuer, subject)` 對應內部 `user_id`，首次登入可交易式建立，避免依賴 webhook 到達順序。不用 email 當 owner，也不把 Auth0 subject 散布成所有業務主鍵。
 4. FastAPI 每次驗 app actor 是否有效，再以 owner scope 執行 use case。讀報告、回覆補充、匯出、刪除同樣需要 owner 檢查；不存在與無權存取避免洩漏他人的物件資訊。帶憑證的個人回應設 `Cache-Control: no-store`，Cloudflare 不快取私人 API。
 5. Worker 接收內部 actor／task ID，執行寫入時重驗資格；Temporal history 不保存 session／refresh token。使用者關頁或 session 到期不會中止已交辦工作，取消與刪除依產品狀態控制。
 6. 本機 JWT 驗證不代表即時得知 Auth provider 的撤銷。應用停用／刪除先關閉 actor 與寫入資格；需要立即撤銷的身分操作使用 provider 查核或經驗簽的生命週期同步，測試其延遲，不宣稱本機驗簽已提供即時撤銷。
 
-官方依據：[Clerk token 驗證](https://clerk.com/docs/guides/sessions/manual-jwt-verification)、[Clerk Python SDK](https://github.com/clerk/clerk-sdk-python)。沿用官方 session 行為，不另外簽發一套平行 JWT。
+Auth0 Free 公布每月最多 25,000 活躍使用者，Google 登入實際方案額度與回呼 URL 須在建立環境時確認。[Auth0 Free](https://auth0.com/pricing/)、[React SDK](https://auth0.com/docs/quickstart/spa/react)、[自訂 API access token](https://auth0.com/docs/secure/tokens/access-tokens/get-access-tokens)、[JWKS 驗證](https://auth0.com/docs/secure/tokens/access-tokens/validate-access-tokens)。Clerk production 要求可設定的正式網域；目前只有 `workers.dev`，因此不沿用先前的 Clerk 候選，也不用其較弱且不可直接轉移使用者資料的 development instance。[Clerk 環境差異](https://clerk.com/docs/guides/development/managing-environments)。不另外簽發一套平行 JWT。
 
 ### 跨語言與連線
 
 FastAPI 的 Pydantic request／response schema 產生 OpenAPI，Web 由此生成型別；生成型別提供編譯期檢查，不冒充 runtime validation。API 驗 request 及公開 response，拒絕不允許欄位；前端只做輸入提示，不重寫 eligibility、owner 或價格規則。共用錯誤格式含穩定 code、request ID、可重試性，command 的去重與 revision 語意沿用本文件。
 
-Browser 不查 DB、不組織 Agent，不讓 browser 直接寫產品表。帳號資料回應不進共享 CDN cache；進度頁重連查 snapshot，不靠頁面程序內記憶保存任務。對 cookie、OAuth redirect 與跨 origin request 的實際行為在登入整合測試驗證；若改用 cookie auth，再補明確 CSRF 防護。
+Browser 不查 DB、不組織 Agent，不讓 browser 直接寫產品表。帳號資料回應不進共享 CDN cache；進度頁重連查 snapshot，不靠頁面程序內記憶保存任務。登入回呼使用固定的 `workers.dev` origin；Auth0 的預設託管登入網域可配合該回呼，不需為本案購買網域。[Auth0／Workers 範例](https://auth0.com/blog/secure-and-deploy-remote-mcp-servers-with-auth0-and-cloudflare/)。以真瀏覽器驗 OAuth redirect、重新整理、token 到期、登出和跨帳號隔離；若日後改用 cookie auth，再補明確 CSRF 防護。
 
 應用表只經 Python 資料存取層，API／worker 使用受限 runtime DB role，migration 使用分開的 DDL role。Owner scope 與跨表關聯由 use cases／query 和約束保護，跨帳號整合測試驗證；本提案不宣稱 ORM 自帶 RLS。將來若開放 browser Data API 或其他獨立資料入口，須先重新設計 DB 層授權。
 
@@ -140,9 +144,11 @@ API／worker 只透過 VM 內部網路連 PostgreSQL，各自有一個有上限�
 
 ### 部署邊界
 
-Cloudflare Pages 只部署靜態 Web；現有 Oracle Ampere ARM VM 以受控容器／service 分開執行 FastAPI、Python worker、Temporal Server、PostgreSQL、`cloudflared` 及備份作業。這是**一台機器上的模組化服務**，不建立 Kubernetes 或第二套 queue。API／worker 共用後端版本與 domain，但各自是獨立程序。正式 Temporal 使用自架 server 與手動 schema migration；`temporal server start-dev` 只用於本機開發。Temporal persistence 與 advanced visibility 均用 PostgreSQL，免另架 Elasticsearch；先驗對應版本、ARM64 image／binary 及首個流程的 CPU／RAM／磁碟。Temporal gRPC／Web UI、PostgreSQL 不公開，僅 FastAPI 經 Tunnel 的 public hostname 暴露；Tunnel 不代替 FastAPI 身分驗證。[Temporal 自架部署](https://docs.temporal.io/self-hosted-guide/deployment)、[PostgreSQL visibility](https://docs.temporal.io/self-hosted-guide/visibility)、[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
+Next.js Web 部署於 `*.workers.dev` 的 Cloudflare Worker，靜態檔案由 Workers Assets 提供；公開 catalog 頁優先預先產生，登入後的探索畫面由 client 讀取受驗證 API，以降低 Workers Free 的動態 CPU。`workers.dev` 是 Cloudflare 提供的個人／業餘專案入口，不是自有正式網域。[workers.dev 適用範圍](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/)。現有 Oracle Ampere ARM VM 以受控容器／service 分開執行 FastAPI、Python worker、Temporal Server、PostgreSQL、`cloudflared` 及備份作業。這是**一台機器上的模組化服務**，不建立 Kubernetes 或第二套 queue。API／worker 共用後端版本與 domain，但各自是獨立程序。正式 Temporal 使用自架 server 與手動 schema migration；`temporal server start-dev` 只用於本機開發。Temporal persistence 與 advanced visibility 均用 PostgreSQL，免另架 Elasticsearch；先驗對應版本、ARM64 image／binary 及首個流程的 CPU／RAM／磁碟。[Temporal 自架部署](https://docs.temporal.io/self-hosted-guide/deployment)、[PostgreSQL visibility](https://docs.temporal.io/self-hosted-guide/visibility)。
 
-穩定公開 API hostname 需有已可在 Cloudflare 設定 DNS 的網域；若沒有，先核對可用網域與其費用，不以臨時 Tunnel URL 當正式網址。[公開 Tunnel 路由](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/routing-to-tunnel/)。同機若承載其他作品，先盤點現有程序與保留 CPU／RAM／磁碟，採專用資料庫、網路、服務帳號、容器名稱與備份路徑；不可藉本案更動其他作品的資料。Web 不持有 DB、模型或 Temporal 密鑰。建立帳號、bucket、網域、設定 secrets 與部署均屬日後實作，不是本次已完成工作。
+無自有網域時，API 不走公開 Tunnel hostname。Worker 以綁定的 [Workers VPC Service](https://developers.cloudflare.com/workers-vpc/) 對固定 VM 私有位址／port 呼叫 FastAPI；Oracle 的具名 Cloudflare Tunnel 僅提供私有連線，FastAPI、Temporal gRPC／Web UI 和 PostgreSQL 不公開。Worker 只代理允許的路徑，FastAPI 仍逐請求驗 Auth0 token 與 owner；Tunnel 不是登入。VPC 在 2026-09-28 為 beta，開放測試期免費，正式價格與 SSE 實際行為尚未驗證；`cloudflared` 須符合 VPC 版本與 QUIC 出站要求，並在真實部署驗 `Content-Type: text/event-stream` 的逐段 flush、斷線及重連。[VPC 價格](https://developers.cloudflare.com/workers-vpc/reference/pricing/)、[VPC Tunnel 條件](https://developers.cloudflare.com/workers-vpc/configuration/tunnel/)、[Tunnel SSE 行為](https://developers.cloudflare.com/cloudflare-one/troubleshooting/tunnel/)。
+
+若 VPC beta 不可用或未來超出費用邊界，先保留 FastAPI HTTP／AG-UI 契約，重新比較公開 Oracle IP＋自動更新的 HTTPS IP 憑證、購買自有網域後的正式 Tunnel，或 AG-UI 的其他 transport；不把 `trycloudflare.com` Quick Tunnel 當正式退路，它不支援 SSE。[Quick Tunnel 限制](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/do-more-with-tunnels/trycloudflare/)、[Let's Encrypt IP 憑證](https://letsencrypt.org/2026/01/15/6day-and-ip-general-availability)。同機若承載其他作品，先盤點現有程序與保留 CPU／RAM／磁碟，採專用資料庫、網路、服務帳號、容器名稱與備份路徑；不可藉本案更動其他作品的資料。Web 不持有 DB、模型或 Temporal 密鑰。建立帳號、bucket、設定 secrets 與部署均屬日後實作，不是本次已完成工作。
 
 本機／CI 使用隔離 PostgreSQL、Temporal 開發／測試環境及受控 auth fixtures；另以獨立測試帳號驗真正登入。依賴鎖版、OpenAPI 生成、lint／typecheck、領域與整合測試、history replay 通過後才部署。產品 migration 以單次 release 作業執行，Temporal schema 依官方對應版本工具獨立升級；採相容擴充→部署→清理，不在每個程序啟動時競跑。等待中的舊 workflow 依前述 worker version 策略保留 executor。
 
@@ -156,19 +162,19 @@ Cloudflare Pages 只部署靜態 Web；現有 Oracle Ampere ARM VM 以受控容�
 
 ### 每月費用估算
 
-以下以 **2026-09-28 公開方案與使用者現有帳單狀態** 規劃。US$0 是目標與目前 VM 帳單觀察，其他免費項目須在實際帳戶額度內；這不是服務商對未來價格、可用量或帳單的保證。未計入新購網域、稅或已存在的其他帳戶用量。
+以下以 **2026-09-28 公開方案與使用者現有帳單狀態** 規劃。US$0 是目標與目前 VM 帳單觀察，不是已查明的長期權益；其他免費項目須在實際帳戶額度內。尚未購買網域，表中不把網域費列為現有資源。
 
 | 項目 | 本輪使用方式 | 預期新增月費 |
 |---|---|---:|
-| 現有 Oracle VM | 使用者回報 4 CPU／24 GB、目前帳單 US$0；不另開 VM／磁碟 | $0（現況） |
-| Cloudflare Pages 靜態站＋Tunnel | Free；Tunnel 對外服務使用既有可管理網域 | $0（額度內） |
+| 現有 Oracle VM | 使用者回報 4 CPU／24 GB、目前帳單 US$0；須核對帳戶類型、A1 shape／OCPU、區域與實際免費額度，不另開 VM／磁碟 | $0 現況；長期費用未確認 |
+| Cloudflare Workers Next.js＋Workers VPC／具名 Tunnel | 以 `workers.dev` 和 Workers Free 驗證；帳戶共用每日 100,000 次動態請求額度、每次 10 ms CPU，靜態資產請求免費；VPC beta 目前免費 | $0（僅在免費額度及 beta 價格內） |
 | Temporal Server／FastAPI／worker／PostgreSQL | 自架於現有 VM；沒有 Temporal Cloud 訂閱 | $0（不計人力） |
-| Clerk | Hobby 免費方案；Google 登入，帳號量在方案內 | $0（額度內） |
+| Auth0 | Free 方案，Google 登入與預設 Auth0 託管網域；不另購自有網域 | $0（方案額度內） |
 | Workers AI | Free 的每日 10,000 Neurons；超額請求失敗，不切換付費模型 | $0（額度內） |
 | OCI Object Storage | 若帳戶仍有 Always Free 物件容量／請求額度，存加密備份及最小控制紀錄 | $0（額度內） |
-| **本輪預期新增固定費** | 不啟用 Workers Paid 或其他付費資源 | **$0／月** |
+| **本輪預期新增固定費** | 先不啟用 Workers Paid 或其他付費資源；OCI 帳戶權益、Workers CPU／VPC、備份容量均待驗證 | **$0／月（目標，未驗證）** |
 
-[Pages 靜態資產](https://developers.cloudflare.com/pages/functions/pricing/)免費；[Clerk Hobby](https://clerk.com/pricing/)目前每 app 50,000 MRU 額度；[Workers AI Free](https://developers.cloudflare.com/workers-ai/platform/pricing/)每日 10,000 Neurons，超額會失敗；[OCI Object Storage Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)公布 20 GB、50,000 API requests／月。啟用物件儲存前須查實際帳戶計費類型、既有用量與剩餘免費額度，備份保留及流量設上限並監測；若新儲存會產生費用，就不能以它宣稱本案零新增月費。若 OCI 物件額度不足，[Cloudflare R2 Standard 免費額度](https://developers.cloudflare.com/r2/pricing/)可比較，但超額也可能計費，不能未盤點就改接。Cloudflare Workers Paid 的 [US$5 基本費](https://developers.cloudflare.com/workers/platform/pricing/)還有額外用量費，因此**不能視為 US$5 帳單硬上限**；本輪先不開通。模型候選 [GLM-4.7-Flash](https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/)具多語與 function calling，[官方免費模型公告](https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/)仍將它列在 Workers Free；實際 PydanticAI 相容與威士忌任務品質仍需固定語料測試。後端對每個研究設模型呼叫／token 上限、每日總量與超額狀態，不能悄悄改用付費 API。
+[Workers 靜態資產](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/)請求免費，動態 SSR 會計入 [Workers Free 限制](https://developers.cloudflare.com/workers/platform/limits/)；10 ms CPU 不保證容納 Next.js SSR，先在 workerd preview 與實際帳戶量測，超限即失敗而不自動升級付費。[Auth0 Free](https://auth0.com/pricing/)目前公布最多 25,000 MAU；[Workers AI Free](https://developers.cloudflare.com/workers-ai/platform/pricing/)每日 10,000 Neurons，超額會失敗。[OCI A1 Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)現公布每月 1,500 OCPU-hours／9,000 GB-hours，約等於 2 OCPU／12 GB；若使用者回報的 4 CPU 是 4 OCPU，超出現行公開額度，不能由目前 US$0 帳單推論未來仍免費。先在 OCI Console 核對帳戶是 Always Free、Trial 或 Pay As You Go、VM shape／OCPU、home region 與成本分析；[帳戶類型畫面](https://docs.oracle.com/en-us/iaas/Content/GSG/Concepts/console_topic-AccountCenter-Billing.htm)可辨識。Object Storage 公布的免費容量依帳戶類型不同，且與既有用量共用；啟用備份前查剩餘額度、預估 base backup／WAL、保留期並實測還原，超額就不能宣稱零新增月費。若 OCI 物件額度不足，[Cloudflare R2 Standard 免費額度](https://developers.cloudflare.com/r2/pricing/)可比較，但超額也可能計費，不能未盤點就改接。Cloudflare Workers Paid 的 [US$5 基本費](https://developers.cloudflare.com/workers/platform/pricing/)還有額外用量費，因此**不能視為 US$5 帳單硬上限**；本輪先不開通。模型候選 [GLM-4.7-Flash](https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/)具多語與 function calling，[官方免費模型公告](https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/)仍將它列在 Workers Free；實際 PydanticAI 相容與威士忌任務品質仍需固定語料測試。後端對每個研究設模型呼叫／token 上限、每日總量與超額狀態，不能悄悄改用付費 API。
 
 ## 資料與執行權威
 
@@ -237,7 +243,11 @@ Agent 只能查 reviewed 庫、讀指定來源、比對版本、提出問題及�
 
 研究觀察、模型整理、證據與覆核狀態分開保存；待覆核資訊可明示於報告，正式推薦／嚴格預算只使用 reviewed 資料。catalog 由 Git 中覆核資料發布為不可變版本；用戶補充不等於編輯者覆核。
 
-Web 經產品 API 讀任務 snapshot，顯示等待執行／研究中／需要補充／完成／失敗／已取消／已被取代。第一個骨架以狀態查詢證明完整流程；即時串流再依所選 framework 官方 durable backend 整合驗證。AG-UI 或 AI SDK UI 不擁有工作生命週期，不能為了串流直接從 HTTP 執行普通 agent。
+**Agent 互動的前後端協定是 AG-UI。**Next.js client 向同源 `/agent` 送出一輪輸入，Worker 經 VPC Service 串流轉送到 FastAPI；FastAPI 驗 owner、task 與條件 revision，冪等地啟動或接回 Temporal workflow。回應使用 AG-UI HTTP/SSE 的 `RUN_STARTED`、階段／狀態事件、已保存結果及 `RUN_FINISHED`／`RUN_ERROR`；一般 catalog、偏好、收藏、補充答覆與取消仍用 typed API／Temporal Update，不把 AG-UI 當資料庫或工作生命週期權威。[AG-UI HTTP 與事件](https://docs.ag-ui.com/concepts/architecture)。
+
+產品 DB 保存任務 status、revision、可公開的階段投影與最終報告；FastAPI 從這份權威狀態產生 `STATE_SNAPSHOT`／階段事件。Browser 關頁或 SSE 中斷不取消 workflow；重連先驗 owner，再讀當前 snapshot，依 task／run／revision 忽略舊事件，完成後重送已保存結果而不重跑模型。第一版不要求逐 token 的可靠重播；模型原始 deltas、工具原文與隱藏推理不作長期 UI 紀錄。若需要即時文字，可在後續另設短暫串流，但正式卡片與報告只取驗證後的 DB 資料。Temporal Workflow Streams 目前是 Public Preview，逐 token 事件會增加 workflow state／history 且 activity 重試可能重送；第一版不依賴它作前端恢復來源。[Temporal Workflow Streams](https://docs.temporal.io/workflow-streams)、[PydanticAI 串流限制](https://pydantic.dev/docs/ai/capabilities/durable_execution/temporal/#streaming)。
+
+PydanticAI 的 `TemporalDurability` 必須在 Temporal workflow 內執行，模型與工具 I/O 由 activities 處理；HTTP endpoint 不直接用 `AGUIAdapter.dispatch_request()` 跑普通 Agent 冒充持久任務。若未來要傳 PydanticAI 原生事件到 AG-UI，可在 API 邊界使用 `AGUIEventStream` 轉換，仍由產品 DB 的已保存狀態決定重連與最終顯示。[PydanticAI durable agent](https://pydantic.dev/docs/ai/capabilities/durable_execution/temporal/)、[UI Event Streams](https://pydantic.dev/docs/ai/integrations/ui/overview/)。
 
 Browser 不持有 Temporal／模型憑證，也不能直接 Query 任意 workflow。內部 history、工具原文及隱藏推理不公開，卡片 facts 驗證並保存後才顯示。進度通知可以重送或缺漏，公開結果以產品 DB 為準。
 
@@ -258,9 +268,10 @@ Logs 記 task／workflow／run／revision、階段、latency、用量與錯誤�
 | DB／Temporal 邊界 | DB commit 後 activity completion 前中斷，恢復不產生第二份報告；取消、刪除及條件改版擋晚到結果。 |
 | 部署相容 | 舊版本等待中的 history 可在受控版本恢復，replay tests 有辨別力。 |
 | 身分與跨語言契約 | 不同帳號不可讀／回覆；Web client 符合實際 API schema，模型不能擴張授權範圍。 |
-| 真實登入與失效 | Google 登入到 API 的 issuer／key／azp 設定正確；過期／錯誤來源 token、停用 actor 及跨帳號 IDs 均拒絕；不靠 webhook 順序建立帳號。 |
-| API 與資料部署 | Pages → Tunnel → FastAPI、VM 內 API／worker／Temporal／DB 連線可用；個人資料不被共享快取；分開的 schema migration、pool 上限及新舊 worker 重疊經驗證。 |
-| 還原與成本 | 從空 VM 還原整個 cluster，VM 外控制紀錄使刪除不復活；備份／WAL 新鮮度、Object Storage 配額、Workers AI 免費用量及真正帳單有量測與告警。 |
+| 真實登入與失效 | Auth0／Google 登入後，API 的 issuer／JWKS／audience 設定正確；過期／錯誤來源 token、停用 actor 及跨帳號 IDs 均拒絕；重新整理與登出流程可用，不靠 webhook 順序建立帳號。 |
+| AG-UI 與重連 | 送出／重送同一 run 不重啟 workflow；SSE 中斷後重新驗 owner 並送最新 snapshot；已完成報告由 DB 還原，舊 revision、重複事件與失敗終態不覆寫新狀態。 |
+| Web、API 與資料部署 | Next.js 在 workerd preview／正式 Workers 下以真瀏覽器驗最終 DOM、page errors、Auth0 callback、hydration、路由與 AG-UI/SSE；動態頁量測 CPU 並符合 Free 限制。Browser → Worker → VPC Service → 具名 Tunnel → FastAPI 的逐段 SSE、關頁／重連可用；VM 內 API／worker／Temporal／DB 連線可用；個人資料不被共享快取；分開的 schema migration、pool 上限及新舊 worker 重疊經驗證。 |
+| 還原與成本 | 核對 OCI 帳戶類型、A1 OCPU／RAM／區域與費用明細，再量測現有 VM 可用容量；從空 VM 還原整個 cluster，VM 外控制紀錄使刪除不復活；備份／WAL 新鮮度、Object Storage 配額、VPC beta 費用、Workers AI 免費用量及真正帳單有量測與告警。 |
 | 營運 | worker、Temporal service、產品 DB 各自故障可診斷；單 VM 故障時恢復與人工切換有演練紀錄。 |
 
-模型使用同一組繁中需求理解、版本消歧、工具選擇、來源衝突及修改案例比較品質／延遲／免費額度消耗。下一個決策是核定本文件的零費用配套；恢復目標須在容量盤點與實際演練後設定，再以垂直流程選出相容版本及模型。不能以只裝套件或模型回一句話宣告架構成立。交付相依見 [PRODUCT_SPEC](PRODUCT_SPEC.md#開發順序與完成界線)。
+模型使用同一組繁中需求理解、版本消歧、工具選擇、來源衝突及修改案例比較品質／延遲／免費額度消耗。下一步先完成 OCI 帳戶／容量核對與 Next.js＋Auth0＋VPC／AG-UI 的最小端到端驗證；恢復目標須在容量盤點與實際演練後設定，再以垂直流程選出相容版本及模型。若 VPC、免費額度或 adapter 驗證失敗，依本文件的替代邊界重評，不宣稱已可零費用上線。不能以只裝套件或模型回一句話宣告架構成立。交付相依見 [PRODUCT_SPEC](PRODUCT_SPEC.md#開發順序與完成界線)。

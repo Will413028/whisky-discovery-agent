@@ -2,8 +2,9 @@
 
 威士忌探索互動 LLM Agent 展示作品。產品方向與目前狀態見 [README.md](README.md)。
 
-- 第一版採 PydanticAI＋Python 後端＋Temporal，規劃個人探索計畫及可交辦研究任務。Temporal 是任務等待、重試與恢復的唯一執行權威；PydanticAI 管模型與工具協調。配套建議見 [ARCHITECTURE.md](ARCHITECTURE.md)，尚未實作。不自建通用 Agent engine、queue 或 checkpoint 系統。
-- 部署預算以現有帳單 US$0 的 Oracle Ampere VM 為基礎，Cloudflare 優先使用免費服務，最多考慮 Workers Paid US$5 基本費；其他持續付費服務不在目前範圍。Workers Paid 另有用量費，不能當成總帳單上限。容量與還原能力未實測前不可宣稱達標。
+- 第一版採 Cloudflare Workers 上的 Next.js、AG-UI Agent 互動、Oracle VM 上的 FastAPI／PostgreSQL／PydanticAI＋Temporal。Temporal 是任務等待、重試與恢復的唯一執行權威；PydanticAI 管模型與工具協調。產品 DB 保存可重連的任務狀態與報告，不以逐 token 事件作權威；HTTP endpoint 不直接執行非持久 Agent。架構與驗證門檻見 [ARCHITECTURE.md](ARCHITECTURE.md)，尚未實作。不自建通用 Agent engine、queue 或 checkpoint 系統。
+- 無自有網域；第一版 Web 使用 `workers.dev`，訪客可看公開 catalog，私人紀錄需 Auth0 登入；Worker 經 Workers VPC Service／具名 Tunnel 連私有 API。VPC beta 與 AG-UI/SSE 須通過真實部署驗證，不用 Quick Tunnel 當正式入口。
+- 部署預算以現有帳單 US$0 的 Oracle Ampere VM 為起點，Cloudflare 優先使用免費服務，最多考慮 Workers Paid US$5 基本費；其他持續付費服務不在目前範圍。現行 OCI A1 公布額度約 2 OCPU／12 GB，與回報的 4 CPU／24 GB 須在帳戶中核對，不能從 US$0 現況推論長期免費。Workers Paid 另有用量費，不能當成總帳單上限。容量與還原能力未實測前不可宣稱達標。
 - 尚無 package manifest、原始碼、測試或可執行命令。建立第一個可執行骨架後，再依實際檔案補上開發及驗證命令。
 - 產品互動流程與資料契約須先明確，再實作功能；不要將規劃中的行為寫成已完成。
 - 雙入口、六項基礎能力、小型真實酒款庫與台灣價格篩選納入探索計畫；記憶以可靠、可長期使用優先，帳號保存仍為具體建議。新增研究、等待補充與恢復的產品契約見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。
