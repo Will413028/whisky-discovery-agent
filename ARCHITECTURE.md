@@ -97,16 +97,31 @@ flowchart LR
 ```
 
 ```text
-apps/web/                 # Next.js App Router；Cloudflare Workers adapter 待驗證
+apps/web/src/
+  app/                    # Next.js 路由、layout、providers 與頁面組合
+  features/               # plans／research／catalog／library；依功能組織
+  shared/
+    ui/                   # 無業務語意的共用元件
+    api/                  # 生成 client 的封裝、認證與錯誤處理
 backend/
-  src/whisky/
-    api/                  # HTTP、auth adapter、commands、views
-    workflows/            # deterministic orchestration、Update／Query
-    agents/               # PydanticAI agent、prompts、typed output
-    activities/           # I/O 與 framework integration
-    domain/               # catalog／discovery／plans／memory 規則與型別
-    application/          # 共用 use cases、交易邊界、必要的 I/O ports
-    adapters/             # DB、來源、身分、Temporal client
+  pyproject.toml          # Python 套件、建置與依賴設定
+  src/whisky/             # src layout；whisky 是 Python import package
+    __init__.py
+    bootstrap/            # 組裝依賴、API／worker 啟動
+    modules/
+      catalog/            # 酒款、來源、價格資格與發布版本
+      discovery/          # 探索計畫、偏好、研究條件與候選規則
+      research/
+        domain/           # 任務、補充問題、報告與狀態規則
+        application/      # start／answer／cancel 用例、交易邊界與 ports
+        api/              # HTTP／AG-UI adapters
+        workflows/        # Temporal deterministic orchestration
+        agents/           # PydanticAI、prompts、typed output
+        activities/       # 可重試 I/O 執行邊界
+        adapters/         # 模組的 DB／外部服務接合
+      library/            # 收藏、喝過紀錄與回饋
+      identity/           # 內部使用者與外部身分對應
+    platform/             # DB engine、設定、logging 等共用技術能力
   migrations/             # 單一產品 schema migration authority
   tests/                  # unit、integration、replay、recovery、evals
 deploy/                   # VM service／容器設定、備份與還原作業文件；無 secrets
@@ -115,7 +130,13 @@ data/catalog/             # 人工覆核的來源資料與發布版本
 tests/e2e/                # Web 旅程
 ```
 
-Domain 不 import FastAPI、PydanticAI、Temporal 或 ORM；活動與 API 都呼叫同一批 use cases。自然語言與點選採相同 command 語意。只在實際外部依賴設 ports，不為每張表建立空轉的 interface／repository 層。runtime／依賴的相容版本在骨架鎖定，現在不提供不存在的執行命令。
+前端採依功能組織＋薄路由層，後端採 **Modular Monolith：先分業務模組，再於模組內按用例與必要層次組織**。這取代全域 api／domain／application 技術分類，讓同一功能的變更集中；API 與 worker 仍共用同一套 Python 套件、以不同程序執行。目錄樹是責任藍圖，不要求簡單模組預建與 research 相同的空目錄。
+
+Web 的 app 層組合 features；features 透過公開介面合作，不深入引用彼此內部檔案；shared 不反向依賴 features。前端 plans 對應後端 discovery 的計畫用例，前後端不必逐一鏡像資料夾。後端模組透過公開 application／query 契約協作，不直接操作其他模組的 ORM 或資料表；跨模組交易由明確的用例協調者管理，不把網路呼叫當成模組化的必要條件。platform 不存業務規則，bootstrap 負責 wiring。
+
+各模組的 domain 不 import FastAPI、PydanticAI、Temporal 或 ORM；activities 與 API 都呼叫同一批 use cases。自然語言與點選採相同 command 語意。只在實際外部依賴設 ports，不為每張表建立空轉的 interface／repository 層。骨架須加入 import 邊界檢查，禁止 shared 反向依賴、跨模組引用內部 persistence 與 domain 引入 framework；runtime／依賴的相容版本在骨架鎖定，現在不提供不存在的執行命令。
+
+**保留 `backend/src/whisky/`。**src layout 將可 import 的套件與 tests／migrations／設定分開；whisky 是自己的 Python namespace，不是業務分層。Flat layout 少一層但容易讓工作目錄掩蓋套件安裝問題；本案 API、worker 與測試共用套件，因此選 src layout。開發使用 editable install，CI／部署另驗一般安裝的 wheel，從非 repo 工作目錄 import 並啟動入口；不以修改 PYTHONPATH／sys.path 掩蓋打包缺檔。[Python Packaging 官方比較](https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/)
 
 ## 身分、API 與資料存取契約
 
@@ -256,6 +277,8 @@ Browser 不持有 Temporal／模型憑證，也不能直接 Query 任意 workflo
 Logs 記 task／workflow／run／revision、階段、latency、用量與錯誤分類；模型輸入輸出預設遮罩或不記。執行所需 history 與可選 debug traces 分開治理，兩者的保留／刪除均需驗證。
 
 ## 第一個交付與驗收出口
+
+第一個流程的資料約束、HTTP／AG-UI mapping、前端狀態、workflow 與發布回退細節見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。其中數值是驗證預設，尚非正式容量或服務承諾。
 
 第一個垂直流程是「委託研究 → 真實來源 → 等待補充 → 關頁 → 登入回覆 → 繼續研究 → 保存報告」。以隔離 fixtures 控制故障，實際模型／來源連接與 stub 分開記錄。
 
