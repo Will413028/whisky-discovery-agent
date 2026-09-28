@@ -172,3 +172,43 @@ def test_database_rejects_receipt_pointing_at_another_owners_plan(plan_context):
                 dict(owner=other.id),
             )
     assert error.value.orig.sqlstate == "23503"
+
+
+def test_plan_pages_use_timestamp_and_id_without_repeating_rows(plan_context):
+    engine, store, (actor, other) = plan_context
+    plans = [
+        store.create(actor.id, actor.generation, f"page-{i}", conditions())
+        for i in range(5)
+    ]
+    store.create(other.id, other.generation, "foreign", conditions())
+    with engine.begin() as connection:
+        connection.execute(text("UPDATE plans SET updated_at = '2026-09-28T00:00:00Z'"))
+    first = store.page(actor.id, limit=2)
+    assert len(first.items) == 2
+    assert first.next_cursor is not None
+    second = store.page(actor.id, limit=2, cursor=first.next_cursor)
+    third = store.page(actor.id, limit=2, cursor=second.next_cursor)
+    assert len(second.items) == 2 and len(third.items) == 1
+    assert third.next_cursor is None
+    assert [plan.id for plan in (*first.items, *second.items, *third.items)] == sorted(
+        (plan.id for plan in plans), reverse=True
+    )
+
+
+@pytest.mark.parametrize("limit", [0, -1, 51])
+def test_plan_page_limit_is_bounded(plan_context, limit):
+    _, store, (actor, _) = plan_context
+    with pytest.raises(ValueError, match="limit"):
+        store.page(actor.id, limit=limit)
+
+
+@pytest.mark.parametrize("change", ["active = false", "generation = 2"])
+def test_plan_pages_hide_disabled_or_previous_generation_data(plan_context, change):
+    engine, store, (actor, _) = plan_context
+    store.create(actor.id, actor.generation, "private-page", conditions())
+    assert store.page(actor.id).items
+    with engine.begin() as connection:
+        connection.execute(
+            text(f"UPDATE users SET {change} WHERE id = :id"), dict(id=actor.id)
+        )
+    assert store.page(actor.id).items == ()

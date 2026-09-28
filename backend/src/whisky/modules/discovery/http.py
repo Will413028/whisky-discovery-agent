@@ -1,14 +1,17 @@
 """Authenticated exploration plan HTTP adapter."""
 
+import base64
+import binascii
+from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, field_validator
 from pydantic.alias_generators import to_camel
 
 from whisky.modules.discovery.conditions import ResearchConditions
-from whisky.modules.discovery.store import PlanConflict, PlanStore
+from whisky.modules.discovery.store import PlanConflict, PlanCursor, PlanStore
 from whisky.modules.identity.public import AccessSession, IdentityAccess
 from whisky.platform.http_errors import PublicAPIError
 
@@ -38,6 +41,25 @@ class PlanView(BaseModel):
     conditions: ResearchConditions
 
 
+class PlanListQuery(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    limit: int = Field(default=20, ge=1, le=50)
+    cursor: str | None = Field(default=None, min_length=1, max_length=512)
+
+
+class PlanListView(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+    items: tuple[PlanView, ...]
+    next_cursor: str | None
+
+
+class CursorPayload(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    version: Literal[1] = 1
+    updated_at: AwareDatetime
+    id: UUID
+
+
 def plan_router(identity: IdentityAccess, store: PlanStore | None) -> APIRouter:
     routes = APIRouter(prefix="/api/v1")
     bearer = HTTPBearer(auto_error=False)
@@ -46,6 +68,41 @@ def plan_router(identity: IdentityAccess, store: PlanStore | None) -> APIRouter:
         credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     ) -> AccessSession:
         return identity.authenticate(credentials.credentials if credentials else None)
+
+    @routes.get("/plans", response_model=PlanListView)
+    def list_plans(
+        request: Request,
+        query: Annotated[PlanListQuery, Query()],
+        session: AccessSession = Depends(authenticate),
+    ) -> PlanListView:
+        if any(
+            len(request.query_params.getlist(key)) > 1 for key in ("limit", "cursor")
+        ):
+            raise PublicAPIError(422, "INVALID_REQUEST")
+        if store is None:
+            raise PublicAPIError(503, "DISCOVERY_UNAVAILABLE")
+        cursor = None
+        if query.cursor is not None:
+            try:
+                payload = CursorPayload.model_validate_json(
+                    base64.b64decode(query.cursor, altchars=b"-_", validate=True)
+                )
+            except (ValueError, binascii.Error):
+                raise PublicAPIError(422, "INVALID_REQUEST") from None
+            cursor = PlanCursor(payload.updated_at, payload.id)
+        page = store.page(session.actor_id, query.limit, cursor)
+        next_cursor = None
+        if page.next_cursor is not None:
+            payload = CursorPayload(
+                updated_at=page.next_cursor.updated_at, id=page.next_cursor.id
+            )
+            next_cursor = base64.urlsafe_b64encode(
+                payload.model_dump_json().encode()
+            ).decode("ascii")
+        return PlanListView(
+            items=tuple(PlanView.model_validate(item) for item in page.items),
+            next_cursor=next_cursor,
+        )
 
     @routes.post("/plans", response_model=PlanView, status_code=201)
     def create_plan(

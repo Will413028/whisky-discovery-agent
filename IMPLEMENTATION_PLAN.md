@@ -426,3 +426,12 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 本機第一次 E2E `4 passed, 1 failed` 是 build 讀入 ignored `.env.local` 的公開 Auth0 設定，但 unconfigured fixture 預期未設定。依既有規約以 `NEXT_PUBLIC_AUTH0_DOMAIN= NEXT_PUBLIC_AUTH0_CLIENT_ID= NEXT_PUBLIC_AUTH0_AUDIENCE= pnpm --filter @whisky/web build` 重建，不修改正式設定；`pnpm --filter @whisky/web test:e2e` → `5 passed`（`/tmp/whisky-t04-plan-http-e2e-green.log`）。這是既有入口／SSE 回歸，不宣稱完整新 plan UI 旅程。
 - 最終 `uv run --project backend pytest backend/tests -q` → `233 passed`（`/tmp/whisky-t04-plan-http-final-full.log`），獨立 wheel `4 passed`（`/tmp/whisky-t04-plan-http-final-wheel.log`）；ruff／format、mypy 35 source files、Python boundary 通過。shared repo status／log 已核對，未見 reviewer 寫入。
 - T04 仍進行中，未部署本增量：計畫 bounded cursor 列表、研究 task／command 查詢、production observation source 與 AG-UI start mapping 尚待接線，不以本段 plan CRUD 代替完整研究受理驗收。
+
+### T04 第五段 — 有界計畫列表
+
+- 真 DB RED：`test_plans.py -k 'page'` 缺少 page 行為 6 failed；HTTP RED：`test_plan_http.py -k 'list or pagination'` 的 GET collection 為 405，10 failed。Web RED：`vitest run tests/plan-proxy.test.ts tests/upstream.test.ts` 有 9 failed，涵蓋 query 被拒絕或被兩層 transport 丟棄。
+- GREEN：PlanStore 以 owner／當前 active generation 限定資料，使用 `(updated_at, id)` keyset、預設 20／最多 50 筆及 limit+1；同時間以 ID 穩定排序。HTTP 使用 versioned JSON／base64 cursor，拒絕未知及重複 query、無效 limit／cursor；跨 owner 即使沿用 cursor 仍無法讀他人資料。cursor 只表示位置，不作授權，也不承諾跨頁固定 snapshot。
+- Web feature allowlist 開放 GET collection 的 limit／cursor，兩層固定 origin transport 保留已驗 query；identity／observe 仍拒絕 query。OpenAPI／TypeScript 重新生成，沒有手寫第二份 schema。
+- 驗證命令：`uv run --project backend pytest backend/tests -q` → 249 passed（63.24 秒）；`pnpm --filter @whisky/web test` → 71 passed；`pnpm --filter @whisky/web test:e2e` → 5 passed（13.8 秒）。ruff／format、mypy、Python／Web 邊界、Web typecheck、Next build 通過；build 按既有 fixture 指令清空三個公開 Auth0 build vars。
+- fresh t04_pagination_design：NO DESIGN FINDINGS；覆蓋 ID／索引、keyset、cursor encoding、generation、唯讀交易、query 驗證、shared transport、其他 consumer 與生成契約；改／記／提／駁回均 0。主 agent 核對最終 diff 與兩個共享 tree 的 status／log，無 reviewer 越界修改。
+- 前段 head `2f63910` 的 push／PR runs `36441049266`、`36441057207`，backend／web jobs 均 SUCCESS。本段尚未部署；T04 繼續研究 task／command 查詢、production observation source 與 AG-UI start mapping。

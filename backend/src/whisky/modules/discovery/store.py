@@ -2,6 +2,7 @@
 
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from hashlib import sha256
 from uuid import UUID, uuid4
 
@@ -25,9 +26,67 @@ class Plan:
     conditions: ResearchConditions
 
 
+@dataclass(frozen=True)
+class PlanCursor:
+    updated_at: datetime
+    id: UUID
+
+
+@dataclass(frozen=True)
+class PlanPage:
+    items: tuple[Plan, ...]
+    next_cursor: PlanCursor | None
+
+
 class PlanStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def page(
+        self, owner: UUID, limit: int = 20, cursor: PlanCursor | None = None
+    ) -> PlanPage:
+        if not 1 <= limit <= 50:
+            raise ValueError("Page limit must be between 1 and 50")
+        if cursor is not None and cursor.updated_at.utcoffset() is None:
+            raise ValueError("Page cursor requires a timezone-aware timestamp")
+        after = "AND (updated_at, id) < (:cursor_time, :cursor_id)" if cursor else ""
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            rows = connection.execute(
+                text(
+                    """
+                SELECT id, owner_id, generation, conditions_revision, conditions,
+                    updated_at FROM plans
+                WHERE owner_id = :owner AND generation = :generation
+            """
+                    + after
+                    + " ORDER BY updated_at DESC, id DESC LIMIT :limit"
+                ),
+                dict(
+                    owner=owner,
+                    generation=generation,
+                    limit=limit + 1,
+                    cursor_time=cursor.updated_at if cursor else None,
+                    cursor_id=cursor.id if cursor else None,
+                ),
+            ).all()
+        visible = rows[:limit]
+        items = tuple(
+            Plan(
+                row.id,
+                row.owner_id,
+                row.generation,
+                row.conditions_revision,
+                ResearchConditions.model_validate(row.conditions),
+            )
+            for row in visible
+        )
+        next_cursor = (
+            PlanCursor(visible[-1].updated_at, visible[-1].id)
+            if len(rows) > limit
+            else None
+        )
+        return PlanPage(items, next_cursor)
 
     def create(
         self, owner: UUID, generation: int, key: str, conditions: ResearchConditions

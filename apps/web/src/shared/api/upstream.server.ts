@@ -12,6 +12,7 @@ export function apiUpstream(origin: string | undefined, fetcher: (request: Reque
       method:request.method, headers:request.headers, body:request.body,
       signal:request.signal, redirect:"manual", cache:"no-store", duplex:"half",
     };
-    return fetcher(new Request(`${target.origin}${new URL(request.url).pathname}`, init));
+    const url = new URL(request.url);
+    return fetcher(new Request(`${target.origin}${url.pathname}${url.search}`, init));
   }};
 }

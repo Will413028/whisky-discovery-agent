@@ -4,6 +4,25 @@ import {planProxy} from "../src/features/discovery/proxy";
 const id = "2d9300f8-e5bf-4b02-9325-c94c6b7be9af";
 
 describe("plan API proxy", () => {
+  it("preserves approved pagination through the configured Node upstream", async () => {
+    const {apiUpstream} = await import("../src/shared/api/upstream.server");
+    let forwarded: Request | undefined;
+    const upstream = apiUpstream("http://api:8417", async request => {
+      forwarded = request;
+      return Response.json({items: [], nextCursor: null});
+    });
+    const response = await planProxy(new Request("https://web.example/api/v1/plans?limit=2&cursor=YWJjZA%3D%3D"), upstream);
+    expect(response.status).toBe(200);
+    expect(forwarded?.url).toBe("http://api:8417/api/v1/plans?limit=2&cursor=YWJjZA%3D%3D");
+  });
+
+  it.each(["limit=0", "limit=51", "limit=bad", "limit=1&limit=2", "cursor=", "cursor=bad!", "cursor=x&cursor=y"])("rejects invalid pagination: %s", async query => {
+    const fetcher = vi.fn();
+    const response = await planProxy(new Request(`https://web.example/api/v1/plans?${query}`), {fetch: fetcher});
+    expect(response.status).toBe(422);
+    expect(fetcher).not.toHaveBeenCalled();
+  });
+
   it("forwards the JSON command to a fixed origin with only required headers", async () => {
     const body = JSON.stringify({key: "fixture", conditions: {entry: "beginner", goal: "果香"}});
     let received: Request | undefined;

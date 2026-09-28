@@ -101,3 +101,60 @@ async def test_invalid_plan_command_is_rejected(plan_client, changes):
     )
     assert response.status_code == 422
     assert response.json()["code"] == "INVALID_REQUEST"
+
+
+async def test_plan_list_has_bounded_resumable_pages(plan_client):
+    client, sign = plan_client
+    headers = {"Authorization": f"Bearer {sign()}"}
+    ids = set()
+    for i in range(3):
+        response = await client.post(
+            "/api/v1/plans", headers=headers, json=command(key=f"page-{i}")
+        )
+        ids.add(response.json()["id"])
+    first = await client.get("/api/v1/plans?limit=2", headers=headers)
+    assert first.status_code == 200
+    assert first.headers["cache-control"] == "no-store"
+    assert len(first.json()["items"]) == 2
+    cursor = first.json()["nextCursor"]
+    assert cursor
+    last = await client.get(
+        "/api/v1/plans", params={"limit": 2, "cursor": cursor}, headers=headers
+    )
+    assert last.status_code == 200
+    assert len(last.json()["items"]) == 1 and last.json()["nextCursor"] is None
+    assert {item["id"] for item in first.json()["items"] + last.json()["items"]} == ids
+    foreign = await client.get(
+        "/api/v1/plans",
+        params={"cursor": cursor},
+        headers={"Authorization": f"Bearer {sign(sub='another')}"},
+    )
+    assert foreign.status_code == 200 and foreign.json()["items"] == []
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "limit=0",
+        "limit=51",
+        "limit=abc",
+        "other=1",
+        "cursor=bad!",
+        "cursor=",
+        "limit=1&limit=2",
+        "cursor=x&cursor=y",
+    ],
+)
+async def test_invalid_plan_pagination_is_rejected(plan_client, query):
+    client, sign = plan_client
+    response = await client.get(
+        f"/api/v1/plans?{query}", headers={"Authorization": f"Bearer {sign()}"}
+    )
+    assert response.status_code == 422
+    assert response.json()["code"] == "INVALID_REQUEST"
+
+
+async def test_plan_list_requires_authentication(plan_client):
+    client, _ = plan_client
+    response = await client.get("/api/v1/plans")
+    assert response.status_code == 401

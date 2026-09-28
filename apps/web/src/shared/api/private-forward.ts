@@ -6,7 +6,7 @@ export function privateFailure(status: number, code: string): Response {
   });
 }
 
-/** Transport only: the feature adapter must validate its path and method first. */
+/** Transport only: the feature adapter must validate path, method and query first. */
 export async function forwardPrivate(request: Request, upstream?: PrivateAPI): Promise<Response> {
   if (!upstream) return privateFailure(503, "PROXY_UNAVAILABLE");
   const headers = new Headers();
@@ -19,8 +19,9 @@ export async function forwardPrivate(request: Request, upstream?: PrivateAPI): P
     signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
   };
   try {
+    const url = new URL(request.url);
     const result = await upstream.fetch(new Request(
-      `http://whisky-api.internal${new URL(request.url).pathname}`, init,
+      `http://whisky-api.internal${url.pathname}${url.search}`, init,
     ));
     if (result.status >= 300 && result.status < 400) {
       await result.body?.cancel();
