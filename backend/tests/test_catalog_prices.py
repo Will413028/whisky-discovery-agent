@@ -5,7 +5,13 @@ from uuid import uuid4
 
 import pytest
 
-from whisky.modules.catalog.domain import Bottle, PriceObservation, price_upper_bound
+from whisky.modules.catalog.domain import (
+    Bottle,
+    PriceObservation,
+    fits_budget,
+    price_upper_bound,
+    taiwan_date,
+)
 
 
 def sample_quote():
@@ -101,3 +107,28 @@ def test_each_sources_latest_quote_is_selected_before_taking_the_upper_bound():
     assert price_upper_bound(
         bottle, [newer, other_source, quote], date(2026, 9, 28)
     ) == Decimal("1300")
+
+
+@pytest.mark.parametrize(
+    "price,budget,expected",
+    [
+        (Decimal("1500"), Decimal("1500"), True),
+        (Decimal("1500"), Decimal("1499"), False),
+        (None, Decimal("1500"), False),
+        (None, None, True),
+    ],
+)
+def test_budget_equality_and_explicitly_disabled_price_filter(price, budget, expected):
+    assert fits_budget(price, budget) is expected
+
+
+def test_price_calendar_rolls_over_at_taiwan_midnight():
+    assert taiwan_date(datetime(2026, 9, 28, 15, 59, 59, tzinfo=UTC)) == date(
+        2026, 9, 28
+    )
+    assert taiwan_date(datetime(2026, 9, 28, 16, tzinfo=UTC)) == date(2026, 9, 29)
+
+
+def test_naive_time_cannot_silently_choose_the_hosts_timezone():
+    with pytest.raises(ValueError):
+        taiwan_date(datetime(2026, 9, 28, 16))

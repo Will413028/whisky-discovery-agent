@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,16 @@ class PriceObservation:
 @dataclass(frozen=True)
 class PricePolicy:
     maximum_age_days: int = 30
+
+
+def taiwan_date(instant: datetime) -> date:
+    if instant.utcoffset() is None:
+        raise ValueError("An aware timestamp is required")
+    return instant.astimezone(ZoneInfo("Asia/Taipei")).date()
+
+
+def fits_budget(upper_bound: Decimal | None, budget: Decimal | None) -> bool:
+    return budget is None or (upper_bound is not None and upper_bound <= budget)
 
 
 def price_upper_bound(

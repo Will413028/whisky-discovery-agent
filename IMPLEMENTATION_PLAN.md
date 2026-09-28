@@ -338,3 +338,4 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 前提沿用 PRODUCT_SPEC 的 TW／TWD 單瓶可比版本、每來源最新觀察、合格報價上緣與集中配置 30 日政策；不把來源撤價當作沒有新資料。Domain 採 Python dataclass／Decimal，沒有 ORM／Agent framework 依賴。
 - `test_catalog_prices.py`：精確價格先 RED（None≠1500.50）→GREEN；draft 排除先 RED→GREEN；version／ABV／容量三個反例各 RED→GREEN；市場／幣別／條件價三個反例各 RED→GREEN；day 31／未來／缺日期各 RED→GREEN，day 0／30 保持可用；最新撤價及每來源最新→跨來源上緣各 RED→GREEN。
 - `uv run --project backend pytest backend/tests/test_catalog_prices.py -q`：15 passed；affected ruff／mypy 與 Python boundary 通過。尚未建立 catalog persistence／migration／publication／真實資料，不把純規則視為 T03 完成；預算相等、台灣時區、缺資料與其他邊界、mutation、真 PostgreSQL 及人工覆核仍待依序完成。
+- 後續預算邊界 RED（相等／關閉價格篩選被拒絕）→GREEN；台灣午夜與 naive timestamp RED→GREEN。現為 21 passed，ruff／mypy 通過。T01–T02 PR #1 的 GitGuardian 命中舊 commit `4209109` 的 Compose `POSTGRES_PASSWORD` 必填環境變數宣告，查核為非字面密碼；GitGuardian 登入／false-positive 處理尚待使用者完成瀏覽器登入，不改歷史或略過檢查，亦不阻擋獨立 T03 開發。
