@@ -2,6 +2,8 @@
   "date": "2026-09-28",
   "scope": "Manual Chrome, real Auth0, thin Worker / VPC / native Node Web / FastAPI; explicitly synthetic source",
   "webCommit": "87a835d",
+  "probeToolingCommit":"3e012f4",
+  "probeCI":{"run":36410967590,"backend":"success","web":"success"},
   "apiCommit": "4209109",
   "workerVersion": "60275f37-3fe9-412b-8b6f-11855ba87879",
   "ci": {"run":36409074156,"backend":"success","web":"success"},
@@ -37,5 +39,30 @@
     "pageErrors":[],
     "freshTokenRecovery":{"status":200,"arrivalMs":2704,"taskStatus":"researching","version":2}
   },
-  "limitations":["Small manual sample, not capacity acceptance","Cross-account and live slow-consumer gates pending","No durable research or recovery acceptance"]
+  "crossAccount":{
+    "method":"Two distinct real Google sign-ins, explicit Google account chooser for second identity; no JWT fixture",
+    "secondIdentityOwnActorStatus":200,"firstIdentityActorStatus":404,
+    "cacheControl":"no-store","firstIdentityObservationStatus":404,
+    "snapshots":[],"pageErrors":[]
+  },
+  "unreadConsumerResourceSample":{
+    "webMiB":48.12,"apiMiB":69.25,"dbMiB":33.39,"tunnelMiB":16.03,
+    "dbConnections":{"idle":1,"activeIncludingInspectionQuery":1},
+    "dbQuery":"SELECT state, count(*) FROM pg_stat_activity WHERE datname = current_database() GROUP BY state"
+  },
+  "unreadConsumer":{
+    "applicationReadBytes":0,"responseStatuses":[200,200,429,200],
+    "responseArrivalMs":[546,697,850,66136],
+    "result":"deadline-released-unread-connections","pageErrors":[],
+    "scope":"Real browser holds two response bodies unread; after 65 seconds a replacement succeeds without cancelling the held bodies first. Cleanup then aborts all responses. This exercises bounded current compact snapshots, not high-volume socket saturation; stalled ASGI send is separately tested locally."
+  },
+  "cleanup":{"probeURLStatus":404,"temporaryAuth0CallbackRemoved":true,"apiTokenLifetimeSeconds":900,"normalAPIAndWebRestored":true},
+  "entryRollback":{
+    "previousSSRVersion":"542be883-e061-411f-9ac9-010dcc992ff2",
+    "previousSSR":{"homeStatus":200,"unauthenticatedMeStatus":401},
+    "restoredThinVersion":"60275f37-3fe9-412b-8b6f-11855ba87879",
+    "restoredThin":{"homeStatus":200,"unauthenticatedMeStatus":401},
+    "method":"wrangler rollback exact-version --yes; actual HTTP checks after each switch; no database rollback"
+  },
+  "limitations":["Small manual sample, not capacity acceptance","No high-volume socket saturation test","No durable research or recovery acceptance"]
 }

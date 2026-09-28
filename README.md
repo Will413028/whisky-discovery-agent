@@ -4,13 +4,13 @@
 
 ## 目前狀態
 
-T00／T01 deterministic CI 通過；T02 已接上 authenticated observe，並實測 Google 登入／refresh／logout、VPC 串流與多分頁限額。原 vinext Worker SSR 的 CPU 未通過 Free 門檻，使用者已改選 Oracle VM 上的原生 Next.js／Node；目前移轉中，完整入口及跨帳號 gate 尚未完成。產品探索、持久研究與酒款庫仍待實作；不以合成串流代表研究服務已可用。
+T00–T02 技術入口已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、token 到期與未讀 consumer 期限已驗證，入口回退演練通過。原 vinext SSR 因 Free CPU 門檻撤回。產品探索、持久研究與酒款庫仍待依 T03–T12 實作；合成串流不代表研究服務已可用。
 
 主軸是保留喜歡的特徵、探索剛剛好的差異，最後留下可回看的選擇與取捨。互動流程、資料契約、建議工程預設與驗收情境見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。功能仍待實作，酒款庫也尚未建立。
 
 ## 開發方向
 
-- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前執行 T02。
+- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；下一階段為 T03 reviewed catalog。
 - [技術架構](ARCHITECTURE.md) 採 Oracle VM 上的 Next.js／Node、FastAPI／PostgreSQL／PydanticAI＋Temporal，AG-UI 管互動。`workers.dev` 薄 Worker 經 VPC／具名 Tunnel 連 VM Web，不執行 SSR；Web 固定轉送私有 API，Auth0 Free 管登入。完整新路徑、資源與備份還原仍須實測；目前 VM 帳單 US$0 不是未來保證。
 - 這是可獨立開發與部署的產品；不依賴其他作品的執行環境。
 - 專案採單一 repo：前端依功能組織，後端以業務模組為主、模組內按需分層，保留 Python `backend/src/whisky/`。目錄與責任見 [技術架構](ARCHITECTURE.md)，首個流程契約與驗證見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。目前有 bootstrap、identity、welcome 與 research 的契約／transport 基礎，未預建其他業務模組。
