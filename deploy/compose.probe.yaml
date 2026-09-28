@@ -1,0 +1,8 @@
+# Explicit opt-in; the normal API command never loads this synthetic source.
+services:
+  api:
+    command: [python, /opt/probe/entry_probe.py]
+    environment:
+      WHISKY_PROBE_OWNER: ${WHISKY_PROBE_OWNER:?set the dedicated probe actor UUID}
+    volumes:
+      - ./entry_probe.py:/opt/probe/entry_probe.py:ro

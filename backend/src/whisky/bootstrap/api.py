@@ -20,9 +20,12 @@ from whisky.bootstrap.settings import Settings
 from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.tokens import TokenVerifier
 from whisky.modules.research.http import observation_router as research_router
+from whisky.modules.research.observation import ObservationSource
 
 
-def configured_app(settings: Settings | None) -> FastAPI:
+def configured_app(
+    settings: Settings | None, source: ObservationSource | None = None
+) -> FastAPI:
     if settings is None:
         return create_app()
     engine = create_engine(
@@ -33,7 +36,7 @@ def configured_app(settings: Settings | None) -> FastAPI:
     )
     app = create_app(
         router(engine, verifier),
-        research_router(IdentityAccess(engine, verifier), None),
+        research_router(IdentityAccess(engine, verifier), source),
     )
 
     @asynccontextmanager
