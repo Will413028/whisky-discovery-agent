@@ -21,6 +21,7 @@ class ActorView(BaseModel):
 class AccessSession:
     actor_id: UUID
     expires_at: float
+    generation: int
 
 
 class IdentityAccess:
@@ -53,7 +54,7 @@ class IdentityAccess:
         assert actor is not None
         if not actor.active:
             raise HTTPException(403, "ACTOR_DISABLED")
-        return AccessSession(actor.id, access.expires_at)
+        return AccessSession(actor.id, access.expires_at, actor.generation)
 
 
 def router(engine: Engine | None, verifier: TokenVerifier | None) -> APIRouter:

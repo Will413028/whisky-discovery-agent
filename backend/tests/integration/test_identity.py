@@ -45,6 +45,27 @@ def test_live_access_rechecks_disabled_and_deleted_actor(
 
 
 @pytest.mark.integration
+def test_authenticated_context_uses_current_persisted_generation(
+    identity_engine, signed_tokens
+):
+    verifier, sign = signed_tokens
+    token = sign()
+    store = IdentityStore(identity_engine)
+    actor = store.resolve(verifier.verify(token))
+    with identity_engine.begin() as connection:
+        connection.execute(
+            update(users).where(users.c.id == actor.id).values(generation=7)
+        )
+    resolved = store.resolve(verifier.verify(token))
+    found = store.read_actor(actor.id, actor.id)
+    session = IdentityAccess(identity_engine, verifier).authenticate(token)
+    assert getattr(resolved, "generation", None) == 7
+    assert getattr(found, "generation", None) == 7
+    assert getattr(session, "generation", None) == 7
+    assert session.actor_id == actor.id
+
+
+@pytest.mark.integration
 def test_first_login_creates_stable_internal_actor(postgres_url):
     engine = create_engine(postgres_url)
     try:

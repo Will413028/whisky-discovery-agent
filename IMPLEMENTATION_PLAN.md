@@ -382,3 +382,12 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 
 - 沿用 ARCHITECTURE 的 DB receipt＋穩定 workflow ID、Temporal 接受確認與明確 running/closed ID 政策；這是跨 DB／Temporal 的非原子邊界，不自建 queue 或 scheduler。完成後重送仍由既有 receipt 返回，不依賴 Temporal retention 永遠保留 history。
 - 已核對 [Temporal workflow ID／run ID](https://docs.temporal.io/workflow-execution/workflowid-runid) 與 [Python Client.start_workflow](https://python.temporal.io/temporalio.client.Client.html#start_workflow)；實際 policy 與 start response loss 將用已固定 SDK 和真 Temporal 驗證，不以文件或 mock 當通過。
+
+### T04 第一段 — identity generation 與 Temporal start adapter
+
+- 真 PostgreSQL RED：將既有 actor generation 更新為 7，同一已驗證 token 再登入仍未取得 generation（`None != 7`）；`/tmp/whisky-t04-generation-red.log`。補上內部 Actor／AccessSession 的 persisted generation，公開 `/me` JSON 不變；登入／停用／跨帳號與 observation 整合 `13 passed`，`/tmp/whisky-t04-generation-green.log`。
+- 真 Temporal RED：SDK 預設 conflict policy 導致並行／回應遺失後重送衝突，預設 reuse policy 讓已關閉工作重開，`3 failed`，`/tmp/whisky-t04-start-red.log`。adapter 依 persisted task UUID 組成固定 workflow ID；workflow type 固定、queue 由 server composition 提供，running 採 USE_EXISTING、closed 採 REJECT_DUPLICATE 並查回既有 run。
+- GREEN：`uv run pytest tests/integration/test_research_start.py -q` → `4 passed`，包含並行受理、terminated 後重送、真 worker 完成後重送、真 server 接受後由 client interceptor 注入回應遺失；`/tmp/whisky-t04-start-green.log`。完成 fixture 僅驗受理，不執行研究、不代表 T05 通過。
+- Mutation：將 REJECT_DUPLICATE 暫改為 ALLOW_DUPLICATE，completed retry 測試因不同 run ID 失敗；`/tmp/whisky-t04-start-mutation.log`。已恢復原 policy。Temporal retention 外的防重仍必須由後續持久 receipt 保證。
+- 本段尚未接入 HTTP／DB task receipt，未部署；T04 仍進行中。接續 discovery typed 條件與 plan、owner／revision／generation 的交易檢查、唯一 receipt 及 acceptance_pending→queued 對帳；目前 adapter 的 server acceptance 不等於完整 T04 出口。
+- 還原 mutation 後，`uv run pytest tests/integration/test_identity.py tests/integration/test_observation_http.py tests/integration/test_research_start.py -q` → `17 passed`（`/tmp/whisky-t04-increment-green.log`）；ruff／format、mypy（24 source files）與 `scripts/check_python_boundaries.py backend/src` 通過。
