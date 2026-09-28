@@ -1,6 +1,6 @@
 # Whisky Discovery Agent 技術架構
 
-更新：2026-09-28。**已確定採 PydanticAI＋Python 後端＋Temporal**：使用者先選第三條執行路線，再確認 PydanticAI。Temporal 管理研究任務生命週期；部署、身分及其他配套仍是建議，尚未建立應用。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
+更新：2026-09-28。**已確定採 PydanticAI＋Python 後端＋Temporal**：使用者先選第三條執行路線，再確認 PydanticAI。部署預算改為沿用現有帳單 US$0 的 Oracle Ampere ARM VM（4 CPU／24 GB），Cloudflare 最多接受 Workers Paid 的 US$5 基本費，不新增其他持續付費服務；以下配套仍是待驗證提案，尚未建立應用。產品行為見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)，本文件負責決策、邊界及驗證，不另存進度。
 
 ## 已確定與待選項
 
@@ -10,8 +10,8 @@
 | 執行權威 | Temporal 管工作派送、等待、重試及恢復；Agent framework 管模型與工具協調。 |
 | 產品範圍 | 個人探索計畫、可交辦研究，沿用雙入口、六項基礎能力、小型 reviewed catalog、台灣參考價格及可靠記憶。 |
 | Agent framework | 已選 PydanticAI＋Python 後端，使用官方 Temporal 整合；Mastra TypeScript 留作替代紀錄。 |
-| Web／產品保存 | 配套提案：Next.js、FastAPI、Clerk、PostgreSQL＋SQLAlchemy／psycopg／Alembic；尚待核定。 |
-| 託管 | 配套提案：Render 承載 Web／API／worker／產品 DB，Temporal Cloud 管 workflow；費用與恢復目標見下文。 |
+| Web／產品保存 | 新配套提案：Vite／React 靜態 Web、FastAPI、Clerk Hobby、PostgreSQL＋SQLAlchemy／psycopg／Alembic；尚待核定。 |
+| 託管與預算 | 沿用使用者現有 Oracle VM，帳單目前 US$0；Cloudflare Free 優先，Workers Paid US$5 基本費是可接受上限而非用量硬上限。自架 Temporal 與產品 DB 的營運／恢復須實測。 |
 | 既有技術 | ADK、AG-UI、LangGraph、Agent Server 及全 TypeScript 都不是限制；舊版只有文件，沒有應用歷史要相容遷移。 |
 | 後續功能 | 定期追蹤、通知及自動發布仍未納入 MVP。 |
 
@@ -41,17 +41,17 @@
 
 ## 配套選型的前提與替代
 
-真實限制是 Python Agent 後端、Temporal、可跨裝置找回探索紀錄、小型人工覆核 catalog，以及個人維護。TypeScript 全棧、特定雲、既有資料遷移、微服務與本機保存都不是限制。預算尚未指定，本提案先以可靠保存、低維運負擔為目標；不是付費或部署授權。
+真實限制是 Python Agent 後端、Temporal、可跨裝置找回探索紀錄、小型人工覆核 catalog、個人維護，以及沿用現有 Oracle VM／Cloudflare、持續費用 US$0 優先且最多考慮 Cloudflare Workers Paid US$5 基本費。TypeScript 全棧、Next.js、Render、Temporal Cloud、既有資料遷移、微服務與本機保存都不是限制。這是選型與預算邊界，不是開通服務的授權。
 
-| 業界常見組合 | 收益與代價 | 本案建議 |
+| 可行組合 | 收益與代價 | 本案處理 |
 |---|---|---|
-| BaaS 整合 Auth＋DB，例如 Supabase | 登入與資料服務集中；若主要用 browser Data API／RLS 很直接。本案仍需 Python API／worker，而 Pro 預設每日備份，PITR 是額外費用。 | 保留替代，不因套件多就認定較完整。 |
-| **託管應用／PostgreSQL＋獨立 Auth＋Temporal Cloud** | 常駐程序、DB 備份、登入及 workflow 各交給託管服務；代價是身分驗證與服務邊界須自己整合。 | **首選 Render＋Clerk＋Temporal Cloud**，符合已需要後端與 worker 的情境。 |
-| AWS／GCP 等雲端元件，或自行架設 VM／Kubernetes | 網路、容量及部署控制較完整；需負擔更多基礎設施、升級與還原操作。 | 有組織既有平台、特殊網路或規模要求時再選；目前沒有這些限制。 |
+| **Oracle VM 自架服務＋Cloudflare 靜態前端** | 符合現有零費用 VM 與 Python／Temporal 常駐需求；代價是單機故障、升級、備份及還原由自己負責。 | **本輪首選**；先量測磁碟、實際共用負載與 ARM 相容性。 |
+| 全部放 Cloudflare Workers／D1／Workflows | 邊緣託管減少 VM 操作，但會改寫 Python／Temporal 的執行權威與長時間工作契約；Workers Paid 另有用量超額。 | 不為部署平台推翻已確定的框架與 workflow。 |
+| Render／託管 PostgreSQL＋Temporal Cloud | 維運與恢復工具較完整，適合有月費預算；前版試算固定計算即 US$59.50／月，另有 Temporal 用量與模型費。 | 歷史替代方案，已因新預算退出本輪首選。 |
 
-這是依本案約束做的工程判斷，不是市場普及率排名。即使移除成本限制，也建議先維持同一套模組化後端、託管身分與資料庫；額外預算先投入還原演練與可用性，而非增加服務數量。
+這是依本案約束做的工程判斷，不是市場普及率排名。若取消費用限制，託管資料庫與 Temporal 會減少個人維運，但不改變產品 domain、API、workflow 與資料契約。單一 VM 不提供高可用性；可靠保存要靠 VM 外備份與演練，不能把「目前帳單 US$0」推論為服務等級保證。
 
-Web 重新比較 **Vite／React SPA** 與 **Next.js**：前者省掉 Node server，直接呼叫公開 Python API；後者多一個程序與轉接，但集中路由、登入及同源 BFF，Python API 可留在私網。本提案選 Next.js 是為了這個邊界，沒有把 SEO 或 SSR 當成已確認需求。FastAPI 適合 typed API 與 PydanticAI 共用 Python 契約；Django 在內建後台、表單及 ORM 整合優先時更有吸引力，目前沒有這項優先順序。
+Web 比較 **Vite／React SPA** 與 **Next.js**：前者可純靜態部署到 Pages Free，直接呼叫受驗證的 Python API；後者可集中 SSR／BFF，但本產品尚無 SEO／SSR 需求，會增加 Node runtime 與成本。本輪改選 Vite／React。FastAPI 適合 typed API 與 PydanticAI 共用 Python 契約；Django 在內建後台、表單及 ORM 整合優先時更有吸引力，目前沒有這項優先順序。[Pages 靜態請求](https://developers.cloudflare.com/pages/functions/pricing/)免費；加入 Pages Functions 才計入 Workers 用量。
 
 ## 建議配套與專案結構
 
@@ -59,34 +59,41 @@ Web 重新比較 **Vite／React SPA** 與 **Next.js**：前者省掉 Node server
 
 | 層 | 建議 | 責任 |
 |---|---|---|
-| Web | Next.js＋React＋TypeScript | 探索畫面、帳號互動與薄 BFF；不執行長研究。 |
+| Web | Vite＋React＋TypeScript，Cloudflare Pages Free 靜態資產 | 探索畫面、帳號互動；不執行長研究或保存私人狀態。 |
 | 產品 API | FastAPI＋Pydantic | 授權、commands、查詢、公開 view；提供 OpenAPI 契約。 |
 | Agent／Worker | PydanticAI＋Temporal Python SDK | workflow 協調、Agent、activities；與 API 共用 Python domain/use cases。 |
-| 產品 DB | Render PostgreSQL＋SQLAlchemy 2＋psycopg 3＋Alembic | Python 後端唯一管理 schema／migrations；runtime 與 migration 採同一 driver 家族。 |
-| 身分 | Clerk；第一個登入方式為 Google | Next.js 與 Python 使用官方 SDK；FastAPI 獨立驗 token 及 owner，不自製密碼或 token 系統。 |
+| 產品與 Temporal DB | 同一 Oracle VM 的 PostgreSQL cluster，隔離產品／Temporal persistence／visibility DB；SQLAlchemy 2＋psycopg 3＋Alembic 僅管理產品 schema | 一次 cluster PITR 可回到同一時間點；Temporal schema 由對應版本官方工具單獨升級，不能用產品 migration 管理。 |
+| 身分 | Clerk Hobby；第一個登入方式為 Google | React 與 Python 使用官方 SDK；FastAPI 獨立驗 token 及 owner，不自製密碼或 token 系統。Hobby 免費額度是候選前提。 |
 | 契約 | Pydantic／OpenAPI → openapi-typescript＋openapi-fetch | 產生 Web types/client；CI 驗證 schema、生成差異及 TypeScript，業務規則只在後端。 |
 | 驗證 | pytest、Temporal test environment／replay、真 PostgreSQL、Playwright、固定 eval | 分開驗 domain、持久工作、產品資料及使用者旅程。 |
-| 部署 | Render Web／private API／background worker＋Temporal Cloud | API／worker 共用後端映像及 domain，以不同 entrypoint 啟動；不按品牌、價格或會員拆微服務。 |
+| 部署 | 現有 Oracle ARM VM 的 FastAPI／Temporal Server／worker／PostgreSQL＋Cloudflare Pages／Tunnel | API／worker 共用後端程式與 domain，以不同程序啟動；Temporal gRPC 與 DB 僅在私有網路。 |
+| 模型 | Cloudflare Workers AI Free 的 `@cf/zai-org/glm-4.7-flash` 為第一個評估候選 | 後端呼叫模型；須驗 PydanticAI 相容、繁中品質、tool calling、延遲與免費用量；不宣稱已選定或自動切換付費。 |
+| VM 外保存 | OCI Object Storage Always Free 額度內的加密 PostgreSQL 備份及最小撤銷紀錄，分開權限與路徑 | 與單機故障分離；bucket 容量、請求及保留政策先盤點，不用 VM 本機磁碟冒充備份。 |
 | 工具鏈 | pnpm 管 Web，uv 管 Python；各自 lockfile | 單一 repo、兩套明確工具鏈；先不加入 Nx／Turborepo 或自建套件發布平台。 |
 
-配套文件：[Next.js self-hosting](https://nextjs.org/docs/app/guides/self-hosting)、[FastAPI](https://fastapi.tiangolo.com/features/)、[SQLAlchemy psycopg 同步／非同步支援](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.psycopg)、[Alembic](https://alembic.sqlalchemy.org/en/latest/)、[OpenAPI client](https://openapi-ts.dev/openapi-fetch/)。產品 domain 由 Python 後端擁有，Web 使用公開契約；未來若改 Agent framework 須另行重評，不並存兩套 domain。
+配套文件：[FastAPI](https://fastapi.tiangolo.com/features/)、[SQLAlchemy psycopg 同步／非同步支援](https://docs.sqlalchemy.org/en/20/dialects/postgresql.html#module-sqlalchemy.dialects.postgresql.psycopg)、[Alembic](https://alembic.sqlalchemy.org/en/latest/)、[OpenAPI client](https://openapi-ts.dev/openapi-fetch/)。產品 domain 由 Python 後端擁有，Web 使用公開契約；未來若改 Agent framework 須另行重評，不並存兩套 domain。
 
 ```mermaid
 flowchart LR
-  B[Browser] --> UI[Next.js Web／薄 BFF]
+  B[Browser] --> UI[Cloudflare Pages／靜態 React]
   B <--> A[Clerk／Google 登入]
-  subgraph R[Render 同區域]
-    UI -->|使用者 session token| API[Private FastAPI]
-    API --> DB[(產品 PostgreSQL)]
+  UI -->|Bearer session token| E[Cloudflare Tunnel／公開 API hostname]
+  subgraph O[現有 Oracle Ampere VM]
+    E --> API[FastAPI]
+    API --> DB[(PostgreSQL cluster)]
     W[Python Worker] --> DB
+    API --> T[Temporal Server]
+    W <--> T
+    T --> DB
+    DB --> BK[備份作業]
   end
-  API --> T[Temporal Cloud]
-  W <--> T
-  W --> S[指定來源與模型 API]
+  BK -. 加密 base backup／WAL .-> S[OCI Object Storage]
+  W --> M[Workers AI Free／指定來源]
+  W -. 最小控制紀錄 .-> S
 ```
 
 ```text
-apps/web/                 # Next.js
+apps/web/                 # Vite／React 靜態站
 backend/
   src/whisky/
     api/                  # HTTP、auth adapter、commands、views
@@ -98,6 +105,7 @@ backend/
     adapters/             # DB、來源、身分、Temporal client
   migrations/             # 單一產品 schema migration authority
   tests/                  # unit、integration、replay、recovery、evals
+deploy/                   # VM service／容器設定、備份與還原作業文件；無 secrets
 contracts/                # generated OpenAPI／Web client，非第二份手寫 SSOT
 data/catalog/             # 人工覆核的來源資料與發布版本
 tests/e2e/                # Web 旅程
@@ -109,10 +117,10 @@ Domain 不 import FastAPI、PydanticAI、Temporal 或 ORM；活動與 API 都呼
 
 ### 登入與授權
 
-1. Clerk 負責 Google OAuth 與 session；Next.js 採官方 SDK。BFF 只轉接允許的產品 endpoints，驗登入與寫入請求的 Origin／CSRF 邊界，不接受任意 upstream URL。
-2. BFF 將該使用者的短效 session token 傳給 FastAPI。Python 以官方 SDK 驗簽、固定可信 issuer／key 來源、token 類型、期限與 `authorized_parties`；若 API 配置 audience，發行與驗證兩端一起核定。只解碼 JWT 或相信 `X-User-Id` 都不構成驗證。
+1. Clerk Hobby 候選負責 Google OAuth 與 session；React 採官方 SDK，從登入 session 取得短效 token，以 `Authorization: Bearer` 呼叫公開 FastAPI。Browser 只連固定 API origin，不可選任意 upstream URL；應用不自行把 token 存入 localStorage 或寫入 URL。
+2. Python 以官方 SDK 驗簽、固定可信 issuer／key 來源、token 類型、期限與 `authorized_parties`；若 API 配置 audience，發行與驗證兩端一起核定。只解碼 JWT、相信 `X-User-Id` 或相信 Tunnel 來源都不構成使用者驗證。CORS 僅允許正式 Web origin；CORS 不是授權，仍需逐請求驗 token。
 3. 由已驗證的 `(issuer, subject)` 對應內部 `user_id`，首次登入可交易式建立，避免依賴 webhook 到達順序。不用 email 當 owner，也不把 Clerk ID 散布成所有業務主鍵。
-4. FastAPI 每次驗 app actor 是否有效，再以 owner scope 執行 use case；private network 不取代授權。讀報告、回覆補充、匯出、刪除同樣需要 owner 檢查；不存在與無權存取避免洩漏他人的物件資訊。
+4. FastAPI 每次驗 app actor 是否有效，再以 owner scope 執行 use case。讀報告、回覆補充、匯出、刪除同樣需要 owner 檢查；不存在與無權存取避免洩漏他人的物件資訊。帶憑證的個人回應設 `Cache-Control: no-store`，Cloudflare 不快取私人 API。
 5. Worker 接收內部 actor／task ID，執行寫入時重驗資格；Temporal history 不保存 session／refresh token。使用者關頁或 session 到期不會中止已交辦工作，取消與刪除依產品狀態控制。
 6. 本機 JWT 驗證不代表即時得知 Auth provider 的撤銷。應用停用／刪除先關閉 actor 與寫入資格；需要立即撤銷的身分操作使用 provider 查核或經驗簽的生命週期同步，測試其延遲，不宣稱本機驗簽已提供即時撤銷。
 
@@ -122,51 +130,45 @@ Domain 不 import FastAPI、PydanticAI、Temporal 或 ORM；活動與 API 都呼
 
 FastAPI 的 Pydantic request／response schema 產生 OpenAPI，Web 由此生成型別；生成型別提供編譯期檢查，不冒充 runtime validation。API 驗 request 及公開 response，拒絕不允許欄位；前端只做輸入提示，不重寫 eligibility、owner 或價格規則。共用錯誤格式含穩定 code、request ID、可重試性，command 的去重與 revision 語意沿用本文件。
 
-BFF 不查 DB、不組織 Agent，不讓 browser 直接寫產品表。帳號資料回應與 session 依賴頁不進共享 CDN／ISR cache；進度頁重連查 snapshot，不靠 Node 程序內記憶保存任務。
+Browser 不查 DB、不組織 Agent，不讓 browser 直接寫產品表。帳號資料回應不進共享 CDN cache；進度頁重連查 snapshot，不靠頁面程序內記憶保存任務。對 cookie、OAuth redirect 與跨 origin request 的實際行為在登入整合測試驗證；若改用 cookie auth，再補明確 CSRF 防護。
 
 應用表只經 Python 資料存取層，API／worker 使用受限 runtime DB role，migration 使用分開的 DDL role。Owner scope 與跨表關聯由 use cases／query 和約束保護，跨帳號整合測試驗證；本提案不宣稱 ORM 自帶 RLS。將來若開放 browser Data API 或其他獨立資料入口，須先重新設計 DB 層授權。
 
-API／worker 使用 Render 的 internal DB endpoint，各自有一個有上限的 SQLAlchemy pool；psycopg 3 同時服務 async runtime 與同步 Alembic，不靠替換 hostname 或猜測 SSL query 參數轉換 DSN。使用 checkout 存活檢查；pool 預算計入程序、replicas、部署重疊及 migration，連線故障的交易重試仍需冪等。沒有量測證據前，不加入定時 `SELECT 1` 保活或第二層 driver pool。
+API／worker 只透過 VM 內部網路連 PostgreSQL，各自有一個有上限的 SQLAlchemy pool；psycopg 3 同時服務 async runtime 與同步 Alembic，不靠替換 hostname 或猜測 SSL query 參數轉換 DSN。使用 checkout 存活檢查；pool 預算計入 API、worker、Temporal server 及 migration，連線故障的交易重試仍需冪等。沒有量測證據前，不加入定時 `SELECT 1` 保活或第二層 driver pool。Temporal 的 persistence／visibility 另依官方 driver 和連線配置估算，不共用應用 ORM pool。
 
 ## 部署、備份與成本提案
 
 ### 部署邊界
 
-Render 同一個專用 workspace／區域放 Next.js public Web、FastAPI private service、常駐 Temporal background worker 及付費 PostgreSQL。API／worker 是同一個後端版本，依職責分程序，Temporal Cloud 另管 service；不使用 Render Workflows 建第二套排程權威。
+Cloudflare Pages 只部署靜態 Web；現有 Oracle Ampere ARM VM 以受控容器／service 分開執行 FastAPI、Python worker、Temporal Server、PostgreSQL、`cloudflared` 及備份作業。這是**一台機器上的模組化服務**，不建立 Kubernetes 或第二套 queue。API／worker 共用後端版本與 domain，但各自是獨立程序。正式 Temporal 使用自架 server 與手動 schema migration；`temporal server start-dev` 只用於本機開發。Temporal persistence 與 advanced visibility 均用 PostgreSQL，免另架 Elasticsearch；先驗對應版本、ARM64 image／binary 及首個流程的 CPU／RAM／磁碟。Temporal gRPC／Web UI、PostgreSQL 不公開，僅 FastAPI 經 Tunnel 的 public hostname 暴露；Tunnel 不代替 FastAPI 身分驗證。[Temporal 自架部署](https://docs.temporal.io/self-hosted-guide/deployment)、[PostgreSQL visibility](https://docs.temporal.io/self-hosted-guide/visibility)、[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)
 
-區域建議 Singapore，Render 與 Temporal Cloud 均有對應區域；這不代表 Clerk 或模型服務的資料也限於該區。Render 私網以同 workspace／region 為邊界，Hobby 沒有進階環境網路隔離，故不把其他作品放進同一信任區。[Render 區域](https://render.com/docs/regions)、[私網邊界](https://render.com/docs/private-network)、[Temporal 區域](https://docs.temporal.io/evaluate/cloud/regions)
+穩定公開 API hostname 需有已可在 Cloudflare 設定 DNS 的網域；若沒有，先核對可用網域與其費用，不以臨時 Tunnel URL 當正式網址。[公開 Tunnel 路由](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/routing-to-tunnel/)。同機若承載其他作品，先盤點現有程序與保留 CPU／RAM／磁碟，採專用資料庫、網路、服務帳號、容器名稱與備份路徑；不可藉本案更動其他作品的資料。Web 不持有 DB、模型或 Temporal 密鑰。建立帳號、bucket、網域、設定 secrets 與部署均屬日後實作，不是本次已完成工作。
 
-API／worker 同 repo、同 domain、同產品 DB；此處是部署角色拆分。Secrets 由託管環境注入，Web 不持有 DB、模型或 Temporal 密鑰。建立服務、網域、登入設定與 secrets 配置屬實作部署階段，不是本次已完成工作。
-
-本機／CI 使用隔離 PostgreSQL、Temporal 開發／測試環境及受控 auth fixtures；另以獨立測試帳號驗真正登入。依賴鎖版、OpenAPI 生成、lint／typecheck、領域與整合測試、history replay 通過後才部署。Migration 以單次 release job 執行，採相容擴充→部署→清理，不在每個 replica 啟動時競跑；等待中的舊 workflow 依前述 worker version 策略保留 executor。
+本機／CI 使用隔離 PostgreSQL、Temporal 開發／測試環境及受控 auth fixtures；另以獨立測試帳號驗真正登入。依賴鎖版、OpenAPI 生成、lint／typecheck、領域與整合測試、history replay 通過後才部署。產品 migration 以單次 release 作業執行，Temporal schema 依官方對應版本工具獨立升級；採相容擴充→部署→清理，不在每個程序啟動時競跑。等待中的舊 workflow 依前述 worker version 策略保留 executor。
 
 ### 恢復目標
 
-正式保存使用付費 DB，先提議 **RPO ≤15 分鐘、RTO ≤4 小時**，分別指可容忍資料遺失時間與恢復服務時間；這是待核定、待演練的目標，不是平台保證。Render 付費 PostgreSQL 在 Hobby workspace 有 3 天 PITR 視窗，Pro 以上為 7 天；不能還原最近 10 分鐘內的時間點，需實測最新可還原時間及整體切換時間。[官方備份文件](https://render.com/docs/postgresql-backups)
+產品、Temporal persistence 與 visibility 放在同一 PostgreSQL cluster 的分離 database；對**整個 cluster**做加密 base backup＋WAL 歸檔到 VM 外 OCI Object Storage，可用 PostgreSQL PITR 回到單一時間點，避免只還原產品 DB 而讓 Temporal 與產品跨時點漂移。候選工具為 pgBackRest，需驗 OCI S3 相容端點、ARM 可用性、備份大小、WAL 產生率與還原程序。[PostgreSQL PITR](https://www.postgresql.org/docs/current/continuous-archiving.html)、[pgBackRest S3-compatible repository](https://pgbackrest.org/user-guide.html#s3-compatible-object-store-support)、[OCI S3 相容 API](https://docs.oracle.com/en-us/iaas/Content/Object/Tasks/s3compatibleapi.htm)
 
-還原先停新 commands、私人資料讀寫與相關 worker，到新 instance 驗 owner／catalog／artifacts；依下述獨立於產品 DB 的 control receipts，重套恢復窗口中的撤銷／刪除，再對帳存活 workflows。Temporal 已記錄完成的 activity 不會因 DB 倒退而自動重寫；缺失結果須明示需恢復／重新研究，無法確認資格的工作撤銷寫入，另建新 task 才能重新研究。receipts 不完整或對帳未完成時不開放相關資料。演練包含這種跨系統狀態差異，不把 PITR 等同 HA 或零資料損失。
+前版 **RPO ≤15 分鐘／RTO ≤4 小時** 依賴付費 DB 的操作條件，不能直接沿用到單 VM，現撤回。RPO（可容忍資料遺失時間）、RTO（恢復服務時間）在實測 WAL 歸檔、VM 外備份與**從空 VM 還原**前不填數值或宣稱達標。規劃先以短保留的 PITR 為目標，實際天數取決於現有磁碟、Object Storage 剩餘額度與 WAL 流量；確定備份政策後，撤銷紀錄的保留須更久。備份加密金鑰及救援憑證不得只留在故障 VM 或同一份加密備份中。
+
+還原時先停公開讀寫、新 commands 與 worker；只在內部恢復 cluster，再讀取 VM 外的最小控制紀錄，重套相符的取消／刪除／條件改版 fence，核對 owner／catalog／artifacts 及存活 workflows，最後才重新對外服務。即使同時點還原，備份點之後已承諾給使用者的工作及刪除仍可能遺失；不可默默顯示「已保存」。結果缺失應明示待重新研究，無法確認資格的工作先封鎖寫入。控制紀錄不完整或不能讀時不開放相關私人資料。單 VM 故障會停機，備份僅解決可恢復性而非高可用性；需實際演練還原、刪除不復活與可讀性。
 
 ### 每月費用估算
 
-以下以 **2026-09-28 官方公開價、USD、單一小流量環境** 試算，不含稅、網域、模型、額外流量／build、獨立 staging、還原臨時 instance 或雙版本 worker 重疊費。規格是容量估算起點，須以首個垂直流程的 RSS、並行與延遲量測調整。
+以下以 **2026-09-28 公開方案與使用者現有帳單狀態** 規劃。US$0 是目標與目前 VM 帳單觀察，其他免費項目須在實際帳戶額度內；這不是服務商對未來價格、可用量或帳單的保證。未計入新購網域、稅或已存在的其他帳戶用量。
 
-| 項目 | 試算起點 | 月費 |
+| 項目 | 本輪使用方式 | 預期新增月費 |
 |---|---|---:|
-| Next.js Web | 0.5 CPU／512 MB | $7 |
-| FastAPI private service | 0.5 CPU／512 MB | $7 |
-| Python Temporal worker | 1 CPU／2 GB | $25 |
-| PostgreSQL | 0.5 CPU／1 GB，另配 5 GB storage | $19＋$1.50 |
-| Render workspace | Hobby | $0 |
-| Clerk | Hobby，含 Google 登入；使用量／功能在該方案限額內 | $0 |
-| **固定計算小計** | 尚未包含下列 Temporal 用量 | **$59.50／月** |
+| 現有 Oracle VM | 使用者回報 4 CPU／24 GB、目前帳單 US$0；不另開 VM／磁碟 | $0（現況） |
+| Cloudflare Pages 靜態站＋Tunnel | Free；Tunnel 對外服務使用既有可管理網域 | $0（額度內） |
+| Temporal Server／FastAPI／worker／PostgreSQL | 自架於現有 VM；沒有 Temporal Cloud 訂閱 | $0（不計人力） |
+| Clerk | Hobby 免費方案；Google 登入，帳號量在方案內 | $0（額度內） |
+| Workers AI | Free 的每日 10,000 Neurons；超額請求失敗，不切換付費模型 | $0（額度內） |
+| OCI Object Storage | 若帳戶仍有 Always Free 物件容量／請求額度，存加密備份及最小控制紀錄 | $0（額度內） |
+| **本輪預期新增固定費** | 不啟用 Workers Paid 或其他付費資源 | **$0／月** |
 
-來源：[Render 價格](https://render.com/pricing)、[compute plan 對照](https://render.com/docs/compute-plans)、[Clerk 價格](https://clerk.com/pricing)。Clerk 目前 Hobby 為每 app 50,000 MRU 限額，不把 MRU 寫成 MAU；若需去品牌、MFA 等方案外功能另估。
-
-Temporal Cloud 目前沒有固定月費；actions 以 $50／百萬起、active history $0.042／GB-hour、retained history $0.00105／GB-hour，Developer support 為 usage 的 10%。例如**假設**每月 100,000 actions、平均 active 0.1 GB、retained 1 GB、730 小時，估算為 `(5＋0.1×730×0.042＋1×730×0.00105)×1.1 ≈ $9.72`；加上上述小計約 **$69.22**。這是算式示例，不是實測預測或費用上限，亦未用限期試用金抵扣。[Temporal 價格](https://temporal.io/pricing)
-
-Supabase Pro 的 Auth＋DB 從 $25／月起、含每日備份；若需要 PITR，add-on 從 $100／月起，還須核對相容 compute 規格。這項恢復成本與既有 Python 邊界，使本案偏向 Render PostgreSQL＋Clerk。[Supabase 價格](https://supabase.com/pricing)
-
-需要壓低預算時，先實測縮小 compute 或改 Vite SPA；schema、授權、去重及恢復契約維持一致。
+[Pages 靜態資產](https://developers.cloudflare.com/pages/functions/pricing/)免費；[Clerk Hobby](https://clerk.com/pricing/)目前每 app 50,000 MRU 額度；[Workers AI Free](https://developers.cloudflare.com/workers-ai/platform/pricing/)每日 10,000 Neurons，超額會失敗；[OCI Object Storage Always Free](https://docs.oracle.com/en-us/iaas/Content/FreeTier/freetier_topic-Always_Free_Resources.htm)公布 20 GB、50,000 API requests／月。啟用物件儲存前須查實際帳戶計費類型、既有用量與剩餘免費額度，備份保留及流量設上限並監測；若新儲存會產生費用，就不能以它宣稱本案零新增月費。若 OCI 物件額度不足，[Cloudflare R2 Standard 免費額度](https://developers.cloudflare.com/r2/pricing/)可比較，但超額也可能計費，不能未盤點就改接。Cloudflare Workers Paid 的 [US$5 基本費](https://developers.cloudflare.com/workers/platform/pricing/)還有額外用量費，因此**不能視為 US$5 帳單硬上限**；本輪先不開通。模型候選 [GLM-4.7-Flash](https://developers.cloudflare.com/workers-ai/models/glm-4.7-flash/)具多語與 function calling，[官方免費模型公告](https://developers.cloudflare.com/changelog/post/2026-07-28-models-require-workers-paid/)仍將它列在 Workers Free；實際 PydanticAI 相容與威士忌任務品質仍需固定語料測試。後端對每個研究設模型呼叫／token 上限、每日總量與超額狀態，不能悄悄改用付費 API。
 
 ## 資料與執行權威
 
@@ -174,6 +176,7 @@ Supabase Pro 的 Auth＋DB 從 $25／月起、含每日備份；若需要 PITR�
 |---|---|---|
 | 帳號、偏好、收藏、探索計畫、證據及報告 | 產品 PostgreSQL | 可匯出及刪除；模型上下文按需組成。 |
 | 執行位置、等待、timer、activity 結果與重試 | Temporal Event History | 由 SDK 重播恢復；不是偏好或報告的長期資料庫。 |
+| 跨備份點的取消／刪除／條件改版控制證據 | VM 外最小控制紀錄 | PITR 後先對帳再開放資料；不作日常產品讀取來源或第二套任務排程。 |
 | 畫面及進度 | API view／帶時間的投影 | 重連重新查任務及結果；token stream 不是唯一結果。 |
 
 計畫有 `planId` 與研究條件 revision；更改目標／偏好／限制才推進，新增進度不使自己的研究失效。每個研究 `taskId` 對應穩定 `workflowId`，另記 runtime `runId` 供診斷；身分與授權不能依賴 ID 保密。
@@ -184,7 +187,7 @@ Supabase Pro 的 Auth＋DB 從 $25／月起、含每日備份；若需要 PITR�
 
 ### 接受、去重與資料庫邊界
 
-以下描述建立研究；取消、刪除及條件變更另依 control command 契約保存可跨 DB 還原的依據。
+以下描述建立研究；取消、刪除及條件變更另依 control command 契約保存可跨**整個 PostgreSQL cluster** 還原的依據。
 
 1. API 從受信任登入取得 actor，驗 owner、條件 revision 及允許的 command；client 不可選任意 workflow type、queue 或 tool config。
 2. 產品 DB 以 command key＋payload hash 去重，建立唯一 task 及 workflow ID；同 key 不同 payload 拒絕。API 按同一 ID start，明確設定正在執行與已完成 ID 的衝突／重用政策；新研究才產生新 task。
@@ -212,15 +215,15 @@ Update 的答覆只表示補充已處理，不等於研究完成。短 HTTP time
 
 ### 取消、條件變更與版本
 
-取消、刪除及使舊任務失效的條件變更，建議由一種 typed `ControlCommand` workflow 保存最小 receipt，再透過 activities 執行產品交易。這利用已選 Temporal，不另設審計資料庫；相較外部 append-only log，少一套服務，但 receipt 的保留與列舉必須納入恢復驗收。
+取消、刪除及使舊任務失效的條件變更由一種 typed `ControlCommand` workflow 協調，但**Temporal 內的 receipt 不足以防還原復活**：自架 Temporal 與產品 DB 同在一個 PostgreSQL cluster，PITR 會一起倒退。故在 VM 外的 OCI Object Storage 存最小、不可覆寫的控制意圖紀錄；它是恢復用安全紀錄，不是另一套 workflow／queue。備份與控制紀錄使用分開路徑及權限：runtime 對控制紀錄只可新增／按 key 讀取，不可列舉、覆寫或刪除；還原身份可列舉／讀取，備份身份不能改控制紀錄。正式啟用前驗 OCI 物件一致性、retention、權限與枚舉完整性。[OCI Object Storage 一致性](https://docs.oracle.com/en-us/iaas/Content/Object/Concepts/objectstorageoverview.htm)、[write-once IAM 範例](https://docs.oracle.com/en-us/iaas/Content/Identity/Concepts/commonpolicies.htm)
 
-API 驗 owner／允許操作後，將目標 instance ID、generation／revision、操作及去重鍵交給 Temporal。Receipt workflow ID 依 scope、目標 instance、identity generation 與操作類型決定；條件變更另以預期 revision 定位，command key／payload hash 處理重送與衝突。先有 durable receipt 才修改產品 DB；先記錄 validation 結果，再由 effect activity 在交易內重驗前提、撤銷 fence／套用刪除，最後通知研究 workflow 取消。HTTP 在確認 Temporal 接受後只可顯示「已提出」，DB effect 確認後才顯示相應操作完成；失敗或無法確認不得顯示成功。一般未涉及撤銷的 CRUD 不因此全改為 workflow。
+API 驗 owner／允許操作後，將目標 instance ID、generation／revision、操作及去重鍵交給 Temporal。Command workflow ID 依 scope、目標 instance、identity generation 與操作類型決定；條件變更另以預期 revision 定位，command key／payload hash 處理重送與衝突。流程為：Temporal 接受 command → activity 以確定性 object key 寫入 VM 外意圖並確認可讀 → HTTP 才可顯示「已提出」 → effect activity 在產品 DB transaction 內重驗前提、撤銷 fence／套用刪除 → 以另一個不可覆寫物件記錄完成／拒絕結果 → 通知研究 workflow 取消。DB effect 可重試、以 command key 冪等；只有 effect 與外部結果均確認後才顯示「已完成」。若意圖寫入／確認失敗，**不得執行 DB effect**；DB effect 完成但結果寫入或回應遺失時，重試查既有結果。一般未涉及撤銷的 CRUD 不因此全改為 workflow。
 
-Receipt 不含被刪原文或 token，記錄操作的 validation／effect 結果與目標版本；identity generation 與可修改的 revision 分開，重新收藏建立新 instance，避免舊刪除誤傷新項目。retention 覆蓋**所有可還原產品備份期限＋緩衝**，且不與使用者內容 history 一起提早清除；規劃起點為備份最長 7 天、receipt 30 天，實際 namespace 設定與清除流程須驗證。這份有限期的最小紀錄用途與保存期需列入刪除說明。
+VM 外紀錄只含操作、目標與上層 scope 的不透明 ID、identity generation、預期 revision、command key／payload hash、時間與最小結果，不含被刪原文或 token；**結果物件本身也帶足以獨立對帳的 scope／target／generation／effect 時間**，不依賴原始意圖仍可讀。意圖在 DB effect 前永久化，故還原後對「已提出但未確認完成」的相符目標可重新驗前提並完成或保持隔離；被明確拒絕的命令也須能從外部結果辨識，不能把失敗當成已刪。identity generation 與可修改的 revision 分開，重新收藏建立新 instance，避免舊刪除誤傷新項目。**Pending 意圖不能因建立已久而過期**，須維持到 effect 完成或業務拒絕；完成後，意圖與結果至少保留到「最後可能還原到 effect 之前」的備份都已失效，再加緩衝。規劃起點為備份最多 7 天、從最終結果起控制紀錄至少 30 天，實際保留與清除須實測，不能只比 Temporal namespace retention 長。這份有限期的最小紀錄用途與保存期需列入刪除說明。
 
-PITR 對帳的預期集合由**還原資料中的 target instance／generation 及其 owner／plan 等上層 scope** 決定，依固定 ID 逐一查回 receipt；不能只靠 workflow 搜尋清單或建立時間篩選自證完整。必須納入還原點之前已接受、之後才生效的 command，以及 pending／回應不明者。有效且已完成的效果重套到相符 instance；明確拒絕的不套用，未確認者保持隔離並恢復處理。在保留契約成立時才能將確定的 NotFound 當作無該 command；查核錯誤、保留期不符或證據缺失均不得開放相關資料。
+PITR 對帳掃描 VM 外紀錄中**整個可還原窗口**，完整讀取所有分頁，並以還原資料中的 target instance／generation、owner／plan 等上層 scope 匹配；同時用確定性 key 核對還原資料所能推導的控制命令。不能只靠還原後的 Temporal workflow 清單或只讀還原點之後建立的物件，因命令可能在還原點前提出、之後才生效。已確認的刪除／撤銷重套到相符 instance；待確認意圖重新驗前提並處理；明確拒絕的不套用；無法判定者保持隔離。任何漏頁、物件讀取錯誤、保留期不符、receipt 與 DB 不一致都不得讓相關私人資料重新公開。
 
-驗收注入「receipt 已接受、DB commit 完成、通知研究 workflow 前中斷，再還原至 DB commit 前」，也測早已接受但延後生效、重新收藏、搜尋漏列、receipt 過期及缺漏。還原後另外核對存活研究工作；找不到產品 task 或無法確認資格者先撤銷寫入。此為待實測的恢復契約，不把文件審查視為恢復測試通過。
+驗收注入「VM 外意圖已持久、DB commit 完成、通知研究 workflow 前中斷，再還原整個 cluster 至 DB commit 前」，也測意圖已寫但 DB effect 未完成、**意圖建立超過 30 天後才生效**、重新收藏、分頁漏讀、紀錄提早過期及物件不可用。還原後另外核對存活研究工作；找不到產品 task 或無法確認資格者先撤銷寫入。此為待實測的恢復契約，不把文件審查視為恢復測試通過。
 
 取消／刪除先在產品 DB 撤銷寫入資格，再要求 Temporal 取消。外部 activity 可能來不及停止，晚到結果仍須被 transaction 擋下；取消是協作式，不能只憑 API 已送出宣稱外部 I/O 已停止。
 
@@ -238,7 +241,7 @@ Web 經產品 API 讀任務 snapshot，顯示等待執行／研究中／需要�
 
 Browser 不持有 Temporal／模型憑證，也不能直接 Query 任意 workflow。內部 history、工具原文及隱藏推理不公開，卡片 facts 驗證並保存後才顯示。進度通知可以重送或缺漏，公開結果以產品 DB 為準。
 
-刪除涵蓋產品 DB、相關 Temporal 執行歷史／payload、traces 與備份保留政策；使用最小必要 payload，不把秘密或不必要的完整個資放進 history。匯出不能替代備份；產品 DB 的 PITR／RPO／RTO 目標與 Temporal service 的 retention／恢復條件分開驗證。
+刪除涵蓋產品 DB、相關 Temporal 執行歷史／payload、traces、VM 外最小控制紀錄與備份保留政策；使用最小必要 payload，不把秘密或不必要的完整個資放進 history。控制紀錄與備份可能在有限保留期內仍含可關聯的 ID／舊資料，需向使用者說明並驗證到期清除。匯出不能替代備份；同一 PostgreSQL cluster 的 PITR 要與 Temporal history retention、控制紀錄及恢復流程一起驗證。
 
 Logs 記 task／workflow／run／revision、階段、latency、用量與錯誤分類；模型輸入輸出預設遮罩或不記。執行所需 history 與可選 debug traces 分開治理，兩者的保留／刪除均需驗證。
 
@@ -256,7 +259,8 @@ Logs 記 task／workflow／run／revision、階段、latency、用量與錯誤�
 | 部署相容 | 舊版本等待中的 history 可在受控版本恢復，replay tests 有辨別力。 |
 | 身分與跨語言契約 | 不同帳號不可讀／回覆；Web client 符合實際 API schema，模型不能擴張授權範圍。 |
 | 真實登入與失效 | Google 登入到 API 的 issuer／key／azp 設定正確；過期／錯誤來源 token、停用 actor 及跨帳號 IDs 均拒絕；不靠 webhook 順序建立帳號。 |
-| API 與資料部署 | BFF 到 private API／DB 連線可用；個人資料不被共享快取；單次 migration、pool 上限及新舊 worker 重疊經驗證。 |
-| 營運 | worker、Temporal service、產品 DB 各自故障可診斷；恢復、刪除與費用有實測紀錄。 |
+| API 與資料部署 | Pages → Tunnel → FastAPI、VM 內 API／worker／Temporal／DB 連線可用；個人資料不被共享快取；分開的 schema migration、pool 上限及新舊 worker 重疊經驗證。 |
+| 還原與成本 | 從空 VM 還原整個 cluster，VM 外控制紀錄使刪除不復活；備份／WAL 新鮮度、Object Storage 配額、Workers AI 免費用量及真正帳單有量測與告警。 |
+| 營運 | worker、Temporal service、產品 DB 各自故障可診斷；單 VM 故障時恢復與人工切換有演練紀錄。 |
 
-模型使用同一組繁中需求理解、版本消歧、工具選擇、來源衝突及修改案例比較品質／延遲／成本。下一個決策是核定本文件的配套、預算與恢復目標，再以垂直流程選出相容版本及模型；不逐套重新詢問純實作細節，也不能以只裝套件或模型回一句話宣告架構成立。交付相依見 [PRODUCT_SPEC](PRODUCT_SPEC.md#開發順序與完成界線)。
+模型使用同一組繁中需求理解、版本消歧、工具選擇、來源衝突及修改案例比較品質／延遲／免費額度消耗。下一個決策是核定本文件的零費用配套；恢復目標須在容量盤點與實際演練後設定，再以垂直流程選出相容版本及模型。不能以只裝套件或模型回一句話宣告架構成立。交付相依見 [PRODUCT_SPEC](PRODUCT_SPEC.md#開發順序與完成界線)。
