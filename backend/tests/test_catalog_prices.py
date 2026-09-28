@@ -132,3 +132,68 @@ def test_price_calendar_rolls_over_at_taiwan_midnight():
 def test_naive_time_cannot_silently_choose_the_hosts_timezone():
     with pytest.raises(ValueError):
         taiwan_date(datetime(2026, 9, 28, 16))
+
+
+@pytest.mark.parametrize(
+    "amount", [Decimal("NaN"), Decimal("Infinity"), Decimal("-1"), Decimal("0")]
+)
+def test_invalid_prices_cannot_enter_the_domain(amount):
+    _, observation = sample_quote()
+    with pytest.raises(ValueError):
+        replace(observation, amount=amount)
+
+
+def test_observations_require_an_aware_capture_time():
+    _, observation = sample_quote()
+    with pytest.raises(ValueError):
+        replace(observation, observed_at=datetime(2026, 9, 28))
+
+
+@pytest.mark.parametrize("missing", [{"abv": None}, {"volume_ml": None}])
+def test_unknown_bottle_attributes_never_count_as_a_comparable_price(missing):
+    bottle, observation = sample_quote()
+    unknown = replace(bottle, **missing)
+    assert (
+        price_upper_bound(
+            unknown, [replace(observation, bottle=unknown)], date(2026, 9, 28)
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "invalid",
+    [
+        {"abv": Decimal("NaN")},
+        {"abv": Decimal("0")},
+        {"abv": Decimal("101")},
+        {"volume_ml": 0},
+    ],
+)
+def test_invalid_bottle_measurements_are_rejected(invalid):
+    bottle, _ = sample_quote()
+    with pytest.raises(ValueError):
+        replace(bottle, **invalid)
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_conflicting_latest_observations_are_unknown_regardless_of_input_order(reverse):
+    bottle, quote = sample_quote()
+    conflict = replace(quote, amount=Decimal("1200"))
+    observations = [quote, conflict]
+    if reverse:
+        observations.reverse()
+    assert price_upper_bound(bottle, observations, date(2026, 9, 28)) is None
+
+
+def test_a_later_observation_resolves_an_earlier_timestamp_conflict():
+    bottle, quote = sample_quote()
+    conflict = replace(quote, amount=Decimal("1200"))
+    newer = replace(
+        quote,
+        observed_at=quote.observed_at + timedelta(hours=1),
+        amount=Decimal("1300"),
+    )
+    assert price_upper_bound(
+        bottle, [quote, conflict, newer], date(2026, 9, 28)
+    ) == Decimal("1300")

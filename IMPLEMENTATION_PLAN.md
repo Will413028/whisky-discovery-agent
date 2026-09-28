@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 起待依序實作。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-28。狀態：T00–T02 已驗收。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；獨立驗收對帳無阻擋缺口。T03 純規則與不可變 publication 進行中，T04 起待依序實作。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,7 +9,7 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03 價格純規則進行中；T04–T09 未開始 |
+| 持久研究骨架與樣本 | T03–T09 | T03 純規則／不可變 publication 進行中；T04–T09 未開始 |
 | 雙入口與探索計畫 | T10 | 未開始 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
@@ -339,3 +339,16 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - `test_catalog_prices.py`：精確價格先 RED（None≠1500.50）→GREEN；draft 排除先 RED→GREEN；version／ABV／容量三個反例各 RED→GREEN；市場／幣別／條件價三個反例各 RED→GREEN；day 31／未來／缺日期各 RED→GREEN，day 0／30 保持可用；最新撤價及每來源最新→跨來源上緣各 RED→GREEN。
 - `uv run --project backend pytest backend/tests/test_catalog_prices.py -q`：15 passed；affected ruff／mypy 與 Python boundary 通過。尚未建立 catalog persistence／migration／publication／真實資料，不把純規則視為 T03 完成；預算相等、台灣時區、缺資料與其他邊界、mutation、真 PostgreSQL 及人工覆核仍待依序完成。
 - 後續預算邊界 RED（相等／關閉價格篩選被拒絕）→GREEN；台灣午夜與 naive timestamp RED→GREEN。現為 21 passed，ruff／mypy 通過。T01–T02 PR #1 的 GitGuardian 命中舊 commit `4209109` 的 Compose `POSTGRES_PASSWORD` 必填環境變數宣告，查核為非字面密碼；GitGuardian 登入／false-positive 處理尚待使用者完成瀏覽器登入，不改歷史或略過檢查，亦不阻擋獨立 T03 開發。
+
+
+### T03 不可變 publication 增量 — 2026-09-28 進行中
+
+- 價格資料驗證取得逐項 RED→GREEN：非法 amount／ABV／volume、未知 ABV／容量、同來源同時戳衝突；35 個價格案例通過。Publication 的 draft、缺來源／錯版本、缺展示欄位來源、重複識別與不合法日期各取得 assertion RED→GREEN；19 個案例通過。來源 facts 與 derived flavor tags 保持不同 domain 型別。
+- 真 PostgreSQL：migration 缺表 assertion RED→GREEN；publish/read stub 的 None assertion RED→GREEN；直接更新五類 sealed component 與刪除 citation 的六個 assertion RED→GREEN。追加新 fact、後續 release 保留舊 item／evidence 引用、DB 中途錯誤完整 rollback 為既有防線驗證，沒有冒稱新 RED。`uv run --project backend pytest backend/tests/integration/test_catalog_store.py -q`：11 passed。
+- 同 transaction 發布並 seal；component trigger 鎖定 parent release 後拒絕 sealed 寫入，複合 FK 綁定 release／item／evidence／bottle version。沿用 UUID、SQLAlchemy Core、Alembic 的理由是既定 PostgreSQL 與不可變引用契約；domain 不依賴 ORM，未新增 queue／cache／extension。
+- Mutation：暫將 `<= policy.maximum_age_days` 改成 `<`，以及移除 price reviewed filter，各取得 1 failed／34 passed；還原後價格＋publication unit 54 passed。日界線與 draft 排除不是僅跑正常輸入的綠燈。
+- 完整 `uv run --project backend pytest backend/tests -q`：122 passed；ruff check／format、mypy 21 source files、Python boundary 通過；`python3 scripts/test_wheel.py` repo 外安裝與 Temporal tests 4 passed，migration head 驗為 `0002_catalog`。本增量未套用到 VM。
+- 獨立 design-review：覆蓋 ID／snapshot／transaction／seal trigger／FK／fact-tag／型別／錯誤／migration，共 0 findings（改 0、記 0、提 0、駁回 0）。T03 仍待價格 persistence、查詢用例、真實樣本人工覆核及資料隔離，不宣稱已驗收。
+- GitGuardian：使用者已處理 Compose 變數宣告誤判；新 head `c63fb9c` 的 GitGuardian 與 backend／web checks 全部成功，PR #1 已合併為 `8b5c888`。先前「等待 false-positive 處理」為當時紀錄，現已解除。
+- 獨立 correctness review 找到兩項 P2，均修正：非法 URL port／本機 literal host 可發布、等值 ABV decimal 字串被誤拒。7 個回歸 assertion 先 RED→GREEN，publication unit 現 26 passed；URL 僅做靜態格式／literal host 檢查，不宣稱完成 T08 的 DNS／redirect SSRF 防線。Domain／migration／store 的既有主鍵與 FK 路徑保持不變。
+- 修正後完整後端驗證：`uv run --project backend pytest backend/tests -q` 129 passed（87.47s）；ruff check／format、mypy 21 source files、Python boundary 再驗通過。
