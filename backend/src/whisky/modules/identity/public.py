@@ -6,9 +6,9 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict
-from sqlalchemy import Engine
+from sqlalchemy import Connection, Engine, select
 
-from whisky.modules.identity.store import IdentityStore
+from whisky.modules.identity.store import IdentityStore, users
 from whisky.modules.identity.tokens import InvalidToken, TokenVerifier
 
 
@@ -22,6 +22,22 @@ class AccessSession:
     actor_id: UUID
     expires_at: float
     generation: int
+
+
+def actor_generation(
+    connection: Connection, actor_id: UUID, *, lock: bool = False
+) -> int | None:
+    """Join a caller's transaction without exposing identity tables to modules.
+
+    Mutation callers lock identity before their own command/aggregate rows.
+    """
+    query = select(users.c.generation).where(
+        users.c.id == actor_id, users.c.active.is_(True)
+    )
+    if lock:
+        query = query.with_for_update()
+    value = connection.scalar(query)
+    return int(value) if value is not None else None
 
 
 class IdentityAccess:

@@ -391,3 +391,13 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - Mutation：將 REJECT_DUPLICATE 暫改為 ALLOW_DUPLICATE，completed retry 測試因不同 run ID 失敗；`/tmp/whisky-t04-start-mutation.log`。已恢復原 policy。Temporal retention 外的防重仍必須由後續持久 receipt 保證。
 - 本段尚未接入 HTTP／DB task receipt，未部署；T04 仍進行中。接續 discovery typed 條件與 plan、owner／revision／generation 的交易檢查、唯一 receipt 及 acceptance_pending→queued 對帳；目前 adapter 的 server acceptance 不等於完整 T04 出口。
 - 還原 mutation 後，`uv run pytest tests/integration/test_identity.py tests/integration/test_observation_http.py tests/integration/test_research_start.py -q` → `17 passed`（`/tmp/whisky-t04-increment-green.log`）；ruff／format、mypy（24 source files）與 `scripts/check_python_boundaries.py backend/src` 通過。
+
+### T04 第二段 — typed 條件與 plan 建立 receipt
+
+- 條件 RED：推測／未知可誤成硬限制、空白欄位、缺版本起點、等值金額 hash 不一致與 mutable snapshot，`10 failed, 5 passed`（`/tmp/whisky-t04-conditions-red.log`）。GREEN：frozen typed schema 保存 entry／goal／版本化起點、prefer／keep／change／avoid、certainty／strength，未知與推測不提升為硬限制；TWD 預算為正有限 Decimal、最多 18 位數／2 位小數，None 表示關閉預算。另有極端 exponent／不足一分金額 `2 failed` 的 RED（`/tmp/whisky-t04-budget-bounds-red.log`），防止 canonical fixed-point 輸出無界膨脹。
+- plan 真 DB RED：初建、同 key／payload、不同 payload、跨 owner、停用／generation、並行去重 `6 failed`（`/tmp/whisky-t04-plans-red.log`）。GREEN：0005 migration 建立 plans 與 discovery 所有的 discovery_commands；後者是垂直流程 logical command_receipts 的模組內實作，scope 固定 plans.create，owner／scope／key 唯一，完成結果與 target 同 transaction 保存。未建立共享可寫 receipt service 或自建 queue。
+- 交易按 identity→command→plan 次序；identity 公開契約用 caller connection 鎖定並驗當前 generation，catalog 公開契約查 reviewed／sealed 起點，discovery 不操作他模組 ORM／表。receipt→plan 使用 deferred 複合 FK 保證 owner 一致；真 DB 直接篡改 owner 回 23503，receipt 寫入後注入中斷會整筆回滾，重送可成功。
+- 起點不存在原先誤受理的 RED `1 failed`（`/tmp/whisky-t04-plan-reference-red.log`）已修復；published fixture 引用可 round-trip。plan 改版後 create 重送原先回 revision 2 的 RED `1 failed`（`/tmp/whisky-t04-plan-receipt-result-red.log`）已修復：receipt 保存初建結果，不從可變 plan 重建當時回應。
+- 最終受影響測試 `uv run pytest tests/integration/test_plans.py tests/test_research_conditions.py -q` → `27 passed`（`/tmp/whisky-t04-plans-final.log`）；ruff／format、mypy 28 source files、模組邊界檢查通過。wheel 以獨立環境驗 migration head 0005 與 executable/Temporal `4 passed`（`/tmp/whisky-t04-plans-wheel.log`）；後续 receipt 欄位變更仍須以最終完整測試核對。
+- fresh t04_plan_design 對 ID／schema／跨模組公開契約／鎖定順序／receipt／條件／索引／migration 的設計審查回 NO DESIGN FINDINGS。T04 尚未完成：下一段接研究 task／receipt、舊 revision 拒絕、DB commit→Temporal start 中斷恢復與 HTTP／AG-UI command 接線；本段沒有部署或宣稱完整受理出口通過。
+- 最終 `uv run --project backend pytest backend/tests -q` → `204 passed`（`/tmp/whisky-t04-plans-final-full.log`），涵蓋 receipt result 的最後變更。同一未參與實作 reviewer 複核最後差集及 correctness，未發現缺陷；主 agent 核對 repo／second-brain status 與 log，沒有 reviewer 寫入。
