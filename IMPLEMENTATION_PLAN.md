@@ -555,6 +555,10 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - VM cutover 已完成角色／0012 migration／登入 trigger／Temporal schema 與專用 namespace。bootstrap admin 輪替 job exit 0，舊密碼真 TCP 登入失敗；更新 final env 並重建 DB 後，control-reconcile exit 0／3 筆完整外部紀錄，API healthy。輪替後加密 bundled full `20260929-190627F`（DB 51,810,372 bytes、repo 6,524,224 bytes、7 秒）成功；空庫還原 gate 尚待驗，公開 tunnel 保持停用。真 VM 首次 stanza-create 因預設 postgres DB role 不存在失敗，明確加入 `pg1-user=whisky` 後 check／backup 通過。
 - 公開 readiness 新行為：missing helper import 取得 RED，再實作固定 API URL／2 秒 timeout／manual redirect／no-store 的匿名 200 或 503，捨棄上游 body。`pnpm --dir apps/web test` → 106 passed，typecheck／Web boundaries／原生 Next build 通過；Node／workerd Playwright 7 passed，含未設定 API 時 `/health/ready` 真 Node 503。前一版 CI push `36608439778` 與 PR `36609451289` 的 backend／web job 各自 success，GitGuardian pass。
 
+- VM 輪替後空庫 restore：full `20260929-190627F` 命令 8.19 秒／PG 可連線 9.53 秒，產品 head 0012、users 2／identities 2、login trigger ALWAYS、Temporal persistence 1.18／visibility 1.9。舊 admin 密碼失敗、無應用 gate 的 runtime 在對帳前登入被拒；recovery IAM 完整對帳 3 commands 後，合成 owner 的 private API 200/no-store。
+- VM waiting infrastructure workflow 在 live Temporal 保存等待，再 bundled full `20260929-191909F`（DB 51,843,140 bytes、repo 6,536,160 bytes、8 秒）。從另一空 volume WAL PITR 至 `2026-09-29 19:23:49.300103+00`，保留 gate marker `19:23:49.146045`，未包含 `19:23:50.451639` 提交；PG 接受連線時仍在 recovery，必須另等 `pg_is_in_recovery=false`，觀測 promotion 上限 36.28 秒。隔離 Temporal server＋新 worker 恢復 waiting history 並完成（9 events），含人工編排總經過 75.88 秒；這不宣稱空 VM RTO 或一般 RPO SLA。兩份正式私人資料合法 full 的最早點目前為 `20260929-190627F`，較早 preliminary full 仍只限初始遷移回退。
+- 外部匿名 readiness monitor 的缺模組 import RED→固定 public URL、HTTP 200／exact ok body／no-store、HTTP／network failure GREEN，scripts unittest 合計 10 passed；ruff pass。本機在 tunnel 停機時真 probe exit 1（HTTP 403）；GitHub runner 真 outage／復原 job 結論與通知收件仍待驗。
+
 獨立 design review 的累積 finding 對帳（每輪修正均須保持前輪已修項）：
 
 | Finding | 狀態／證據 |
@@ -568,5 +572,6 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 | witness-first 寫到一半無法恢復 | 本機故障注入及真 OCI recovery IAM 補寫通過。 |
 | 省略 overlay／舊 image／舊管理員 URL 繞過應用 gate | PostgreSQL login trigger、舊程式連線負例、base／full Compose 靜態檢查已修；VM admin 旋轉與真還原負例待驗。 |
 | 第一個 full 在 gate／admin 旋轉前，沒有合法私人資料還原點 | runbook 已改為最終 DB 設定／可能重啟→重新對帳→旋轉後 bundled full→空庫還原及舊憑證／舊程式負例，之後才可啟用私人資料；VM 證據待驗。 |
+| 外部 monitor 跟隨 redirect 可誤認其他端點健康 | 真 HTTP 302→另一 ok 端點先 RED，再用拒絕 redirect handler GREEN；目標端點未被請求。scripts 11 passed；schedule default branch／60 天 inactivity 的存活檢查已寫 runbook。 |
 
 - 未完成：VM 掛載 secrets／定時全備份、正式 Temporal／研究 worker ARM deployment、VM 上隔離還原及 API／舊 history 旅程、健康／外部告警與 rollback、RPO／RTO 真 VM 量測、T01–T08 live 總旅程。T09 未驗收，正式私人研究仍保持關閉。
