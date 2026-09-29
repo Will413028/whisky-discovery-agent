@@ -59,6 +59,9 @@ class PublicHealthTests(unittest.TestCase):
                 "https://whisky-discovery-web.fathompod.workers.dev/health/ready",
             )
             self.assertEqual(fetch.call_args.kwargs["timeout"], 10)
+            self.assertEqual(
+                request.get_header("User-agent"), "WhiskyDiscoveryAvailability/1.0"
+            )
             response.read.return_value = b'{"status":"unavailable"}'
             with self.assertRaises(RuntimeError):
                 check_public_health()

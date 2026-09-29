@@ -17,7 +17,13 @@ open_readiness = build_opener(RejectRedirect()).open
 
 def check_public_health() -> None:
     try:
-        request = Request(PUBLIC_READY_URL, headers={"Cache-Control": "no-cache"})
+        request = Request(
+            PUBLIC_READY_URL,
+            headers={
+                "Cache-Control": "no-cache",
+                "User-Agent": "WhiskyDiscoveryAvailability/1.0",
+            },
+        )
         with open_readiness(request, timeout=10) as response:
             if response.status != 200:
                 raise RuntimeError("Public readiness did not return HTTP 200")

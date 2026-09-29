@@ -575,3 +575,6 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 | 外部 monitor 跟隨 redirect 可誤認其他端點健康 | 真 HTTP 302→另一 ok 端點先 RED，再用拒絕 redirect handler GREEN；目標端點未被請求。scripts 11 passed；schedule default branch／60 天 inactivity 的存活檢查已寫 runbook。 |
 
 - 未完成：VM 掛載 secrets／定時全備份、正式 Temporal／研究 worker ARM deployment、VM 上隔離還原及 API／舊 history 旅程、健康／外部告警與 rollback、RPO／RTO 真 VM 量測、T01–T08 live 總旅程。T09 未驗收，正式私人研究仍保持關閉。
+
+- T09 VM 正式目錄 `/opt/whisky-discovery`：每日 Asia/Taipei 03:15（最多20分鐘 jitter）timer active，首次 systemd service Result=success；canonical DB secret mount 經 `docker inspect --format ...Mounts` 核實後強制 recreate，再 fresh control-reconcile，final full `20260929-193331F`（repo 6,540,672 bytes、7 秒）。Web 在切換期間 ready 503/no-store，完成對帳後 200/no-store。`pgbackrest --stanza=whisky --output=json repo-ls --recurse` → 229 files／47,749,376 bytes。三款人工覆核 manifest 真發布 release `e629c492-07a7-46e7-82f0-ef20c58202b4`，沒有發布合成酒款。
+- Monitor 獨立複查 NO DESIGN FINDINGS；scripts 11 passed／ruff check與format通過。push run `36634413509` 的實際 public-readiness job failure，但 response 403／1010 為 Cloudflare 封鎖預設 Python User-Agent，不能算 VM 停機 gate。明確 `WhiskyDiscoveryAvailability/1.0` header 先測 RED（None），實作後 GREEN；真 Python 使用該識別取得200/ok，沒有冒充瀏覽器或降低WAF。將重做受控 outage→復原。
