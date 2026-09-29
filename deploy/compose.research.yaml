@@ -1,0 +1,202 @@
+# Add only after the independent full-cluster restore and reconciliation gate.
+# The T02 entry stack remains the base until its private-data cutover is accepted.
+services:
+  temporal-schema:
+    image: temporalio/admin-tools:1.29.7-tctl-1.18.4-cli-1.7.2@sha256:4a17b5be706c56a9238fb7b5b32a36966cee14939658b20597837b2443b277c8
+    entrypoint: [/bin/sh, /setup.sh]
+    environment:
+      SQL_HOST: db
+      SQL_PORT: "5432"
+      SQL_USER: whisky_temporal_schema
+      SQL_PASSWORD: ${WHISKY_TEMPORAL_SCHEMA_PASSWORD:?set Temporal schema password}
+    volumes: [./temporal-schema.sh:/setup.sh:ro]
+    networks: [private]
+    depends_on:
+      db-roles: {condition: service_completed_successfully}
+    restart: "no"
+    mem_limit: 256m
+    cpus: 0.5
+
+  temporal:
+    image: temporalio/server:1.29.7@sha256:688da708d0daca6ff8083334a4a7fbbdbc7e70d1cca8e2eda8c05b21fdbd601e
+    environment:
+      DB: postgres12
+      DB_PORT: "5432"
+      POSTGRES_USER: whisky_temporal_runtime
+      POSTGRES_PWD: ${WHISKY_TEMPORAL_DB_PASSWORD:?set Temporal runtime password}
+      POSTGRES_SEEDS: db
+      DBNAME: temporal
+      VISIBILITY_DBNAME: temporal_visibility
+      BIND_ON_IP: 0.0.0.0
+      DYNAMIC_CONFIG_FILE_PATH: config/dynamicconfig/whisky.yaml
+    volumes: [./temporal-dynamic.yaml:/etc/temporal/config/dynamicconfig/whisky.yaml:ro]
+    networks: [private]
+    depends_on:
+      temporal-schema: {condition: service_completed_successfully}
+    restart: unless-stopped
+    mem_limit: 2g
+    cpus: 1.5
+    healthcheck:
+      test: [CMD, nc, -z, 127.0.0.1, "7233"]
+      interval: 10s
+      timeout: 3s
+      start_period: 30s
+      retries: 12
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  temporal-namespace:
+    image: temporalio/admin-tools:1.29.7-tctl-1.18.4-cli-1.7.2@sha256:4a17b5be706c56a9238fb7b5b32a36966cee14939658b20597837b2443b277c8
+    profiles: [setup]
+    entrypoint: [/bin/sh, /setup.sh]
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      WHISKY_TEMPORAL_NAMESPACE: ${WHISKY_TEMPORAL_NAMESPACE:?set dedicated namespace}
+    volumes: [./temporal-namespace.sh:/setup.sh:ro]
+    networks: [private]
+    depends_on:
+      temporal: {condition: service_healthy}
+    restart: "no"
+    mem_limit: 128m
+    cpus: 0.25
+
+  db-roles:
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    entrypoint: [psql, -X, -v, ON_ERROR_STOP=1, -h, db, -U, whisky, -d, postgres, -f, /setup.sql]
+    environment:
+      PGPASSWORD: ${WHISKY_DB_PASSWORD:?set admin database password}
+      WHISKY_PRODUCT_DB_PASSWORD: ${WHISKY_PRODUCT_DB_PASSWORD:?set product runtime password}
+      WHISKY_PRODUCT_DDL_PASSWORD: ${WHISKY_PRODUCT_DDL_PASSWORD:?set product DDL password}
+      WHISKY_TEMPORAL_DB_PASSWORD: ${WHISKY_TEMPORAL_DB_PASSWORD:?set Temporal runtime password}
+      WHISKY_TEMPORAL_SCHEMA_PASSWORD: ${WHISKY_TEMPORAL_SCHEMA_PASSWORD:?set Temporal schema password}
+    volumes: [./database-roles.sql:/setup.sql:ro]
+    networks: [private]
+    depends_on:
+      db: {condition: service_healthy}
+    restart: "no"
+    mem_limit: 128m
+    cpus: 0.25
+
+  admin-rotate:
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    profiles: [maintenance]
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - test -n "$$WHISKY_NEW_DB_PASSWORD"; exec psql -X -v ON_ERROR_STOP=1 -h db -U whisky -d postgres -f /rotate.sql
+    environment:
+      PGPASSWORD: ${WHISKY_DB_PASSWORD:?set current admin password}
+      WHISKY_NEW_DB_PASSWORD: ${WHISKY_NEW_DB_PASSWORD:-}
+    volumes: [./database-admin-rotate.sql:/rotate.sql:ro]
+    networks: [private]
+    depends_on:
+      db: {condition: service_healthy}
+    restart: "no"
+    mem_limit: 128m
+    cpus: 0.25
+
+  migrate:
+    depends_on:
+      db-roles: {condition: service_completed_successfully}
+
+  db-login-gate:
+    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    entrypoint: [psql, -X, -v, ON_ERROR_STOP=1, -h, db, -U, whisky, -d, whisky, -f, /gate.sql]
+    environment:
+      PGPASSWORD: ${WHISKY_DB_PASSWORD:?set admin database password}
+    volumes: [./database-login-gate.sql:/gate.sql:ro]
+    networks: [private]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+    restart: "no"
+    mem_limit: 128m
+    cpus: 0.25
+
+  control-reconcile:
+    image: whisky-discovery-api:${WHISKY_RELEASE:?set immutable release tag}
+    command: [whisky-control-reconcile]
+    environment:
+      WHISKY_RECOVERY_MODE: isolated
+      WHISKY_DATABASE_URL: ${WHISKY_MIGRATION_DATABASE_URL:?set product DDL URL for isolated recovery}
+      WHISKY_OCI_CONTROL_CONFIG_FILE: /run/secrets/oci-control.conf
+      WHISKY_OCI_NAMESPACE: ${WHISKY_OCI_NAMESPACE:?set OCI Object Storage namespace}
+      WHISKY_OCI_CONTROL_BUCKET: ${WHISKY_OCI_CONTROL_BUCKET:?set control bucket}
+      WHISKY_OCI_CONTROL_WITNESS_BUCKET: ${WHISKY_OCI_CONTROL_WITNESS_BUCKET:?set independent witness bucket}
+    secrets:
+      - source: control_recovery_config
+        target: oci-control.conf
+      - source: control_recovery_key
+        target: oci-control.pem
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    networks: [private]
+    depends_on:
+      db-login-gate: {condition: service_completed_successfully}
+    restart: "no"
+    mem_limit: 512m
+    cpus: 0.5
+
+  api:
+    environment:
+      WHISKY_CONTROL_ENABLED: ${WHISKY_CONTROL_ENABLED:-0}
+    depends_on:
+      control-reconcile: {condition: service_completed_successfully}
+
+  worker:
+    image: whisky-discovery-api:${WHISKY_RELEASE:?set immutable release tag}
+    command:
+      - whisky-worker
+      - --address
+      - temporal:7233
+      - --namespace
+      - ${WHISKY_TEMPORAL_NAMESPACE:?set dedicated namespace}
+      - --task-queue
+      - ${WHISKY_TEMPORAL_TASK_QUEUE:?set dedicated task queue}
+    environment:
+      WHISKY_DATABASE_URL: ${WHISKY_RUNTIME_DATABASE_URL:?set product runtime URL}
+      WHISKY_RECOVERY_REQUIRED: "1"
+      WHISKY_CLOUDFLARE_ACCOUNT_ID: ${WHISKY_CLOUDFLARE_ACCOUNT_ID:?set Workers AI account ID}
+      WHISKY_CLOUDFLARE_AI_TOKEN_FILE: /run/secrets/workers-ai-token
+      WHISKY_DAILY_MODEL_NEURONS: ${WHISKY_DAILY_MODEL_NEURONS:-5000}
+      WHISKY_OCI_CONTROL_CONFIG_FILE: /run/secrets/oci-control.conf
+      WHISKY_OCI_NAMESPACE: ${WHISKY_OCI_NAMESPACE:?set OCI Object Storage namespace}
+      WHISKY_OCI_CONTROL_BUCKET: ${WHISKY_OCI_CONTROL_BUCKET:?set control bucket}
+      WHISKY_OCI_CONTROL_WITNESS_BUCKET: ${WHISKY_OCI_CONTROL_WITNESS_BUCKET:?set independent witness bucket}
+    secrets:
+      - source: workers_ai_token
+        target: workers-ai-token
+      - source: control_runtime_config
+        target: oci-control.conf
+      - source: control_runtime_key
+        target: oci-control.pem
+    read_only: true
+    tmpfs: ["/tmp:size=16m,mode=1777"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    init: true
+    mem_limit: 1g
+    cpus: 1
+    networks: [private]
+    depends_on:
+      temporal: {condition: service_healthy}
+      control-reconcile: {condition: service_completed_successfully}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+secrets:
+  workers_ai_token:
+    file: ./secrets/workers-ai-token
+  control_runtime_config:
+    file: ./secrets/whisky-control-runtime-vm.conf
+  control_runtime_key:
+    file: ./secrets/whisky-control-runtime.pem
+  control_recovery_config:
+    file: ./secrets/whisky-control-recovery-vm.conf
+  control_recovery_key:
+    file: ./secrets/whisky-control-recovery.pem

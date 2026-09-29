@@ -14,7 +14,7 @@ from whisky.modules.control.journal import (
     result_record,
     write_verified,
 )
-from whisky.modules.control.store import ControlReceipt
+from whisky.modules.control.store import ControlReceipt, control_payload_hash
 from whisky.modules.discovery.conditions import ResearchConditions
 
 
@@ -76,3 +76,12 @@ def test_condition_change_records_replayable_key_and_conditions_in_each_object()
     ):
         assert record["commandKey"] == pending.key
         assert record["newConditions"] == conditions.model_dump(mode="json")
+
+
+def test_v1_control_rejects_future_conditions_before_hashing():
+    class FutureConditions:
+        def canonical_json(self):
+            return '{"schema_version":2}'
+
+    with pytest.raises(ValueError, match="v1"):
+        control_payload_hash("plan.change_conditions", uuid4(), 1, FutureConditions())

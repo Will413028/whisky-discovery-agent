@@ -16,6 +16,24 @@ class ControlJournal(Protocol):
     def read(self, key: str) -> bytes: ...
 
 
+class MirroredControlJournal:
+    """Persist an independent witness before the primary effect log."""
+
+    def __init__(self, primary: ControlJournal, witness: ControlJournal) -> None:
+        self.primary = primary
+        self.witness = witness
+
+    def put_once(self, key: str, body: bytes) -> None:
+        self.witness.put_once(key, body)
+        self.primary.put_once(key, body)
+
+    def read(self, key: str) -> bytes:
+        primary = self.primary.read(key)
+        if self.witness.read(key) != primary:
+            raise ControlJournalConflict("Control witness body differs")
+        return primary
+
+
 def _record(command: ControlReceipt) -> dict[str, object]:
     return dict(
         schemaVersion=1,

@@ -3,14 +3,14 @@
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from hashlib import sha256
 from typing import Literal, cast
 from uuid import UUID, uuid4
 
 from sqlalchemy import Connection, Engine, RowMapping, text
 
+from whisky.modules.control.v1_codec import decode_conditions_v1, payload_hash_v1
 from whisky.modules.discovery.public import (
-    ResearchConditions,
+    ResearchConditionsV1,
     change_conditions,
     delete_actor_plans,
     delete_plan,
@@ -60,7 +60,7 @@ class ControlReceipt:
     status: ControlStatus
     result: dict[str, str] | None
     created_at: datetime
-    new_conditions: ResearchConditions | None = None
+    new_conditions: ResearchConditionsV1 | None = None
 
     @property
     def workflow_id(self) -> str:
@@ -68,6 +68,18 @@ class ControlReceipt:
             f"whisky-control-{self.kind}-{self.target_id.hex}-"
             f"{self.target_generation}-{self.expected_revision}-{self.id.hex}"
         )
+
+
+def control_payload_hash(
+    kind: ControlKind,
+    target_id: UUID,
+    expected_revision: int,
+    conditions: ResearchConditionsV1 | None,
+) -> str:
+    """Use the same command identity for normal intake and recovery audit."""
+    if conditions is not None and not isinstance(conditions, ResearchConditionsV1):
+        raise ValueError("Control schema v1 requires v1 research conditions")
+    return payload_hash_v1(kind, target_id, expected_revision, conditions)
 
 
 class ControlStore:
@@ -83,7 +95,7 @@ class ControlStore:
         key: str,
         *,
         expected_revision: int = 0,
-        conditions: ResearchConditions | None = None,
+        conditions: ResearchConditionsV1 | None = None,
     ) -> ControlReceipt:
         try:
             key_uuid = UUID(key)
@@ -97,19 +109,7 @@ class ControlStore:
                 raise ValueError("Condition changes require a revision and conditions")
         elif expected_revision != 0 or conditions is not None:
             raise ValueError("Only condition changes carry a revision and conditions")
-        payload = json.dumps(
-            dict(
-                kind=kind,
-                targetId=str(target_id),
-                expectedRevision=expected_revision,
-                conditions=json.loads(conditions.canonical_json())
-                if conditions
-                else None,
-            ),
-            sort_keys=True,
-            separators=(",", ":"),
-        )
-        digest = sha256(payload.encode()).hexdigest()
+        digest = control_payload_hash(kind, target_id, expected_revision, conditions)
         with self.engine.begin() as connection:
             existing = self._by_key(connection, owner, kind, key)
             if existing is not None:
@@ -342,7 +342,7 @@ class ControlStore:
         if kind == "plan.change_conditions":
             if plan.conditions_revision != row["expected_revision"]:
                 raise DomainRejection("REVISION_CONFLICT")
-            conditions = ResearchConditions.model_validate(row["new_conditions"])
+            conditions = decode_conditions_v1(row["new_conditions"])
             change_conditions(
                 connection, target, owner, plan.conditions_revision, conditions
             )
@@ -446,7 +446,7 @@ class ControlStore:
             result=row["result"],
             created_at=row["created_at"],
             new_conditions=(
-                ResearchConditions.model_validate(row["new_conditions"])
+                decode_conditions_v1(row["new_conditions"])
                 if row["new_conditions"] is not None
                 else None
             ),

@@ -161,6 +161,74 @@ def controlled_workflow_ids(
     return tuple(workflow_id_for(task_id) for task_id in rows)
 
 
+def actor_tasks_closed(connection: Connection, owner: UUID, generation: int) -> bool:
+    """Recovery fence for a removed identity generation."""
+    return (
+        connection.scalar(
+            text("""
+        SELECT count(*) FROM research_tasks
+        WHERE owner_id=:owner AND generation=:generation AND write_allowed
+        """),
+            dict(owner=owner, generation=generation),
+        )
+        == 0
+    )
+
+
+def task_control_effect_present(
+    connection: Connection, task_id: UUID, owner: UUID, generation: int
+) -> bool:
+    """Recovery read of one cancellation fence."""
+    row = (
+        connection.execute(
+            text("""
+            SELECT owner_id,generation,status,write_allowed
+            FROM research_tasks WHERE id=:id
+            """),
+            dict(id=task_id),
+        )
+        .mappings()
+        .first()
+    )
+    if row is None:
+        return True
+    if row["owner_id"] != owner or row["generation"] != generation:
+        raise ValueError("control target belongs to another scope")
+    return row["status"] in {"cancelled", "superseded"} and not row["write_allowed"]
+
+
+def plan_tasks_closed(
+    connection: Connection,
+    plan_id: UUID,
+    owner: UUID,
+    generation: int,
+    expected_revision: int | None,
+) -> bool:
+    """Recovery read of every task invalidated by a plan control effect."""
+    revision_clause = (
+        "AND conditions_revision<=:revision" if expected_revision is not None else ""
+    )
+    return (
+        connection.scalar(
+            text(
+                """
+        SELECT count(*) FROM research_tasks
+        WHERE owner_id=:owner AND plan_id=:plan AND generation=:generation
+          AND write_allowed
+        """
+                + revision_clause
+            ),
+            dict(
+                owner=owner,
+                plan=plan_id,
+                generation=generation,
+                revision=expected_revision,
+            ),
+        )
+        == 0
+    )
+
+
 def _close_questions_and_turns(
     connection: Connection,
     owner: UUID,

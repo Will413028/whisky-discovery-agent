@@ -5,6 +5,7 @@ import asyncio
 import os
 import re
 from collections.abc import Mapping
+from pathlib import Path
 
 from openai import AsyncOpenAI
 from pydantic_ai.durable_exec.temporal import PydanticAIPlugin
@@ -24,7 +25,8 @@ from whisky.modules.control.activities import (
     ControlActivities,
     TemporalResearchCanceller,
 )
-from whisky.modules.control.journal import ControlJournal
+from whisky.modules.control.journal import ControlJournal, MirroredControlJournal
+from whisky.modules.control.journal_oci import OciControlJournal
 from whisky.modules.control.store import ControlStore
 from whisky.modules.control.workflow import ControlWorkflow
 from whisky.modules.research.activities import ResearchActivities
@@ -37,8 +39,41 @@ from whisky.modules.research.source_reader import SourceReader
 from whisky.modules.research.workflow import ResearchWorkflow
 from whisky.modules.research.workflow_v2 import ResearchWorkflowV2
 from whisky.modules.research.workflow_v3 import ResearchWorkflowV3
+from whisky.platform.recovery_gate import assert_recovery_ready, install_recovery_gate
 
 WORKERS_AI_MODEL = DEFAULT_MODEL
+
+
+def cloudflare_token_from_values(values: Mapping[str, str]) -> str:
+    inline = values.get("WHISKY_CLOUDFLARE_AI_TOKEN", "")
+    token_file = values.get("WHISKY_CLOUDFLARE_AI_TOKEN_FILE", "")
+    if inline and token_file:
+        raise ValueError("Workers AI token source must be unique")
+    if token_file:
+        if not Path(token_file).is_absolute():
+            raise ValueError("Workers AI token file must be absolute")
+        return Path(token_file).read_text(encoding="utf-8").strip()
+    return inline
+
+
+def control_journal_from_values(values: Mapping[str, str]) -> ControlJournal | None:
+    config_file = values.get("WHISKY_OCI_CONTROL_CONFIG_FILE", "")
+    namespace = values.get("WHISKY_OCI_NAMESPACE", "")
+    bucket = values.get("WHISKY_OCI_CONTROL_BUCKET", "")
+    witness_bucket = values.get("WHISKY_OCI_CONTROL_WITNESS_BUCKET", "")
+    configured = (config_file, namespace, bucket, witness_bucket)
+    if not any(configured):
+        return None
+    if (
+        not all(configured)
+        or not config_file.startswith("/")
+        or bucket == witness_bucket
+    ):
+        raise ValueError("OCI control journal requires complete absolute configuration")
+    return MirroredControlJournal(
+        OciControlJournal.from_config_file(config_file, namespace, bucket),
+        OciControlJournal.from_config_file(config_file, namespace, witness_bucket),
+    )
 
 
 def main() -> None:
@@ -152,7 +187,7 @@ async def run(
         values = os.environ
     database_url = values.get("WHISKY_DATABASE_URL", "")
     account_id = values.get("WHISKY_CLOUDFLARE_ACCOUNT_ID", "")
-    token = values.get("WHISKY_CLOUDFLARE_AI_TOKEN", "")
+    token = cloudflare_token_from_values(values)
     configured = (database_url, account_id, token)
     if probe_only:
         if not task_queue.startswith("whisky-probe-") or any(configured):
@@ -164,11 +199,17 @@ async def run(
         raise ValueError("Research worker requires database and Workers AI settings")
     if database_url and not database_url.startswith("postgresql+psycopg://"):
         raise ValueError("Research worker requires PostgreSQL with psycopg")
+    control_journal = control_journal_from_values(values)
     client = await Client.connect(
         address, namespace=namespace, plugins=[PydanticAIPlugin()]
     )
-    engine = create_engine(database_url)
+    engine = create_engine(database_url, pool_pre_ping=True)
     try:
+        if values.get("WHISKY_RECOVERY_REQUIRED", "") not in {"", "0", "1"}:
+            raise ValueError("Recovery required flag must be 0 or 1")
+        if values.get("WHISKY_RECOVERY_REQUIRED") == "1":
+            install_recovery_gate(engine)
+            assert_recovery_ready(engine)
         quota = QuotaStore(
             engine,
             daily_neuron_limit=int(values.get("WHISKY_DAILY_MODEL_NEURONS", "0")),
@@ -178,6 +219,7 @@ async def run(
             task_queue,
             engine,
             cloudflare_model(account_id, token),
+            control_journal=control_journal,
             quota=quota,
         ).run()
     finally:

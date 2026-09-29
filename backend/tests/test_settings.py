@@ -101,3 +101,34 @@ def test_temporal_requires_host_and_port_without_credentials(address):
 def test_temporal_without_product_identity_configuration_is_rejected():
     with pytest.raises(ValueError):
         Settings.from_environment({"WHISKY_TEMPORAL_ADDRESS": "temporal:7233"})
+
+
+def test_control_start_is_opt_in_and_requires_temporal():
+    assert Settings.from_environment(configured_values()).control_enabled is False
+    with pytest.raises(ValueError, match="Control"):
+        Settings.from_environment(configured_values(WHISKY_CONTROL_ENABLED="1"))
+    enabled = Settings.from_environment(
+        configured_values(
+            WHISKY_TEMPORAL_ADDRESS="temporal:7233",
+            WHISKY_TEMPORAL_NAMESPACE="whisky",
+            WHISKY_TEMPORAL_TASK_QUEUE="whisky-research",
+            WHISKY_CONTROL_ENABLED="1",
+        )
+    )
+    assert enabled.control_enabled is True
+    with pytest.raises(ValueError, match="Control"):
+        Settings.from_environment(configured_values(WHISKY_CONTROL_ENABLED="anything"))
+
+
+def test_recovery_gate_is_explicit_and_bad_flag_fails_startup():
+    assert Settings.from_environment(configured_values()).recovery_required is False
+    assert (
+        Settings.from_environment(
+            configured_values(WHISKY_RECOVERY_REQUIRED="1")
+        ).recovery_required
+        is True
+    )
+    with pytest.raises(ValueError, match="Recovery"):
+        Settings.from_environment(
+            configured_values(WHISKY_RECOVERY_REQUIRED="anything")
+        )

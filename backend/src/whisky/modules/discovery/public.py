@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING
 from uuid import UUID
 
 from whisky.modules.discovery.conditions import ResearchConditions as ResearchConditions
+from whisky.modules.discovery.conditions_v1 import (
+    ResearchConditionsV1 as ResearchConditionsV1,
+)
 from whisky.platform.domain_errors import DomainRejection
 
 if TYPE_CHECKING:
@@ -26,7 +29,7 @@ def change_conditions(
     plan_id: UUID,
     owner: UUID,
     revision: int,
-    conditions: ResearchConditions,
+    conditions: ResearchConditionsV1,
 ) -> None:
     """Caller holds the owner and plan locks; update only the expected revision."""
     from sqlalchemy import text
@@ -80,4 +83,60 @@ def delete_actor_plans(connection: Connection, owner: UUID, generation: int) -> 
         WHERE owner_id=:owner AND generation<=:generation AND deleted_at IS NULL
         """),
         dict(owner=owner, generation=generation),
+    )
+
+
+def actor_plans_closed(connection: Connection, owner: UUID, generation: int) -> bool:
+    """Recovery fence for all plans in a removed identity generation."""
+    from sqlalchemy import text
+
+    return (
+        connection.scalar(
+            text("""
+        SELECT count(*) FROM plans
+        WHERE owner_id=:owner AND generation=:generation AND deleted_at IS NULL
+        """),
+            dict(owner=owner, generation=generation),
+        )
+        == 0
+    )
+
+
+def plan_control_effect_present(
+    connection: Connection,
+    plan_id: UUID,
+    owner: UUID,
+    generation: int,
+    *,
+    deleted: bool,
+    expected_revision: int,
+    new_conditions: ResearchConditionsV1 | None,
+) -> bool:
+    """Recovery read of the plan's own fence and revision."""
+    from sqlalchemy import text
+
+    plan = (
+        connection.execute(
+            text("""
+            SELECT owner_id,generation,deleted_at,conditions_revision,conditions
+            FROM plans WHERE id=:id
+            """),
+            dict(id=plan_id),
+        )
+        .mappings()
+        .first()
+    )
+    if plan is None:
+        return True
+    if plan["owner_id"] != owner or plan["generation"] != generation:
+        raise ValueError("control target belongs to another scope")
+    if deleted:
+        return plan["deleted_at"] is not None
+    if plan["deleted_at"] is not None:
+        return True
+    if plan["conditions_revision"] < expected_revision + 1:
+        return False
+    return not (
+        plan["conditions_revision"] == expected_revision + 1
+        and ResearchConditionsV1.model_validate(plan["conditions"]) != new_conditions
     )

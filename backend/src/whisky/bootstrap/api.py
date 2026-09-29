@@ -18,7 +18,9 @@ from starlette.responses import Response
 from whisky.bootstrap.errors import ErrorView, error_response
 from whisky.bootstrap.settings import Settings
 from whisky.modules.control.http import control_router as make_control_router
+from whisky.modules.control.service import ControlController
 from whisky.modules.control.store import ControlStore
+from whisky.modules.control.temporal_start import ConnectingTemporalControlStarter
 from whisky.modules.discovery.http import plan_router as discovery_router
 from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess, router
@@ -32,6 +34,7 @@ from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.store import ResearchStore
 from whisky.modules.research.temporal_start import ConnectingTemporalResearchStarter
 from whisky.platform.http_errors import PublicAPIError
+from whisky.platform.recovery_gate import assert_recovery_ready, install_recovery_gate
 
 
 def configured_app(
@@ -42,6 +45,8 @@ def configured_app(
     engine = create_engine(
         settings.database_url, pool_pre_ping=True, pool_size=5, max_overflow=0
     )
+    if settings.recovery_required:
+        install_recovery_gate(engine)
     verifier = TokenVerifier(
         settings.issuer, settings.audience, settings.issuer + ".well-known/jwks.json"
     )
@@ -59,6 +64,18 @@ def configured_app(
             temporal_client,
         )
         answers = AnswerResearch(ClarificationStore(engine), temporal_client)
+    control_store = ControlStore(engine)
+    control_controller = None
+    if settings.control_enabled:
+        assert settings.temporal is not None
+        control_controller = ControlController(
+            control_store,
+            ConnectingTemporalControlStarter(
+                settings.temporal.address,
+                settings.temporal.namespace,
+                settings.temporal.task_queue,
+            ),
+        )
     app = create_app(
         router(engine, verifier),
         research_router(
@@ -73,18 +90,26 @@ def configured_app(
             IdentityAccess(engine, verifier), PlanStore(engine)
         ),
         control_router=make_control_router(
-            IdentityAccess(engine, verifier), ControlStore(engine), None
+            IdentityAccess(engine, verifier), control_store, control_controller
         ),
     )
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         try:
+            if settings.recovery_required:
+                assert_recovery_ready(engine)
             yield
         finally:
             engine.dispose()
 
     app.router.lifespan_context = lifespan
+
+    @app.get("/health/ready")
+    def readiness() -> dict[str, str]:
+        assert_recovery_ready(engine)
+        return {"status": "ok"}
+
     return app
 
 

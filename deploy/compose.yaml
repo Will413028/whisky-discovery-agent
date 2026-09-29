@@ -6,7 +6,8 @@ x-api: &api
     context: ..
     dockerfile: deploy/Dockerfile
   environment:
-    WHISKY_DATABASE_URL: ${WHISKY_DATABASE_URL:?set dedicated database URL}
+    WHISKY_DATABASE_URL: ${WHISKY_RUNTIME_DATABASE_URL:?set gated product runtime URL}
+    WHISKY_RECOVERY_REQUIRED: "1"
     WHISKY_AUTH0_ISSUER: ${WHISKY_AUTH0_ISSUER:?set Auth0 issuer}
     WHISKY_AUTH0_AUDIENCE: ${WHISKY_AUTH0_AUDIENCE:?set API audience}
     WHISKY_TEMPORAL_ADDRESS: ${WHISKY_TEMPORAL_ADDRESS:-}
@@ -56,12 +57,26 @@ services:
       driver: json-file
       options: {max-size: 10m, max-file: "3"}
   db:
-    image: postgres:18-alpine@sha256:77f585114c32fbca283dc835b0596f4e52b51b4c6662d7810b2f4084f60a1873
+    image: whisky-discovery-postgres:${WHISKY_PG_RELEASE:?set immutable PostgreSQL release tag}
+    build:
+      context: ..
+      dockerfile: deploy/postgres.Dockerfile
+    command:
+      - postgres
+      - -c
+      - archive_mode=on
+      - -c
+      - archive_command=pgbackrest --stanza=whisky archive-push %p
+      - -c
+      - archive_timeout=60s
     environment:
       POSTGRES_DB: whisky
       POSTGRES_USER: whisky
       POSTGRES_PASSWORD: ${WHISKY_DB_PASSWORD:?set dedicated database password}
     volumes: [product-db:/var/lib/postgresql]
+    secrets:
+      - source: pgbackrest_config
+        target: /etc/pgbackrest/pgbackrest.conf
     networks: [private]
     restart: unless-stopped
     mem_limit: 512m
@@ -77,6 +92,8 @@ services:
   migrate:
     <<: *api
     command: [whisky-migrate]
+    environment:
+      WHISKY_DATABASE_URL: ${WHISKY_MIGRATION_DATABASE_URL:?set product DDL URL}
     depends_on:
       db: {condition: service_healthy}
     restart: "no"
@@ -86,7 +103,7 @@ services:
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
     healthcheck:
-      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8417/health/live', timeout=2)"]
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8417/health/ready', timeout=2)"]
       interval: 10s
       timeout: 3s
       retries: 6
@@ -114,3 +131,5 @@ volumes:
 secrets:
   tunnel_token:
     file: ./secrets/tunnel-token
+  pgbackrest_config:
+    file: ./secrets/pgbackrest.conf
