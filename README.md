@@ -4,13 +4,13 @@
 
 ## 目前狀態
 
-T00–T07 已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、reviewed catalog、可靠受理、durable Agent、等待恢復及控制命令均有本機與 CI 證據。原 vinext SSR 因 Free CPU 門檻撤回。T08 真來源／配額與[固定模型對照](backend/evals/T08_REVIEW.md)已有本機證據，仍待人工 rubric 與 CI；研究 worker、catalog 與 migrations 尚未正式部署，T09–T12 尚未完成。
+T00–T08 已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、reviewed catalog、可靠受理、durable Agent、等待恢復、控制命令、真來源與配額均有本機與 CI 證據；[固定模型對照](backend/evals/T08_REVIEW.md)已完成人工 rubric，選定 Qwen。原 vinext SSR 因 Free CPU 門檻撤回。研究 worker、catalog 與 migrations 尚未正式部署，T09–T12 尚未完成。
 
 主軸是保留喜歡的特徵、探索剛剛好的差異，最後留下可回看的選擇與取捨。互動流程、資料契約、建議工程預設與驗收情境見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。目前有三款人工覆核起始樣本，完整探索功能仍待實作。
 
 ## 開發方向
 
-- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前進行 T08 真來源、模型與用量防線。
+- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前進行 T09 replay、安全部署與備份還原。
 - [技術架構](ARCHITECTURE.md) 採 Oracle VM 上的 Next.js／Node、FastAPI／PostgreSQL／PydanticAI＋Temporal，AG-UI 管互動。`workers.dev` 薄 Worker 經 VPC／具名 Tunnel 連 VM Web，不執行 SSR；Web 固定轉送私有 API，Auth0 Free 管登入。完整新路徑、資源與備份還原仍須實測；目前 VM 帳單 US$0 不是未來保證。
 - 這是可獨立開發與部署的產品；不依賴其他作品的執行環境。
 - 專案採單一 repo：前端依功能組織，後端以業務模組為主、模組內按需分層，保留 Python `backend/src/whisky/`。目錄與責任見 [技術架構](ARCHITECTURE.md)，首個流程契約與驗證見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。目前有 bootstrap、identity、catalog、welcome 與 research 的契約／transport 基礎，按用例加入模組。
