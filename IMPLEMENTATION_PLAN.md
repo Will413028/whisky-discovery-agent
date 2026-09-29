@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-30。狀態：T00–T08 已驗收，T09 進行中。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；T03 catalog／人工覆核、T04 可靠受理、T05 durable Agent、T06 等待補充／跨程序恢復、T07 控制命令與 T08 真來源／模型／配額已通過各自出口。T03–T08 的 schema／研究 worker 尚未部署；正式私人紀錄仍須 T09 的還原出口。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-30。狀態：T00–T08 已驗收，T09 進行中。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；T03 catalog／人工覆核、T04 可靠受理、T05 durable Agent、T06 等待補充／跨程序恢復、T07 控制命令與 T08 真來源／模型／配額已通過各自出口。T03–T08 的 schema／研究 worker 與三款 reviewed catalog 已部署 VM；正式私人紀錄仍須 T09 完整總驗收。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -574,7 +574,14 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 | 第一個 full 在 gate／admin 旋轉前，沒有合法私人資料還原點 | runbook 已改為最終 DB 設定／可能重啟→重新對帳→旋轉後 bundled full→空庫還原及舊憑證／舊程式負例，之後才可啟用私人資料；VM 證據待驗。 |
 | 外部 monitor 跟隨 redirect 可誤認其他端點健康 | 真 HTTP 302→另一 ok 端點先 RED，再用拒絕 redirect handler GREEN；目標端點未被請求。scripts 11 passed；schedule default branch／60 天 inactivity 的存活檢查已寫 runbook。 |
 
-- 未完成：VM 掛載 secrets／定時全備份、正式 Temporal／研究 worker ARM deployment、VM 上隔離還原及 API／舊 history 旅程、健康／外部告警與 rollback、RPO／RTO 真 VM 量測、T01–T08 live 總旅程。T09 未驗收，正式私人研究仍保持關閉。
+- 未完成：Actions failure 通知設定／收件、default branch 首次 schedule，以及 T01–T08 live 總旅程；現有同 VM 空庫演練不宣稱空 VM RTO。T09 未驗收，control 命令仍保持停用。
 
 - T09 VM 正式目錄 `/opt/whisky-discovery`：每日 Asia/Taipei 03:15（最多20分鐘 jitter）timer active，首次 systemd service Result=success；canonical DB secret mount 經 `docker inspect --format ...Mounts` 核實後強制 recreate，再 fresh control-reconcile，final full `20260929-193331F`（repo 6,540,672 bytes、7 秒）。Web 在切換期間 ready 503/no-store，完成對帳後 200/no-store。`pgbackrest --stanza=whisky --output=json repo-ls --recurse` → 229 files／47,749,376 bytes。三款人工覆核 manifest 真發布 release `e629c492-07a7-46e7-82f0-ef20c58202b4`，沒有發布合成酒款。
 - Monitor 獨立複查 NO DESIGN FINDINGS；scripts 11 passed／ruff check與format通過。push run `36634413509` 的實際 public-readiness job failure，但 response 403／1010 為 Cloudflare 封鎖預設 Python User-Agent，不能算 VM 停機 gate。明確 `WhiskyDiscoveryAvailability/1.0` header 先測 RED（None），實作後 GREEN；真 Python 使用該識別取得200/ok，沒有冒充瀏覽器或降低WAF。將重做受控 outage→復原。
+
+- 受控停機重新驗證：commit `4f07caa` 的外部 Actions run `36634780232` attempt 1，public-readiness 真 HTTP503／exit1；Tunnel復原後相同run attempt2 public-readiness success，本機固定probe200/ok。這才是停機→復原證據，前次403/1010不算。monitor schedule 尚需defaultbranch第一次實際執行，通知收件待核對。
+
+- 真 artifact 回退：Oracle ARM Web `4f07caa`→先前相容 image `c87bcfa`→`4f07caa`，公開200/ok/no-store恢復各14.99／14.83／14.98秒；每步以固定 monitor識別完整公開路徑驗證，DB epoch `2026-09-29 19:33:15.575116+00`／schema0012 前後一致，未退schema或還原正式DB。兩版Web產品程式相同，這證明artifact切換與前版可服務，不外推未來所有程式版本相容。
+- 最新commit `4f07caa` 的 runs `36634785243`／`36634780321`，backend／web jobs 各自 success，GitGuardian success；public-readiness run `36634780232`復原attempt2 success。AGENTS.md去掉過期T07/T08進度，改指向唯一計畫；README修正已部署狀態但不宣稱T09完成。
+- OCI Usage API以 `RequestSummarizedUsagesDetails(query_type=COST, granularity=DAILY, group_by=[currency])` 並完整pagination，查詢 `2026-09-01T00:00:00Z`–`2026-09-29T00:00:00Z` →28 rows／SGD／computed_amount 0；最新reported_end為9/29UTC。新部署與Object Storage之後費用尚未全部結算，不外推持續免費。
+- 真 Chrome原生UI已開到個人Google帳號passkey視窗，等待使用者完成iCloud Keychain／Touch ID；browser extension連線policy失敗，nativeChrome可操作，沒有繞過安全warning。尚未完成本次真JWT研究／跨帳號／取消旅程或通知收件。
