@@ -1,0 +1,2080 @@
+{
+  "corpus_version": 1,
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "prompt_version": "research-v3-21f7456fece1",
+  "catalog_release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+  "daily_neuron_allowance": 2000,
+  "daily_reserved_neurons": 632,
+  "results": [
+    {
+      "case_id": "fruit_under_2000",
+      "repetition": 1,
+      "status": "completed",
+      "elapsed_ms": 11320,
+      "task_id": "5636f93e-f838-403e-9b94-928955b94e5c",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 78,
+          "reserved_input_upper_bound": 3636,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 509,
+          "output_tokens": 739,
+          "latency_ms": 8239
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 2442
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "37cf4960-0c84-46ea-b7c0-f7983512becc",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+          "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+          "status": "ok",
+          "review_status": "unreviewed",
+          "error_code": null,
+          "content_sha256": "6e62872437151ab1ebd4e6d8c1b1ced32b4e454998aeb1ab9e8ff42805ae3e43",
+          "text_length": 2000,
+          "effective_url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:33:29.401783+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+          "status": "ok",
+          "final_url": "https://www.drinks.com.tw/product.aspx?Id=1764"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "依目前已覆核資料，找到 1 款可比較候選：「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "已覆核版本標示為「12 Year Old Double Oak 常規版 40%」；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": [
+        "目前資料不足以確認候選與起點酒款的桶型差異；不將其視為已符合條件。"
+      ]
+    },
+    {
+      "case_id": "fruit_under_2000",
+      "repetition": 2,
+      "status": "completed",
+      "elapsed_ms": 7323,
+      "task_id": "c47792a7-862c-46c8-b166-7cd4ee4b72ef",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 78,
+          "reserved_input_upper_bound": 3636,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 509,
+          "output_tokens": 670,
+          "latency_ms": 5444
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 1418
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "df5cee38-3382-483c-981b-449e4ca92055",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+          "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+          "status": "ok",
+          "review_status": "unreviewed",
+          "error_code": null,
+          "content_sha256": "6e62872437151ab1ebd4e6d8c1b1ced32b4e454998aeb1ab9e8ff42805ae3e43",
+          "text_length": 2000,
+          "effective_url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:33:36.795386+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+          "status": "ok",
+          "final_url": "https://www.drinks.com.tw/product.aspx?Id=1764"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "依目前已覆核資料，找到 1 款可比較候選：「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "已覆核版本標示為「12 Year Old Double Oak 常規版 40%」；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": [
+        "目前資料不足以確認候選與起點酒款的桶型差異；不將其視為已符合條件。"
+      ]
+    },
+    {
+      "case_id": "strict_800",
+      "repetition": 1,
+      "status": "completed",
+      "elapsed_ms": 253,
+      "task_id": "91356255-806a-4748-a80c-8eb35919967b",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [],
+      "source_observations": [],
+      "source_reads": [],
+      "error_code": null,
+      "model_version": "catalog-budget-rule-v1",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "本次已覆核酒款中，沒有同時符合每瓶 TWD 800 預算與要求的候選。",
+      "candidate_names": [],
+      "candidate_details": [],
+      "unresolved": []
+    },
+    {
+      "case_id": "strict_800",
+      "repetition": 2,
+      "status": "completed",
+      "elapsed_ms": 261,
+      "task_id": "5f606ab8-e390-46f2-9602-f5a7a89d3dd2",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [],
+      "source_observations": [],
+      "source_reads": [],
+      "error_code": null,
+      "model_version": "catalog-budget-rule-v1",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "本次已覆核酒款中，沒有同時符合每瓶 TWD 800 預算與要求的候選。",
+      "candidate_names": [],
+      "candidate_details": [],
+      "unresolved": []
+    },
+    {
+      "case_id": "ambiguous_glenfiddich",
+      "repetition": 1,
+      "status": "completed",
+      "elapsed_ms": 5941,
+      "task_id": "647a7efb-3f89-449c-b396-d463f8acceaf",
+      "questions": [
+        {
+          "prompt": "請確認您喝過的酒款版本：「格蘭菲迪 12 年」、「格蘭菲迪 15 年 Solera」？",
+          "choices": [
+            {
+              "id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+              "name": "格蘭菲迪 12 年"
+            },
+            {
+              "id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+              "name": "格蘭菲迪 15 年 Solera"
+            }
+          ]
+        }
+      ],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 80,
+          "reserved_input_upper_bound": 4014,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 648,
+          "output_tokens": 653,
+          "latency_ms": 4322
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 943
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "da05dc21-7476-4870-89d2-82f0ca97825f",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+          "evidence_id": "90802104-a519-49dc-b76e-cde795e94c1f",
+          "status": "ok",
+          "review_status": "unreviewed",
+          "error_code": null,
+          "content_sha256": "c55caaeae8f94b64cc84fee855cb40bdd7b1b6c35ffdff6f0310de1c36421e65",
+          "text_length": 1233,
+          "effective_url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:33:43.314926+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+          "status": "ok",
+          "final_url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "已確認起點版本為「格蘭菲迪 12 年」。依目前已覆核資料，找到 2 款可比較候選：「格蘭菲迪 15 年 Solera」、「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭菲迪 15 年 Solera",
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭菲迪 15 年 Solera",
+          "reason": "已覆核版本標示為「15 Year Old Solera 常規版 40%」；品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑；編輯整理的風味標籤：果香、辛香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "15",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "Glenfiddich",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭菲迪 15 年 Solera",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "Glenfiddich 15 Year Old",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑。",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "15 Year Old Solera 常規版 40%",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "辛香",
+              "value": "辛香",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            }
+          ],
+          "prices": []
+        },
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "已覆核版本標示為「12 Year Old Double Oak 常規版 40%」；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": []
+    },
+    {
+      "case_id": "ambiguous_glenfiddich",
+      "repetition": 2,
+      "status": "completed",
+      "elapsed_ms": 11767,
+      "task_id": "d9406cf7-1106-4668-b967-bb3becdae13b",
+      "questions": [
+        {
+          "prompt": "請確認您喝過的酒款版本：「格蘭菲迪 12 年」、「格蘭菲迪 15 年 Solera」？",
+          "choices": [
+            {
+              "id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+              "name": "格蘭菲迪 12 年"
+            },
+            {
+              "id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+              "name": "格蘭菲迪 15 年 Solera"
+            }
+          ]
+        }
+      ],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 80,
+          "reserved_input_upper_bound": 4014,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 648,
+          "output_tokens": 691,
+          "latency_ms": 10284
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 883
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "d09a1dc5-a721-444e-8b17-3579453c5f5e",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+          "evidence_id": "90802104-a519-49dc-b76e-cde795e94c1f",
+          "status": "ok",
+          "review_status": "unreviewed",
+          "error_code": null,
+          "content_sha256": "c55caaeae8f94b64cc84fee855cb40bdd7b1b6c35ffdff6f0310de1c36421e65",
+          "text_length": 1233,
+          "effective_url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:33:55.170863+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+          "status": "ok",
+          "final_url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "已確認起點版本為「格蘭菲迪 12 年」。依目前已覆核資料，找到 2 款可比較候選：「格蘭菲迪 15 年 Solera」、「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭菲迪 15 年 Solera",
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭菲迪 15 年 Solera",
+          "reason": "已覆核版本標示為「15 Year Old Solera 常規版 40%」；品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑；編輯整理的風味標籤：果香、辛香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "15",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "Glenfiddich",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭菲迪 15 年 Solera",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "Glenfiddich 15 Year Old",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑。",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "15 Year Old Solera 常規版 40%",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "2e92d2cd-64cd-440c-8de0-589a9da35b12"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "辛香",
+              "value": "辛香",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "90802104-a519-49dc-b76e-cde795e94c1f"
+              ]
+            }
+          ],
+          "prices": []
+        },
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "已覆核版本標示為「12 Year Old Double Oak 常規版 40%」；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": []
+    },
+    {
+      "case_id": "glenlivet_source_failure",
+      "repetition": 1,
+      "status": "completed",
+      "elapsed_ms": 6098,
+      "task_id": "0ce8867d-3a72-4ee2-935f-d3a2439c2919",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 78,
+          "reserved_input_upper_bound": 3618,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 500,
+          "output_tokens": 770,
+          "latency_ms": 5376
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 262
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "fa518c75-5325-4fe4-a176-7309fdf81c56",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+          "evidence_id": "6e6549a4-f143-463c-99e6-962ec90234d8",
+          "status": "unavailable",
+          "review_status": "unreviewed",
+          "error_code": "SOURCE_HTTP_ERROR",
+          "content_sha256": null,
+          "text_length": null,
+          "effective_url": null,
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:34:01.210834+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+          "status": "unavailable",
+          "code": "SOURCE_HTTP_ERROR"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "依目前已覆核資料，找到 1 款可比較候選：「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "已覆核版本標示為「12 Year Old Double Oak 常規版 40%」；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": [
+        "指定來源暫時無法讀取（SOURCE_HTTP_ERROR）；仍以已覆核資料為準。"
+      ]
+    },
+    {
+      "case_id": "glenlivet_source_failure",
+      "repetition": 2,
+      "status": "completed",
+      "elapsed_ms": 6299,
+      "task_id": "961cc337-ee62-4780-a74b-570dd8bf6125",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 78,
+          "reserved_input_upper_bound": 3616,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 500,
+          "output_tokens": 758,
+          "latency_ms": 5883
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 114
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "3b12b1c7-6806-4a3c-9b0e-d341fc73fc73",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+          "evidence_id": "6e6549a4-f143-463c-99e6-962ec90234d8",
+          "status": "unavailable",
+          "review_status": "unreviewed",
+          "error_code": "SOURCE_HTTP_ERROR",
+          "content_sha256": null,
+          "text_length": null,
+          "effective_url": null,
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:34:07.679853+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+          "status": "unavailable",
+          "code": "SOURCE_HTTP_ERROR"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "依目前已覆核資料，找到 1 款可比較候選：「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "已覆核版本標示為「12 Year Old Double Oak 常規版 40%」；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": [
+        "指定來源暫時無法讀取（SOURCE_HTTP_ERROR）；仍以已覆核資料為準。"
+      ]
+    },
+    {
+      "case_id": "conditional_solera_price",
+      "repetition": 1,
+      "status": "completed",
+      "elapsed_ms": 5278,
+      "task_id": "c2678dc7-4ab6-43ff-aca3-8a3c1cf34589",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 80,
+          "reserved_input_upper_bound": 3917,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 625,
+          "output_tokens": 594,
+          "latency_ms": 4104
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 805
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "af7a6363-ca1d-462f-8cca-f2ba92df7753",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+          "evidence_id": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+          "status": "ok",
+          "review_status": "unreviewed",
+          "error_code": null,
+          "content_sha256": "f25c2e10f6c8d7f72b5b8d8a0eed3f4d82c7244675a214ed11b968d4d245d80d",
+          "text_length": 1235,
+          "effective_url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:34:12.928279+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+          "status": "ok",
+          "final_url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "依目前已覆核資料，找到 2 款可比較候選：「格蘭菲迪 12 年」、「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭菲迪 12 年",
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭菲迪 12 年",
+          "reason": "合格台灣公開單瓶參考價上緣為 TWD 978；品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主；編輯整理的風味標籤：奶油糖、果香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "Glenfiddich",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭菲迪 12 年",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "Glenfiddich 12 Year Old",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主。",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old 常規版 40%",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "奶油糖",
+              "value": "奶油糖",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "978",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+            }
+          ]
+        },
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "合格台灣公開單瓶參考價上緣為 TWD 816；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": [
+        "格蘭菲迪 15 年 Solera 目前沒有符合價格政策的台灣公開單瓶價，未列為嚴格預算候選。"
+      ]
+    },
+    {
+      "case_id": "conditional_solera_price",
+      "repetition": 2,
+      "status": "completed",
+      "elapsed_ms": 5744,
+      "task_id": "94f489a7-6c14-4367-b28e-454f29f70a34",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 80,
+          "reserved_input_upper_bound": 3919,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 625,
+          "output_tokens": 652,
+          "latency_ms": 4340
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 888
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "41c979f1-cef1-4d56-aed7-21600be3a0e6",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+          "evidence_id": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+          "status": "ok",
+          "review_status": "unreviewed",
+          "error_code": null,
+          "content_sha256": "f25c2e10f6c8d7f72b5b8d8a0eed3f4d82c7244675a214ed11b968d4d245d80d",
+          "text_length": 1235,
+          "effective_url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-09-29T00:34:18.527013+00:00"
+        }
+      ],
+      "source_reads": [
+        {
+          "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+          "status": "ok",
+          "final_url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old"
+        }
+      ],
+      "error_code": null,
+      "model_version": "@cf/qwen/qwen3-30b-a3b-fp8",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "依目前已覆核資料，找到 2 款可比較候選：「格蘭菲迪 12 年」、「格蘭利威 12 年」。",
+      "candidate_names": [
+        "格蘭菲迪 12 年",
+        "格蘭利威 12 年"
+      ],
+      "candidate_details": [
+        {
+          "name": "格蘭菲迪 12 年",
+          "reason": "合格台灣公開單瓶參考價上緣為 TWD 978；品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主；編輯整理的風味標籤：奶油糖、果香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "Glenfiddich",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭菲迪 12 年",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "Glenfiddich 12 Year Old",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主。",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old 常規版 40%",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "奶油糖",
+              "value": "奶油糖",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "445346ab-9eef-45a1-801d-2ba0b480acd8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "978",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "8fb77f20-5168-48b3-9a26-3aba5cec512f"
+            }
+          ]
+        },
+        {
+          "name": "格蘭利威 12 年",
+          "reason": "合格台灣公開單瓶參考價上緣為 TWD 816；品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖；編輯整理的風味標籤：太妃糖、果香、香草甜香。",
+          "claims": [
+            {
+              "kind": "fact",
+              "key": "abv",
+              "value": "40",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "age_years",
+              "value": "12",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "brand",
+              "value": "The Glenlivet",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "market",
+              "value": "TW",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "name",
+              "value": "格蘭利威 12 年",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "official_name",
+              "value": "The Glenlivet 12 Year Old",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "producer_tasting_notes",
+              "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "version_label",
+              "value": "12 Year Old Double Oak 常規版 40%",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "fact",
+              "key": "volume_ml",
+              "value": "700",
+              "evidence_ids": [
+                "53f1c620-4bed-4153-97b1-d02c31d84d16"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "太妃糖",
+              "value": "太妃糖",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "果香",
+              "value": "果香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            },
+            {
+              "kind": "tag",
+              "key": "香草甜香",
+              "value": "香草甜香",
+              "evidence_ids": [
+                "6e6549a4-f143-463c-99e6-962ec90234d8"
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "amount": "816",
+              "currency": "TWD",
+              "market": "TW",
+              "volume_ml": 700,
+              "checked_on": "2026-09-28",
+              "evidence_id": "53f1c620-4bed-4153-97b1-d02c31d84d16"
+            }
+          ]
+        }
+      ],
+      "unresolved": [
+        "格蘭菲迪 15 年 Solera 目前沒有符合價格政策的台灣公開單瓶價，未列為嚴格預算候選。"
+      ]
+    },
+    {
+      "case_id": "unlisted_ardbeg",
+      "repetition": 1,
+      "status": "completed",
+      "elapsed_ms": 293,
+      "task_id": "35c41f0d-0902-4d41-9308-8df56100adf6",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [],
+      "source_observations": [],
+      "source_reads": [],
+      "error_code": null,
+      "model_version": "catalog-coverage-rule-v1",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "「Ardbeg Ten」不在本版已覆核酒款資料中，無法提供有來源的版本或風味比較。",
+      "candidate_names": [],
+      "candidate_details": [],
+      "unresolved": [
+        "可改從已收錄酒款或具體風味偏好繼續探索。"
+      ]
+    },
+    {
+      "case_id": "unlisted_ardbeg",
+      "repetition": 2,
+      "status": "completed",
+      "elapsed_ms": 276,
+      "task_id": "49eb4a47-babe-4908-b41f-c3ac7e3fa38a",
+      "questions": [],
+      "hard_gates": {
+        "report_persisted": true,
+        "owner_isolation": true,
+        "qualified_candidates": true,
+        "reviewed_claim_citations": true,
+        "reviewed_question_choices": true,
+        "unreviewed_source_separation": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [],
+      "source_observations": [],
+      "source_reads": [],
+      "error_code": null,
+      "model_version": "catalog-coverage-rule-v1",
+      "prompt_version": "research-v3-21f7456fece1",
+      "policy_version": "price-30d-v1",
+      "summary": "「Ardbeg Ten」不在本版已覆核酒款資料中，無法提供有來源的版本或風味比較。",
+      "candidate_names": [],
+      "candidate_details": [],
+      "unresolved": [
+        "可改從已收錄酒款或具體風味偏好繼續探索。"
+      ]
+    }
+  ]
+}

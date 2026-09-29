@@ -4,7 +4,7 @@ from datetime import date
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Engine, text
+from sqlalchemy import Connection, Engine, text
 
 from whisky.modules.catalog.domain import (
     Bottle,
@@ -34,19 +34,29 @@ class CatalogStore:
                 text("""SELECT id FROM catalog_releases
                 WHERE sealed ORDER BY published_at DESC LIMIT 1""")
             )
-            if release_id is None:
-                return ()
-            identifiers = connection.scalars(
-                text("""SELECT id FROM catalog_items
-                WHERE release_id=:release_id AND reviewed ORDER BY id"""),
-                {"release_id": release_id},
-            ).all()
+            return self.candidates_in_release(connection, release_id, as_of, budget)
+
+    @staticmethod
+    def candidates_in_release(
+        connection: Connection,
+        release_id: UUID | None,
+        as_of: date,
+        budget: Decimal | None,
+    ) -> tuple[CatalogCandidate, ...]:
+        """Use one pinned release and one transaction for all candidate facts."""
+        if release_id is None:
+            return ()
+        identifiers = connection.scalars(
+            text("""SELECT id FROM catalog_items
+            WHERE release_id=:release_id AND reviewed ORDER BY id"""),
+            {"release_id": release_id},
+        ).all()
         candidates = []
         for identifier in identifiers:
-            item = self.item(release_id, identifier)
+            item = CatalogStore._item(connection, release_id, identifier)
             if item is None:
                 continue
-            prices = self.prices(release_id, identifier)
+            prices = published_prices(connection, release_id, identifier)
             qualified = qualified_prices(
                 item.bottle, [price.observation for price in prices], as_of
             )
@@ -184,59 +194,65 @@ class CatalogStore:
             )
 
     def item(self, release_id: UUID, item_id: UUID) -> CatalogItem | None:
-        parameters = {"release_id": release_id, "item_id": item_id}
         with self.engine.connect() as connection:
-            row = (
-                connection.execute(
-                    text("""SELECT i.* FROM catalog_items i
+            return self._item(connection, release_id, item_id)
+
+    @staticmethod
+    def _item(
+        connection: Connection, release_id: UUID, item_id: UUID
+    ) -> CatalogItem | None:
+        parameters = {"release_id": release_id, "item_id": item_id}
+        row = (
+            connection.execute(
+                text("""SELECT i.* FROM catalog_items i
                 JOIN catalog_releases r ON r.id=i.release_id
                 WHERE i.release_id=:release_id AND i.id=:item_id
                     AND r.sealed AND i.reviewed"""),
-                    parameters,
-                )
-                .mappings()
-                .first()
+                parameters,
             )
-            if row is None:
-                return None
-            citations: dict[tuple[str, str], list[UUID]] = {}
-            for citation in connection.execute(
-                text("""SELECT kind,key,evidence_id FROM catalog_citations
+            .mappings()
+            .first()
+        )
+        if row is None:
+            return None
+        citations: dict[tuple[str, str], list[UUID]] = {}
+        for citation in connection.execute(
+            text("""SELECT kind,key,evidence_id FROM catalog_citations
                 WHERE release_id=:release_id AND item_id=:item_id
                 ORDER BY evidence_id"""),
-                parameters,
-            ).mappings():
-                citations.setdefault((citation["kind"], citation["key"]), []).append(
-                    citation["evidence_id"]
-                )
-            facts = []
-            tags = []
-            for claim in connection.execute(
-                text("""SELECT kind,key,value,method,method_version FROM catalog_claims
-                WHERE release_id=:release_id AND item_id=:item_id ORDER BY kind,key"""),
-                parameters,
-            ).mappings():
-                identifiers = tuple(citations[(claim["kind"], claim["key"])])
-                if claim["kind"] == "fact":
-                    facts.append(CatalogFact(claim["key"], claim["value"], identifiers))
-                else:
-                    tags.append(
-                        FlavorTag(
-                            claim["value"],
-                            identifiers,
-                            claim["method"],
-                            claim["method_version"],
-                        )
-                    )
-            return CatalogItem(
-                row["id"],
-                Bottle(row["bottle_version_id"], row["abv"], row["volume_ml"]),
-                row["name"],
-                tuple(facts),
-                tuple(tags),
-                row["reviewed"],
-                row["reviewed_on"],
+            parameters,
+        ).mappings():
+            citations.setdefault((citation["kind"], citation["key"]), []).append(
+                citation["evidence_id"]
             )
+        facts = []
+        tags = []
+        for claim in connection.execute(
+            text("""SELECT kind,key,value,method,method_version FROM catalog_claims
+                WHERE release_id=:release_id AND item_id=:item_id ORDER BY kind,key"""),
+            parameters,
+        ).mappings():
+            identifiers = tuple(citations[(claim["kind"], claim["key"])])
+            if claim["kind"] == "fact":
+                facts.append(CatalogFact(claim["key"], claim["value"], identifiers))
+            else:
+                tags.append(
+                    FlavorTag(
+                        claim["value"],
+                        identifiers,
+                        claim["method"],
+                        claim["method_version"],
+                    )
+                )
+        return CatalogItem(
+            row["id"],
+            Bottle(row["bottle_version_id"], row["abv"], row["volume_ml"]),
+            row["name"],
+            tuple(facts),
+            tuple(tags),
+            row["reviewed"],
+            row["reviewed_on"],
+        )
 
     def evidence(self, release_id: UUID, evidence_id: UUID) -> Evidence | None:
         with self.engine.connect() as connection:

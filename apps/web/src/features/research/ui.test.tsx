@@ -143,3 +143,24 @@ test("a failed report read can be retried after the task is already complete", a
   expect(await screen.findByText("重新讀取成功")).toBeTruthy();
   expect(reportReads).toBe(2);
 });
+
+test("completed report separates an unreviewed source excerpt from recommendations", async () => {
+  const completed: TaskView = {...waiting, viewVersion:4, status:"completed", stage:"報告完成", question:null, reportId};
+  vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL) => {
+    const url = new URL(String(input), window.location.origin);
+    if (url.pathname.endsWith(`/tasks/${id}`)) return Response.json(completed);
+    if (url.pathname.endsWith(`/reports/${reportId}`)) return Response.json({
+      id:reportId,taskId:id,summary:"依已覆核資料整理",candidates:[],unresolved:[],
+      sourceObservations:[{id:"00000000-0000-4000-8000-000000000008",status:"ok",reviewStatus:"unreviewed",
+        url:"https://www.drinks.com.tw/product.aspx?Id=1753",publisher:"來源商店",sourceCheckedOn:"2026-09-28",
+        requestedUrl:"https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+        observedAt:"2026-09-29T00:00:00Z",excerpt:"這是本次讀取的頁面文字",errorCode:null}],
+    });
+    throw new Error(`Unexpected ${url}`);
+  }));
+  render(<ResearchTask taskId={id} />);
+  expect(await screen.findByText("這是本次讀取的頁面文字")).toBeTruthy();
+  expect(screen.getByRole("heading", {name:"本次來源讀取（未覆核）"})).toBeTruthy();
+  expect(screen.getByRole("link", {name:"https://www.drinks.com.tw/product.aspx?Id=1753"}).getAttribute("href")).toBe("https://www.drinks.com.tw/product.aspx?Id=1753");
+  expect(screen.getByRole("link", {name:"原已覆核引用"}).getAttribute("href")).toBe("https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old");
+});

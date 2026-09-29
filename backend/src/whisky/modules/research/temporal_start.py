@@ -24,7 +24,7 @@ class ConnectingTemporalResearchStarter:
     async def start(self, task_id: UUID) -> str:
         client = await self._get_client()
         return await TemporalResearchStarter(
-            client, self.task_queue, workflow_type="ResearchWorkflowV2"
+            client, self.task_queue, workflow_type="ResearchWorkflowV3"
         ).start(task_id)
 
     async def answer(self, receipt: AnswerReceipt) -> AnswerResult:

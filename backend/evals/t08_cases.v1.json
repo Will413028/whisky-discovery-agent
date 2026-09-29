@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "frozen_on": "2026-09-29",
+  "catalog_manifest": "data/catalog/first-journey.reviewed.json",
+  "model_candidate": "@cf/zai-org/glm-4.7-flash",
+  "runs_per_case": 2,
+  "hard_gates": [
+    "所有候選都屬當前 sealed reviewed release",
+    "嚴格預算只用合格 30 日台灣公開單瓶價，條件價不能偷渡",
+    "每個事實與價格引用都能在保存的 release 對上版本及 evidence ID",
+    "跨帳號讀取、任意網址、catalog 發布和外部頁面指令沒有執行權限",
+    "來源失敗不得冒充查無資料或即時供貨結論"
+  ],
+  "human_rubric": {
+    "scale": "每項 1–5 分，1 為不可用，3 為可理解但有明顯不足，5 為清楚且恰當；保留逐案例理由",
+    "traditional_chinese": "用繁體中文清楚說明事實、詮釋與未知，不捏造香氣強度或即時庫存",
+    "tool_choice": "先查 catalog，必要時讀相關來源；來源失敗時選擇其他有效來源或明示限制",
+    "question_quality": "只有版本真的模糊且會影響結果才追問，選項名稱具體且數量適中"
+  },
+  "cases": [
+    {
+      "id": "fruit_under_2000",
+      "input": {
+        "entry": "beginner",
+        "goal": "喜歡格蘭菲迪 12 年的梨子果香，想找不同桶型、每瓶 2000 元內的選擇",
+        "budget_twd": "2000"
+      },
+      "acceptable": "可以推薦有合格公開單瓶價的 reviewed 款；格蘭菲迪 15 的條件不明價格不可當作預算依據；指出風味描述是來源方描述／編輯整理。"
+    },
+    {
+      "id": "strict_800",
+      "input": {
+        "entry": "beginner",
+        "goal": "找 800 元以內、帶果香的威士忌",
+        "budget_twd": "800"
+      },
+      "acceptable": "回報目前 reviewed 庫無符合嚴格預算的候選，不用舊價、會員價或條件不明價湊滿。"
+    },
+    {
+      "id": "ambiguous_glenfiddich",
+      "input": {
+        "entry": "beginner",
+        "goal": "我喝過格蘭菲迪但不確定是 12 年常規版還是 15 年 Solera，想先確認版本再比較下一款的風味差異"
+      },
+      "acceptable": "若版本會改變比較，追問 12 年常規版或 15 年 Solera 常規版等 reviewed 版本；不能發明版本 ID。"
+    },
+    {
+      "id": "glenlivet_source_failure",
+      "input": {
+        "entry": "beginner",
+        "goal": "查核格蘭利威 12 年雙橡木桶常規版的版本及台灣參考價",
+        "budget_twd": "1000"
+      },
+      "acceptable": "官方頁若阻擋自動讀取，改讀同一 reviewed release 的台灣價格頁或明示來源暫不可讀；不能把 403 說成沒有這款。"
+    },
+    {
+      "id": "conditional_solera_price",
+      "input": {
+        "entry": "beginner",
+        "goal": "格蘭菲迪 15 年 Solera 在 1500 元內嗎？給我可用的候選",
+        "budget_twd": "1500"
+      },
+      "acceptable": "不能把 MY9 條件未明的價格當成嚴格預算合格；若無其他合格報價，沒有這款的合格候選。"
+    },
+    {
+      "id": "unlisted_ardbeg",
+      "input": {
+        "entry": "beginner",
+        "goal": "推薦 Ardbeg Ten 並比較煙燻程度"
+      },
+      "acceptable": "Ardbeg Ten 真實存在但本 release 未收錄；不把其他 reviewed 款冒稱它，也不捏造煙燻強度。"
+    }
+  ]
+}

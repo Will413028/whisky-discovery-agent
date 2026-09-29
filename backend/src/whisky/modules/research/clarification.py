@@ -1,6 +1,7 @@
 """Owned, versioned clarification state for a durable research task."""
 
 import json
+from collections.abc import Callable
 from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Literal
@@ -51,6 +52,57 @@ class ClarificationStore:
             raise ValueError("INVALID_VERSION_CHOICE") from None
         if len(set(version_ids)) != len(version_ids):
             raise ValueError("INVALID_VERSION_CHOICE")
+        return self._publish(
+            context,
+            waiting_version,
+            version_ids,
+            expires_at,
+            lambda versions: draft.prompt,
+        )
+
+    def publish_reviewed_versions(
+        self,
+        context: ResearchRunContext,
+        waiting_version: int,
+        version_ids: tuple[UUID, ...],
+        expires_at: datetime,
+        release_id: UUID,
+    ) -> PublishedQuestion:
+        """V3 accepts only reviewed IDs; the DB resolves canonical labels."""
+        return self._publish(
+            context,
+            waiting_version,
+            version_ids,
+            expires_at,
+            self._reviewed_prompt,
+            expected_release_id=release_id,
+        )
+
+    @staticmethod
+    def _reviewed_prompt(versions: list[dict[str, str]]) -> str:
+        return (
+            "請確認您喝過的酒款版本：「"
+            + "」、「".join(version["label"] for version in versions)
+            + "」？"
+        )
+
+    def _publish(
+        self,
+        context: ResearchRunContext,
+        waiting_version: int,
+        version_ids: tuple[UUID, ...],
+        expires_at: datetime,
+        prompt_for: Callable[[list[dict[str, str]]], str],
+        *,
+        expected_release_id: UUID | None = None,
+    ) -> PublishedQuestion:
+        if (
+            waiting_version < 1
+            or not 2 <= len(version_ids) <= 5
+            or len(set(version_ids)) != len(version_ids)
+            or expires_at.utcoffset() is None
+        ):
+            raise ValueError("Invalid clarification question")
         with self.engine.begin() as connection:
             if (
                 actor_generation(connection, context.owner_id, lock=True)
@@ -95,7 +147,7 @@ class ClarificationStore:
             )
             if existing is not None:
                 if (
-                    existing["prompt"] != draft.prompt
+                    existing["prompt"] != prompt_for(existing["choices"])
                     or tuple(UUID(choice["id"]) for choice in existing["choices"])
                     != version_ids
                     or existing["expires_at"] != expires_at
@@ -109,6 +161,8 @@ class ClarificationStore:
             if task.status != "researching":
                 raise ResearchConflict("TASK_NOT_WRITABLE")
             release_id = current_release_id(connection)
+            if expected_release_id is not None and release_id != expected_release_id:
+                raise ResearchConflict("CATALOG_CHANGED")
             versions = []
             for version_id in version_ids:
                 version = (
@@ -119,6 +173,9 @@ class ClarificationStore:
                 if version is None:
                     raise ValueError("INVALID_VERSION_CHOICE")
                 versions.append({"id": str(version_id), "label": version.name})
+            prompt = prompt_for(versions)
+            if not prompt.strip() or len(prompt) > 2000:
+                raise ValueError("Invalid clarification question")
             question_id = uuid4()
             connection.execute(
                 text("""
@@ -135,14 +192,14 @@ class ClarificationStore:
                     generation=context.generation,
                     revision=context.conditions_revision,
                     version=waiting_version,
-                    prompt=draft.prompt,
+                    prompt=prompt,
                     choices=json.dumps(versions, ensure_ascii=False),
                     expires=expires_at,
                 ),
             )
             question_view = dict(
                 id=str(question_id),
-                prompt=draft.prompt,
+                prompt=prompt,
                 waitingVersion=waiting_version,
                 expiresAt=expires_at.isoformat(),
                 choices=versions,

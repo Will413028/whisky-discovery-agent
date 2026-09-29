@@ -207,6 +207,15 @@ export function ResearchTask({taskId}: {taskId:string}) {
           {candidate.prices.map(price => <p key={price.id}>參考價格：{price.amount ?? "未提供"} {price.currency}／{price.volumeMl ?? "?"} ml，{price.market}，查核日期 {price.checkedOn ?? "未提供"}</p>)}
           {candidate.claims.flatMap(claim => claim.sources).map(source => <p key={source.evidenceId}>來源：<a href={source.url} target="_blank" rel="noopener noreferrer">{source.publisher ?? source.url}</a>（{source.checkedOn}）</p>)}
         </section>)}
+        {Boolean(report.sourceObservations?.length) && <section><h3>本次來源讀取（未覆核）</h3>
+          <p>以下是本次讀取的頁面觀察，尚未納入已覆核事實、推薦或預算判定。</p>
+          {report.sourceObservations.map(observation => <div key={observation.id}>
+            <p>本次讀取：<a href={observation.url} target="_blank" rel="noopener noreferrer">{observation.url}</a>，讀取時間 {new Date(observation.observedAt).toLocaleString("zh-TW")}；原來源查核日 {observation.sourceCheckedOn}</p>
+            {observation.requestedUrl !== observation.url && <p>原已覆核來源（{observation.publisher ?? "來源未標示"}）：<a href={observation.requestedUrl} target="_blank" rel="noopener noreferrer">原已覆核引用</a></p>}
+            {observation.excerpt && <blockquote>{observation.excerpt}</blockquote>}
+            {observation.status === "unavailable" && <p>這次無法讀取：{observation.errorCode}</p>}
+          </div>)}
+        </section>}
       </article> : <p>讀取報告中…</p>)}
       {task.status === "failed" && <p role="alert">研究未完成：{task.error?.message}</p>}
       {task.status === "cancelled" && <p>委託已取消。</p>}
