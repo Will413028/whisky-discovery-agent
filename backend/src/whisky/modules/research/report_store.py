@@ -27,6 +27,7 @@ from whisky.modules.research.views import (
     ReportCandidateView,
     ReportClaimView,
     ReportPriceView,
+    ReportSourceObservationView,
     ReportSourceView,
     ReportView,
 )
@@ -163,6 +164,48 @@ class ReportStore:
                         prices=tuple(prices),
                     )
                 )
+            observation_rows = connection.execute(
+                text("""
+                SELECT observation.*
+                FROM research_report_source_observations AS link
+                JOIN research_source_observations AS observation
+                  ON observation.id=link.observation_id
+                WHERE link.report_id=:report
+                ORDER BY link.ordinal
+                """),
+                {"report": report_id},
+            ).mappings()
+            source_observations = []
+            for observation in observation_rows:
+                if observation["task_id"] != report["task_id"]:
+                    raise RuntimeError("Saved report has a foreign source observation")
+                source = published_source(
+                    connection,
+                    observation["release_id"],
+                    observation["evidence_id"],
+                    observation["bottle_version_id"],
+                )
+                if source is None:
+                    raise RuntimeError(
+                        "Saved report has an unresolved source observation"
+                    )
+                visible_text = observation["visible_text"]
+                source_observations.append(
+                    ReportSourceObservationView(
+                        id=observation["id"],
+                        status=observation["status"],
+                        review_status=observation["review_status"],
+                        url=observation["effective_url"] or source.url,
+                        requested_url=source.url,
+                        publisher=source.publisher,
+                        source_checked_on=observation["source_checked_on"],
+                        observed_at=observation["observed_at"],
+                        excerpt=visible_text[:240]
+                        if visible_text is not None
+                        else None,
+                        error_code=observation["error_code"],
+                    )
+                )
             content = report["content"]
             return ReportView(
                 schema_version=report["schema_version"],
@@ -177,6 +220,7 @@ class ReportStore:
                 summary=content["summary"],
                 unresolved=tuple(content["unresolved"]),
                 candidates=tuple(candidates),
+                source_observations=tuple(source_observations),
                 clarified_bottle=(
                     ClarifiedBottleView(
                         question_id=report["clarification_id"],
@@ -202,6 +246,7 @@ class ReportStore:
         model_version: str,
         clarification_id: UUID | None = None,
         selected_version_id: UUID | None = None,
+        source_observation_ids: tuple[UUID, ...] = (),
     ) -> SavedReport:
         versions = (artifact_key, policy_version, prompt_version, model_version)
         if any(not value.strip() or len(value) > 128 for value in versions):
@@ -210,6 +255,10 @@ class ReportStore:
             raise ValueError("Report summary must be bounded and nonempty")
         if len(draft.candidates) > 3:
             raise ValueError("A report may include at most three candidates")
+        if len(source_observation_ids) > 4 or len(set(source_observation_ids)) != len(
+            source_observation_ids
+        ):
+            raise ValueError("Report source observations must be bounded and unique")
         if any(not value.strip() or len(value) > 1000 for value in draft.unresolved):
             raise ValueError("Unresolved questions must be bounded and nonempty")
         with self.engine.begin() as connection:
@@ -299,6 +348,27 @@ class ReportStore:
             if len(release_ids) > 1 or len(item_refs) != len(draft.candidates):
                 raise ResearchConflict("INVALID_CANDIDATE")
             catalog_release = current_release_id(connection)
+            for observation_id in source_observation_ids:
+                observation = (
+                    connection.execute(
+                        text("""
+                    SELECT task_id,owner_id,generation,conditions_revision,release_id
+                    FROM research_source_observations WHERE id=:id
+                    """),
+                        {"id": observation_id},
+                    )
+                    .mappings()
+                    .first()
+                )
+                if (
+                    observation is None
+                    or observation["task_id"] != task_id
+                    or observation["owner_id"] != owner
+                    or observation["generation"] != generation
+                    or observation["conditions_revision"] != task["conditions_revision"]
+                    or observation["release_id"] != catalog_release
+                ):
+                    raise ResearchConflict("INVALID_SOURCE_OBSERVATION")
             selected_current = (
                 reviewed_version_in_release(
                     connection, catalog_release, selected_version_id
@@ -377,6 +447,19 @@ class ReportStore:
                     ),
                 ),
             )
+            for ordinal, observation_id in enumerate(source_observation_ids):
+                connection.execute(
+                    text("""
+                    INSERT INTO research_report_source_observations
+                        (report_id,ordinal,observation_id)
+                    VALUES (:report,:ordinal,:observation)
+                    """),
+                    dict(
+                        report=report_id,
+                        ordinal=ordinal,
+                        observation=observation_id,
+                    ),
+                )
             for ordinal, (candidate, verified) in enumerate(
                 zip(draft.candidates, verified_candidates, strict=True)
             ):

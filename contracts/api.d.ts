@@ -800,6 +800,44 @@ export interface components {
             /** Volumeml */
             volumeMl: number | null;
         };
+        /** ReportSourceObservationView */
+        ReportSourceObservationView: {
+            /** Errorcode */
+            errorCode: string | null;
+            /** Excerpt */
+            excerpt: string | null;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Observedat
+             * Format: date-time
+             */
+            observedAt: string;
+            /** Publisher */
+            publisher: string | null;
+            /** Requestedurl */
+            requestedUrl: string;
+            /**
+             * Reviewstatus
+             * @constant
+             */
+            reviewStatus: "unreviewed";
+            /**
+             * Sourcecheckedon
+             * Format: date
+             */
+            sourceCheckedOn: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "unavailable";
+            /** Url */
+            url: string;
+        };
         /** ReportSourceView */
         ReportSourceView: {
             /**
@@ -847,6 +885,11 @@ export interface components {
              * @constant
              */
             schemaVersion: 1;
+            /**
+             * Sourceobservations
+             * @default []
+             */
+            sourceObservations: components["schemas"]["ReportSourceObservationView"][];
             /** Summary */
             summary: string;
             /**

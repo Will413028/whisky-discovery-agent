@@ -133,6 +133,19 @@ class ClarifiedBottleView(ViewModel):
     reviewed_in_release: bool
 
 
+class ReportSourceObservationView(ViewModel):
+    id: UUID
+    status: Literal["ok", "unavailable"]
+    review_status: Literal["unreviewed"]
+    url: str
+    requested_url: str
+    publisher: str | None
+    source_checked_on: date
+    observed_at: AwareDatetime
+    excerpt: str | None
+    error_code: str | None
+
+
 class ReportView(ViewModel):
     schema_version: Literal[1]
     id: UUID
@@ -147,3 +160,4 @@ class ReportView(ViewModel):
     unresolved: tuple[str, ...]
     clarified_bottle: ClarifiedBottleView | None = None
     candidates: tuple[ReportCandidateView, ...]
+    source_observations: tuple[ReportSourceObservationView, ...] = ()

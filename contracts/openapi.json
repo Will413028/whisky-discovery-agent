@@ -1170,6 +1170,94 @@
         "title": "ReportPriceView",
         "type": "object"
       },
+      "ReportSourceObservationView": {
+        "additionalProperties": false,
+        "properties": {
+          "errorCode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Errorcode"
+          },
+          "excerpt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Excerpt"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "observedAt": {
+            "format": "date-time",
+            "title": "Observedat",
+            "type": "string"
+          },
+          "publisher": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher"
+          },
+          "requestedUrl": {
+            "title": "Requestedurl",
+            "type": "string"
+          },
+          "reviewStatus": {
+            "const": "unreviewed",
+            "title": "Reviewstatus",
+            "type": "string"
+          },
+          "sourceCheckedOn": {
+            "format": "date",
+            "title": "Sourcecheckedon",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "unavailable"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "reviewStatus",
+          "url",
+          "requestedUrl",
+          "publisher",
+          "sourceCheckedOn",
+          "observedAt",
+          "excerpt",
+          "errorCode"
+        ],
+        "title": "ReportSourceObservationView",
+        "type": "object"
+      },
       "ReportSourceView": {
         "additionalProperties": false,
         "properties": {
@@ -1270,6 +1358,14 @@
             "const": 1,
             "title": "Schemaversion",
             "type": "integer"
+          },
+          "sourceObservations": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ReportSourceObservationView"
+            },
+            "title": "Sourceobservations",
+            "type": "array"
           },
           "summary": {
             "title": "Summary",

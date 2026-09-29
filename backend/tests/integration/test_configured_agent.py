@@ -2,19 +2,19 @@ import asyncio
 import json
 import socket
 from contextlib import asynccontextmanager
+from dataclasses import replace
 from uuid import uuid4
 
 import pytest
 import uvicorn
 from httpx import AsyncClient
 from pydantic_ai.durable_exec.temporal import PydanticAIPlugin
-from pydantic_ai.messages import ToolReturnPart
+from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from sqlalchemy import text
 from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
 from test_catalog_release import synthetic_release
-from test_research_workflow import controlled_model
 
 from whisky.bootstrap.api import configured_app
 from whisky.bootstrap.settings import Settings
@@ -23,6 +23,7 @@ from whisky.modules.catalog.store import CatalogStore
 from whisky.modules.discovery.conditions import ResearchConditions
 from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess
+from whisky.modules.research.source_reader import SourceReader
 
 pytestmark = pytest.mark.integration
 
@@ -134,7 +135,17 @@ async def test_http_observer_gets_terminal_report_or_recovers_after_disconnect(
     research_context, signed_tokens, monkeypatch, disconnect, invalid
 ):
     engine, _, _, _ = research_context
-    CatalogStore(engine).publish(synthetic_release())
+    release = synthetic_release()
+    release = replace(
+        release,
+        evidence=(
+            replace(
+                release.evidence[0],
+                url="https://www.drinks.com.tw/product.aspx?Id=1753",
+            ),
+        ),
+    )
+    CatalogStore(engine).publish(release)
     verifier, sign = signed_tokens
     monkeypatch.setattr("whisky.bootstrap.api.TokenVerifier", lambda *_: verifier)
     actor = IdentityAccess(engine, verifier).authenticate(sign())
@@ -150,25 +161,18 @@ async def test_http_observer_gets_terminal_report_or_recovers_after_disconnect(
     async def held_model(messages, info):
         model_started.set()
         await allow_model.wait()
-        response = controlled_model(messages, info)
-        if any(
-            isinstance(part, ToolReturnPart)
-            for message in messages
-            for part in message.parts
-        ):
-            response.parts[0].args = {
-                "report": response.parts[0].args,
-                "clarification": None,
-            }
-        if invalid and any(
-            isinstance(part, ToolReturnPart)
-            for message in messages
-            for part in message.parts
-        ):
-            response.parts[0].args["report"]["candidates"][0]["claims"][0]["value"] = (
-                "沒有來源的事實"
-            )
-        return response
+        assert not info.function_tools
+        return ModelResponse(
+            parts=[
+                ToolCallPart(
+                    info.output_tools[0].name,
+                    {"source_index": 999 if invalid else 1, "focus": "version"},
+                )
+            ]
+        )
+
+    async def fetch(_url: str, _limit: int):
+        return 200, {"Content-Type": "text/html"}, b"<p>Reviewed fixture</p>"
 
     async with await WorkflowEnvironment.start_local() as env:
         queue = f"test-{uuid4()}"
@@ -201,7 +205,13 @@ async def test_http_observer_gets_terminal_report_or_recovers_after_disconnect(
             ),
         )
         async with (
-            research_worker(worker_client, queue, engine, FunctionModel(held_model)),
+            research_worker(
+                worker_client,
+                queue,
+                engine,
+                FunctionModel(held_model),
+                source_reader=SourceReader(fetch=fetch),
+            ),
             serve(app) as origin,
             AsyncClient(base_url=origin, timeout=10) as client,
         ):

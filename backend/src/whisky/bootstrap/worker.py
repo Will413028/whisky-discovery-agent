@@ -9,7 +9,7 @@ from collections.abc import Mapping
 from openai import AsyncOpenAI
 from pydantic_ai.durable_exec.temporal import PydanticAIPlugin
 from pydantic_ai.models import Model
-from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.models.openai import OpenAIChatModel, OpenAIResponsesModel
 from pydantic_ai.providers.openai import OpenAIProvider
 from sqlalchemy import Engine, create_engine
 from temporalio.client import Client
@@ -30,10 +30,15 @@ from whisky.modules.control.workflow import ControlWorkflow
 from whisky.modules.research.activities import ResearchActivities
 from whisky.modules.research.agent import configure_research_agent
 from whisky.modules.research.agent_v2 import configure_research_agent_v2
+from whisky.modules.research.agent_v3 import configure_research_agent_v3
+from whisky.modules.research.model import QuotaModel
+from whisky.modules.research.quota import DEFAULT_MODEL, QuotaStore
+from whisky.modules.research.source_reader import SourceReader
 from whisky.modules.research.workflow import ResearchWorkflow
 from whisky.modules.research.workflow_v2 import ResearchWorkflowV2
+from whisky.modules.research.workflow_v3 import ResearchWorkflowV3
 
-WORKERS_AI_MODEL = "@cf/zai-org/glm-4.7-flash"
+WORKERS_AI_MODEL = DEFAULT_MODEL
 
 
 def main() -> None:
@@ -54,14 +59,18 @@ def main() -> None:
     )
 
 
-def cloudflare_model(account_id: str, token: str) -> OpenAIChatModel:
+def cloudflare_model(
+    account_id: str, token: str, *, model_name: str = WORKERS_AI_MODEL
+) -> Model:
     if not re.fullmatch(r"[0-9a-fA-F]{32}", account_id) or not token.strip():
         raise ValueError("Workers AI account ID and token must be configured")
     base_url = f"https://api.cloudflare.com/client/v4/accounts/{account_id}/ai/v1"
     client = AsyncOpenAI(base_url=base_url, api_key=token, max_retries=0)
-    return OpenAIChatModel(
-        WORKERS_AI_MODEL, provider=OpenAIProvider(openai_client=client)
-    )
+    if model_name == "@cf/openai/gpt-oss-20b":
+        return OpenAIResponsesModel(
+            model_name, provider=OpenAIProvider(openai_client=client)
+        )
+    return OpenAIChatModel(model_name, provider=OpenAIProvider(openai_client=client))
 
 
 def research_worker(
@@ -71,10 +80,15 @@ def research_worker(
     model: Model,
     *,
     control_journal: ControlJournal | None = None,
+    quota: QuotaStore | None = None,
+    source_reader: SourceReader | None = None,
 ) -> Worker:
+    if quota is not None:
+        model = QuotaModel(model, quota)
     configure_research_agent(engine, model)
     configure_research_agent_v2(engine, model)
-    db = ResearchActivities(engine)
+    configure_research_agent_v3(model)
+    db = ResearchActivities(engine, quota=quota, source_reader=source_reader)
     control = (
         ControlActivities(
             ControlStore(engine), control_journal, TemporalResearchCanceller(client)
@@ -86,6 +100,7 @@ def research_worker(
         restrictions=SandboxRestrictions.default.with_passthrough_modules(
             "whisky.modules.research.agent",
             "whisky.modules.research.agent_v2",
+            "whisky.modules.research.agent_v3",
         )
     )
     return Worker(
@@ -95,14 +110,19 @@ def research_worker(
             BootstrapProbe,
             ResearchWorkflow,
             ResearchWorkflowV2,
+            ResearchWorkflowV3,
             *([ControlWorkflow] if control is not None else []),
         ],
         activities=[
             db.begin_research,
             db.begin_research_v2,
+            db.begin_research_v3,
+            db.catalog_snapshot_v3,
+            db.read_source_v3,
             db.save_report,
             db.fail_research,
             db.publish_question,
+            db.publish_question_v3,
             db.accept_answer,
             db.expire_question,
             *(
@@ -149,8 +169,16 @@ async def run(
     )
     engine = create_engine(database_url)
     try:
+        quota = QuotaStore(
+            engine,
+            daily_neuron_limit=int(values.get("WHISKY_DAILY_MODEL_NEURONS", "0")),
+        )
         await research_worker(
-            client, task_queue, engine, cloudflare_model(account_id, token)
+            client,
+            task_queue,
+            engine,
+            cloudflare_model(account_id, token),
+            quota=quota,
         ).run()
     finally:
         engine.dispose()
