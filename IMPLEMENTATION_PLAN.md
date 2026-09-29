@@ -552,6 +552,9 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 最新完整後端 `uv run --no-sync --project backend pytest backend/tests -q > /tmp/whisky-t09-full-pytest.log 2>&1` → **455 passed（233.35 秒）**；`uv run --no-sync --project backend ruff check backend scripts`、`ruff format --check`（160 files）、`mypy backend/src`（72 source files）、Python 邊界、scripts unittest 7、`python3 scripts/check_deploy_gate.py` 與 OpenAPI 契約 drift 檢查均通過。wheel／ARM candidate 與 VM live 仍各有獨立出口。
 - 登入 gate 追加後完整回歸 `uv run --no-sync --project backend pytest backend/tests -q > /tmp/whisky-t09-full-pytest-2.log 2>&1` → **456 passed（243.49 秒）**；ruff check／format（161 files）、mypy（72 source files）、Python 邊界、scripts unittest 8、base／full graph、OpenAPI drift 均通過；wheel 4 passed／migration head 0012。ARM API `whisky-discovery-api:t09-gate2` build 成功（image `sha256:319ac71fd32bfa08752a7228d18909ec2b53ebf447942df8dfe39395afc66155`）。專案專用 Workers AI Read token 經使用者在建立當下核准，僅存 ignored secrets；verify active、Qwen 真 inference HTTP 200，沒有沿用其他產品 token。
 
+- VM cutover 已完成角色／0012 migration／登入 trigger／Temporal schema 與專用 namespace。bootstrap admin 輪替 job exit 0，舊密碼真 TCP 登入失敗；更新 final env 並重建 DB 後，control-reconcile exit 0／3 筆完整外部紀錄，API healthy。輪替後加密 bundled full `20260929-190627F`（DB 51,810,372 bytes、repo 6,524,224 bytes、7 秒）成功；空庫還原 gate 尚待驗，公開 tunnel 保持停用。真 VM 首次 stanza-create 因預設 postgres DB role 不存在失敗，明確加入 `pg1-user=whisky` 後 check／backup 通過。
+- 公開 readiness 新行為：missing helper import 取得 RED，再實作固定 API URL／2 秒 timeout／manual redirect／no-store 的匿名 200 或 503，捨棄上游 body。`pnpm --dir apps/web test` → 106 passed，typecheck／Web boundaries／原生 Next build 通過；Node／workerd Playwright 7 passed，含未設定 API 時 `/health/ready` 真 Node 503。前一版 CI push `36608439778` 與 PR `36609451289` 的 backend／web job 各自 success，GitGuardian pass。
+
 獨立 design review 的累積 finding 對帳（每輪修正均須保持前輪已修項）：
 
 | Finding | 狀態／證據 |

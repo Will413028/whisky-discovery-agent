@@ -17,3 +17,4 @@ archive-timeout=60
 
 [whisky]
 pg1-path=/var/lib/postgresql/18/docker
+pg1-user=whisky
