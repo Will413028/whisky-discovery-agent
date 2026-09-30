@@ -564,17 +564,17 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 | Finding | 狀態／證據 |
 |---|---|
 | 單一控制庫可能整組遺失、保留期未證 | 雙 bucket 全庫比對與真 IAM 已修「單桶遺失」；共同管理域與最舊可還原點仍開放，須用 VM 備份／保留期實測界定。 |
-| 舊 Compose job 在 DB 重啟後可能放行 | `0012_recovery_gate`、真 Docker restart／API ready 負例已修；VM 停機／重跑順序待驗。 |
+| 舊 Compose job 在 DB 重啟後可能放行 | `0012_recovery_gate`、真 Docker restart／API ready 負例已修；VM canonical DB recreate 後重新對帳，公開 ready 由503恢復200。 |
 | runtime／schema 共用管理權或 PUBLIC 跨庫存取 | 角色分離、PUBLIC 撤權、獨立真 PostgreSQL 角色負例通過。 |
 | 還原直接讀其他業務模組資料表 | 改用 `discovery.public`／`research.public`，定向與完整 DB 回歸通過。 |
 | 結果時間戳不是因果序 | clock-skew 真 DB RED→GREEN 與重複位置拒絕已修。 |
 | V1 控制紀錄依賴可變 current model | V1 codec／effect 全路徑固定，未來模型變動的 RED→GREEN 通過；新 plan schema 屬 T10。 |
 | witness-first 寫到一半無法恢復 | 本機故障注入及真 OCI recovery IAM 補寫通過。 |
-| 省略 overlay／舊 image／舊管理員 URL 繞過應用 gate | PostgreSQL login trigger、舊程式連線負例、base／full Compose 靜態檢查已修；VM admin 旋轉與真還原負例待驗。 |
-| 第一個 full 在 gate／admin 旋轉前，沒有合法私人資料還原點 | runbook 已改為最終 DB 設定／可能重啟→重新對帳→旋轉後 bundled full→空庫還原及舊憑證／舊程式負例，之後才可啟用私人資料；VM 證據待驗。 |
+| 省略 overlay／舊 image／舊管理員 URL 繞過應用 gate | PostgreSQL login trigger、舊程式連線負例、base／full Compose 靜態檢查已修；VM admin 已旋轉，空庫還原後舊密碼與未對帳 runtime 登入均真拒絕。 |
+| 第一個 full 在 gate／admin 旋轉前，沒有合法私人資料還原點 | final設定／epoch對帳→旋轉後 bundled full `20260929-190627F`→空庫還原與舊憑證／舊程式負例均通過；合法私人還原點從此full開始，不使用 preliminary full。 |
 | 外部 monitor 跟隨 redirect 可誤認其他端點健康 | 真 HTTP 302→另一 ok 端點先 RED，再用拒絕 redirect handler GREEN；目標端點未被請求。scripts 11 passed；schedule default branch／60 天 inactivity 的存活檢查已寫 runbook。 |
 
-- 未完成：Actions failure 通知設定／收件、default branch 首次 schedule，以及 T01–T08 live 總旅程；現有同 VM 空庫演練不宣稱空 VM RTO。T09 未驗收，control 命令仍保持停用。
+- 未完成：default branch 首次 schedule 與跨帳號 live 總旅程；現有同 VM 空庫演練不宣稱空 VM RTO。T09 未驗收；post-rotation restore 與基本真登入／研究／恢復通過後，control 僅為下述有界驗收暫時啟用，未宣稱正式私人資料 gate 全部通過。
 
 - T09 VM 正式目錄 `/opt/whisky-discovery`：每日 Asia/Taipei 03:15（最多20分鐘 jitter）timer active，首次 systemd service Result=success；canonical DB secret mount 經 `docker inspect --format ...Mounts` 核實後強制 recreate，再 fresh control-reconcile，final full `20260929-193331F`（repo 6,540,672 bytes、7 秒）。Web 在切換期間 ready 503/no-store，完成對帳後 200/no-store。`pgbackrest --stanza=whisky --output=json repo-ls --recurse` → 229 files／47,749,376 bytes。三款人工覆核 manifest 真發布 release `e629c492-07a7-46e7-82f0-ef20c58202b4`，沒有發布合成酒款。
 - Monitor 獨立複查 NO DESIGN FINDINGS；scripts 11 passed／ruff check與format通過。push run `36634413509` 的實際 public-readiness job failure，但 response 403／1010 為 Cloudflare 封鎖預設 Python User-Agent，不能算 VM 停機 gate。明確 `WhiskyDiscoveryAvailability/1.0` header 先測 RED（None），實作後 GREEN；真 Python 使用該識別取得200/ok，沒有冒充瀏覽器或降低WAF。將重做受控 outage→復原。
@@ -583,5 +583,8 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 
 - 真 artifact 回退：Oracle ARM Web `4f07caa`→先前相容 image `c87bcfa`→`4f07caa`，公開200/ok/no-store恢復各14.99／14.83／14.98秒；每步以固定 monitor識別完整公開路徑驗證，DB epoch `2026-09-29 19:33:15.575116+00`／schema0012 前後一致，未退schema或還原正式DB。兩版Web產品程式相同，這證明artifact切換與前版可服務，不外推未來所有程式版本相容。
 - 最新commit `4f07caa` 的 runs `36634785243`／`36634780321`，backend／web jobs 各自 success，GitGuardian success；public-readiness run `36634780232`復原attempt2 success。AGENTS.md去掉過期T07/T08進度，改指向唯一計畫；README修正已部署狀態但不宣稱T09完成。
+- 2026-09-30 真 Chrome／Google／Auth0 登入後，經公開 Worker→VPC→VM Web 建立果香、TWD 2,500 研究；完成報告只列兩款合格候選（978／816 TWD、700 ml、TW、查核日 2026-09-28），本次官網讀取保持未覆核區塊。Reload 保留同一任務與完成報告。固定 T08 版本不明語料進入「等待版本補充」；`ssh oci-a1 'sudo docker restart whisky-discovery-worker-1'` 後，inspect 顯示新程序起點 `2026-09-30T02:45:41.60716939Z`，返回任務清單可找回同一等待工作與原期限，選 12 年補答後同任務完成且起點明示 12 年。真外部來源讀取失敗保留 `SOURCE_HTTP_ERROR` 與未覆核觀察，未冒充新正式事實。一般「我喜歡格蘭菲迪」描述未觸發消歧，留作 T10 雙入口／明確版本契約的實測反例；不把固定語料通過推論成任意描述已支援。尚待跨帳號、控制旅程與告警收件／schedule，T09 仍未驗收。
 - OCI Usage API以 `RequestSummarizedUsagesDetails(query_type=COST, granularity=DAILY, group_by=[currency])` 並完整pagination，查詢 `2026-09-01T00:00:00Z`–`2026-09-29T00:00:00Z` →28 rows／SGD／computed_amount 0；最新reported_end為9/29UTC。新部署與Object Storage之後費用尚未全部結算，不外推持續免費。
-- 真 Chrome原生UI已開到個人Google帳號passkey視窗，等待使用者完成iCloud Keychain／Touch ID；browser extension連線policy失敗，nativeChrome可操作，沒有繞過安全warning。尚未完成本次真JWT研究／跨帳號／取消旅程或通知收件。
+- 真 Chrome原生UI登入已完成；browser extension連線policy失敗，nativeChrome可操作，沒有繞過安全warning。真JWT研究／跨worker恢復見上；跨帳號／控制總驗收與通知收件繼續核對，不保留過期的 passkey 等待狀態。
+- 暫時 T09 真 API 驗收頁沿用 `/account` callback，不新增 Auth0 callback／scope，memory-only token 不輸出；只有 Web public mount，正常 API／worker 未換成合成來源。等待任務取消首次202/pending，同key重送200/completed且command ID相同，task cancelled／問題關閉／report null。另一等待任務改條件首次202/pending，同key重送200/completed，plan revision1→2、舊task superseded／report null。獨立 recovery IAM 以 `read_complete_control_log(primary,witness)` **只讀**全庫驗5 commands，兩筆 live cancel／change各completed，雙庫全分頁與body比對通過；沒有對live DB跑還原job。原owner的plan／task／report讀取各200/no-store，第二身份隔離待驗。
+- 告警收件已通過：真Chrome核對 Will413028 的 Actions通知現值為 Email／Failed workflows only，沒有修改設定；只搜尋本專案的 GitHub通知信，9/30 05:40收件、commit4f07caa，信中 `public-readiness Failed in 7 seconds`，安全解析的run連結為 `36634780232`，對應已驗HTTP503的停機attempt1。不是先前403/1010的run；通知連結中的email token不保存至repo。Web驗收工具變更後Vitest106、typecheck、boundaries、nativeNextbuild與Node/workerdPlaywright7均通過；不以工具編譯取代真API證據。

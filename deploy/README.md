@@ -1,6 +1,6 @@
 # Whisky Discovery deployment
 
-The VM still runs the accepted T02 entry stack. This repository's candidate Compose files now require the T09 recovery gate and are not yet an accepted production research service. Deployment progress is recorded in the implementation plan. The research source fails closed unless the explicit synthetic probe is mounted.
+The VM runs the recovery-gated research stack and reviewed catalog. T09's remaining live acceptance gates are tracked in the implementation plan; deployment alone does not establish acceptance. Normal research uses durable product state and Temporal. Synthetic entry diagnostics remain an explicit, separate opt-in.
 
 ## Configuration
 
@@ -27,7 +27,7 @@ Register an HTTP Workers VPC Service against this named Tunnel, hostname `web`, 
 
 Use this Compose project only. Stop `api` before changing its release, select a verified compatible image, then start it without overlap. Web may be stopped/replaced independently; never restore an older database over current data. For the initial Web cutover, retain the previous SSR Worker version and original API VPC service until acceptance; rollback the public Worker to that version before stopping the candidate Web. After acceptance, normal rollback selects the prior Web image while keeping the thin Worker and Web VPC binding. Do not downgrade schema automatically, prune Docker, or remove shared resources. The API stop/start strategy preserves the process-local connection limit.
 
-Database backups and an isolated restore are not established by this entry stack. T09 must add and prove them before accepting durable research data.
+Encrypted cluster backups, WAL PITR, isolated restore and control reconciliation have deployment evidence in the implementation plan. T09 acceptance additionally requires the live product journey and external alarm gates below.
 
 ## T09 private research cutover (candidate, not yet accepted)
 
@@ -48,6 +48,10 @@ For disaster recovery, use an empty, separately named volume/project with no tun
 The anonymous public `/health/ready` traverses Worker/VPC/Web/API and the current database recovery gate. It exposes only `ok` or `unavailable`, uses no credentials, and is never cached. `.github/workflows/availability.yml` checks it from an external GitHub runner every 15 minutes, on manual dispatch, and when the monitor changes. An unavailable endpoint fails the job; configure the repository's Actions failure notifications for the maintainer and verify receipt. GitHub scheduled runs can be delayed, so this is a demonstration availability alarm, not a guaranteed detection-time SLA. Backup freshness, quota and billing need separate checks; HTTP readiness does not establish those. Scheduled runs require this workflow on the default branch; acceptance records its first actual scheduled run separately from push/dispatch tests. For this public repository, GitHub disables schedules after 60 days without repository activity. The maintainer must check the latest scheduled run weekly and re-enable the workflow when disabled; there is no independent watchdog for GitHub itself. See [GitHub schedule rules](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
 
 Rollback an application release with the previous **recovery-gated, schema-compatible** image and the same overlay; stop API/worker before replacing either process, and do not downgrade or restore the DB for an application error. The pre-T09 entry image is only an initial-cutover fallback while control commands and private research are still disabled; after those are enabled it cannot serve as a compatible recovery rollback. Keep control inventories and encrypted backups intact during rollback.
+
+## Temporary real API acceptance
+
+For T09's real control/owner journey, build `apps/web/scripts/build-recovery-probe.mjs` with the project's public Auth0 variables and temporarily mount `.artifacts/recovery-probe/` as the Web public directory. Keep the normal API command and the research overlay; do not use `compose.probe.yaml`, which replaces the API with synthetic diagnostics. The recovery page uses the existing `/account` callback and memory-only tokens. After the post-rotation restore and basic login/research/reconnect gates pass, enable controls for this bounded acceptance exercise; record each command's completed receipt and real OCI persistence. Remove the Web mount after acceptance, restore the normal Web container and verify `/__recovery_probe.html` is 404. Disable controls again if their gates are incomplete.
 
 ## Explicit synthetic entry probe
 
