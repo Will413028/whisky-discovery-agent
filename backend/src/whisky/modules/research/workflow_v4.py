@@ -316,6 +316,7 @@ class ResearchWorkflowV4(PydanticAIWorkflow):
                 SOURCE_PROMPT_V4
                 + json.dumps(
                     {
+                        "goal": context.conditions.goal,
                         "intent": intent.model_dump(mode="json"),
                         "candidates": [
                             {

@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 from pydantic_ai.durable_exec.temporal import PydanticAIPlugin
-from pydantic_ai.messages import ModelResponse, ToolCallPart
+from pydantic_ai.messages import ModelResponse, ToolCallPart, UserPromptPart
 from pydantic_ai.models.function import FunctionModel
 from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
@@ -16,6 +16,7 @@ from whisky.bootstrap.worker import research_worker
 from whisky.modules.catalog.publication import load_reviewed_release
 from whisky.modules.catalog.store import CatalogStore
 from whisky.modules.research.quota import QuotaStore
+from whisky.modules.research.source_reader import SourcePage
 
 pytestmark = pytest.mark.integration
 ROOT = Path(__file__).parents[3]
@@ -172,3 +173,60 @@ async def test_actual_quota_failure_is_detected_without_calling_provider(
     assert result["error_code"] == "RESEARCH_FAILED"
     assert result["provider_attempts"] == 0
     assert eval_runner.quota_exhausted(result), result["failure_chain"]
+
+
+async def test_source_selection_receives_the_actual_research_goal(
+    research_context, eval_runner
+):
+    engine, *_ = research_context
+    corpus = json.loads(eval_runner.CORPUS.read_text())
+    controls = json.loads(eval_runner.CONTROLS.read_text())
+    CatalogStore(engine).publish(
+        load_reviewed_release((ROOT / corpus["catalog_manifest"]).read_text())
+    )
+    case = next(c for c in corpus["cases"] if c["id"] == "source_failure_fallback")
+    typed = eval_runner.CaseControls.model_validate(controls["cases"][case["id"]])
+    prompts = []
+
+    def model(messages, info):
+        prompt = next(
+            part.content
+            for message in messages
+            for part in message.parts
+            if isinstance(part, UserPromptPart) and isinstance(part.content, str)
+        )
+        payload = json.loads(prompt[prompt.index("{") :])
+        prompts.append(payload)
+        assert payload.get("goal") == case["input"]
+        choice = next(
+            source
+            for source in payload["provided_sources"]
+            if source["item_name"] == "格蘭利威 12 年"
+        )
+        return ModelResponse(
+            parts=[
+                ToolCallPart(
+                    info.output_tools[0].name, {"source_index": choice["index"]}
+                )
+            ]
+        )
+
+    class FixtureSource:
+        async def read(self, url):
+            return SourcePage(
+                url, "Explicit synthetic source fixture; not reviewed facts."
+            )
+
+    source_reader = eval_runner.EvalSourceReader(delegate=FixtureSource())
+    async with await WorkflowEnvironment.start_local() as env:
+        client = Client(**{**env.client.config(), "plugins": [PydanticAIPlugin()]})
+        queue = f"whisky-t10-goal-fixture-{uuid4()}"
+        async with research_worker(
+            client, queue, engine, FunctionModel(model), source_reader=source_reader
+        ):
+            result = await eval_runner.run_case(
+                client, queue, engine, case, typed, source_reader
+            )
+    assert result["status"] == "completed", result["failure_chain"]
+    assert len(prompts) == 1
+    assert result["source_reads"][0]["status"] == "ok"

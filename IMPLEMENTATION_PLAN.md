@@ -251,6 +251,8 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 - 此 eval／單一版本 slice 完整 backend **601 passed（288.58秒）**（`/tmp/whisky-t10-eval-full-backend.log`）；追加真 quota error 回歸後 runner 定向 **13 passed（17.47秒）**，實際 generic RESEARCH_FAILED 仍可辨識 DAILY_BUDGET_UNCONFIGURED，provider attempts=0。wheel **4 passed（12.08秒）**、scripts unittest11、ruff check／format、mypy88 source files與Python boundaries通過。原 corpus `git diff -- backend/evals/t10_cases.v1.json` 無差異。此輪未改Web，沿最新193／12browser證據；live模型／人工rubric／ARM與部署未驗，不把fixture結果當模型品質。
 
+- eval／單一確認 commit `7133bed` 的 push run `36776707397`／PR run `36776713237` backend與Web jobs各success；PR backend **602 passed（236.98秒）**／wheel4（5.25秒），包含追加真quota負例。來源context檢查再捕捉V4 source prompt未送入本次goal：FunctionModel檢查實際prompt取得1 RED（goal=None），補入goal並更新V4 prompt hash；只供來源選擇，候選／版本／價格資格仍由reviewed規則決定。定向runner14 GREEN（12.90秒），完整backend **603 passed（275.52秒）**（`/tmp/whisky-t10-source-goal-full.log`），ruff／mypy通過；來源／模型fixture明示隔離，不作Qwen真品質證據。T10 live模型仍待帳戶免費配額核對，瀏覽器工具目前沒有可控制的browser，尚未部署。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。
