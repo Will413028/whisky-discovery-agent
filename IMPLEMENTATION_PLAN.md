@@ -196,6 +196,11 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 - 最終installed wheel4 passed（18.05秒，`/tmp/whisky-t10-v4-contract-wheel-final.log`，head0014）、ruff check／format、mypy79 files與Python邊界通過。frozen conditions_v1／control v1_codec／TaskView生成物差異核對無變更；指令檔路徑及現行規則對帳0處修改。新input／proposal tables尚未部署，保留PR draft，后續正式接線仍須真Temporal等待／重啟／replay及真模型人工rubric。
 
+- V4 durable executor 本機接線：新增獨立 workflow／proposal與source agents，begin與immutable input同transaction；proposal引用須精確來自原描述、一次修正仍失敗就拒絕，明確 use-intent／skip 才接續，不自動修改已確認偏好或預算。proposal agent stub取得3 failed RED→3 GREEN（`/tmp/whisky-t10-proposal-agent-{red,green}.log`）；begin_v4 stub兩項RED→新舊begin／workflow9 GREEN（`/tmp/whisky-t10-execution-v4-{red,green}.log`）；durable question stub 1 failed RED→1 GREEN（`/tmp/whisky-t10-proposal-workflow-v4-{red,green}.log`）。restart test初次的result_type harness錯誤與Temporal server啟動逾時不列行為RED。
+- 真PostgreSQL＋Temporal驗proposal問題持久化、停止／重啟worker後同question與deadline、明確採用／略過intent、庫外起點空結果、plan未被推論修改、model／reader quota ledger及同一Task完成；實際完成history以禁止provider的Replayer重播。完整backend530 passed（572.05秒，`/tmp/whisky-t10-v4-executor-backend-full.log`）；其後design finding刪除未使用focus，V4自有source schema納入prompt hash，受影響V4 workflow／proposal unit／legacy V2 replay共9 passed（116.27秒，`/tmp/whisky-t10-v4-focus-review-green.log`）。installed wheel4 passed（29.49秒，`/tmp/whisky-t10-v4-executor-wheel.log`）、mypy83 files、ruff check／format與Python boundaries通過。未將小型schema修正後的定向測試冒充第二次完整530。
+- fresh executor design review 1A（沿用V3 focus但renderer未使用）決定改，刪除focus與指示後複核fixed；V3不改。獨立有界correctness review `NO CONFIRMED DEFECTS`，涵蓋transaction／owner／revision／取消fence、durable waiting／restart／replay、quota、舊registration與payload相容性；指令檔對帳0處更改。source fallback兩次上限已寫入，專用failure→success案例仍未驗；比較metadata／API start_v4／proposal cards與完整雙入口、真模型人工rubric／真瀏覽器／部署出口尚待完成。此slice未部署，不標T10驗收。
+- input／proposal commit `da5b11d` 的PR run `36698828206` 與push run `36698822944`，backend／web jobs各自success；不把該CI當成後續executor的驗證。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

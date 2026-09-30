@@ -16,6 +16,7 @@ from whisky.modules.catalog.public import (
 )
 from whisky.modules.research.agent_v2 import PROMPT_VERSION_V2
 from whisky.modules.research.agent_v3 import PROMPT_VERSION_V3
+from whisky.modules.research.agent_v4 import PROMPT_VERSION_V4
 from whisky.modules.research.clarification import ClarificationStore
 from whisky.modules.research.contracts import (
     AnswerReceipt,
@@ -32,6 +33,10 @@ from whisky.modules.research.contracts import (
     ReviewedVersionQuestionCommit,
     SourceObservation,
     SourceObservationReceipt,
+)
+from whisky.modules.research.contracts_v4 import (
+    PreferenceQuestionCommitV4,
+    ResearchExecutionV4,
 )
 from whisky.modules.research.quota import QuotaError, QuotaStore
 from whisky.modules.research.report import ReportClaim
@@ -76,6 +81,31 @@ class ResearchActivities:
     async def begin_research_v3(self, task_id: str) -> ResearchRunContext:
         context = await self.begin_research(task_id)
         return replace(context, prompt_version=PROMPT_VERSION_V3)
+
+    @activity.defn(name="whisky_begin_research_v4")
+    async def begin_research_v4(self, task_id: str) -> ResearchExecutionV4:
+        try:
+            return await asyncio.to_thread(
+                self.run_store.begin_v4, UUID(task_id), PROMPT_VERSION_V4
+            )
+        except (ResearchConflict, ValueError) as error:
+            raise ApplicationError(str(error), non_retryable=True) from error
+
+    @activity.defn(name="whisky_publish_preference_question_v4")
+    async def publish_preference_question_v4(
+        self, commit: PreferenceQuestionCommitV4
+    ) -> PublishedQuestion:
+        try:
+            return await asyncio.to_thread(
+                self.clarifications.publish_preference_proposal,
+                commit.context,
+                commit.waiting_version,
+                commit.source_text,
+                commit.proposal,
+                commit.expires_at,
+            )
+        except (ResearchConflict, ValueError) as error:
+            raise ApplicationError(str(error), non_retryable=True) from error
 
     @activity.defn(name="whisky_catalog_snapshot_v3")
     async def catalog_snapshot_v3(
