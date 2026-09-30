@@ -1,0 +1,12 @@
+[Unit]
+Description=Whisky Discovery encrypted PostgreSQL cluster backup to OCI
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/whisky-discovery/deploy/backup.sh
+TimeoutStartSec=30min
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

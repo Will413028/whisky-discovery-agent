@@ -24,6 +24,7 @@ jobs:
       - run: git diff --exit-code -- contracts/openapi.json contracts/task-view.schema.json
       - run: python3 -m unittest discover -s scripts/tests -t scripts
       - run: python3 scripts/check_python_boundaries.py backend/src
+      - run: python3 scripts/check_deploy_gate.py
       - run: uv run --project backend pytest backend/tests -q
       - run: python3 scripts/test_wheel.py
 

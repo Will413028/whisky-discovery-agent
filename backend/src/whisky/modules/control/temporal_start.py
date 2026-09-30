@@ -1,11 +1,33 @@
 """Temporal starter for deterministic control workflow identities."""
 
+import asyncio
+
 from temporalio.client import Client
 from temporalio.common import WorkflowIDConflictPolicy, WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
 
 from whisky.modules.control.store import ControlReceipt
 from whisky.modules.control.workflow import ControlWorkflow
+
+
+class ConnectingTemporalControlStarter:
+    """Share one lazy API client while Temporal remains independently restartable."""
+
+    def __init__(self, address: str, namespace: str, task_queue: str) -> None:
+        self.address = address
+        self.namespace = namespace
+        self.task_queue = task_queue
+        self._client: Client | None = None
+        self._lock = asyncio.Lock()
+
+    async def start(self, receipt: ControlReceipt) -> str | None:
+        async with self._lock:
+            if self._client is None:
+                self._client = await Client.connect(
+                    self.address, namespace=self.namespace, lazy=True
+                )
+            client = self._client
+        return await TemporalControlStarter(client, self.task_queue).start(receipt)
 
 
 class TemporalControlStarter:

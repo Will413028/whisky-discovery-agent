@@ -13,6 +13,7 @@ dependencies = [
     "ag-ui-protocol==0.1.22",
     "pydantic-ai-slim[openai,temporal]==2.51.0",
     "aiohttp>=3.13,<4",
+    "oci==2.187.0",
 ]
 
 [project.scripts]
@@ -20,6 +21,7 @@ whisky-api = "whisky.bootstrap.api:main"
 whisky-worker = "whisky.bootstrap.worker:main"
 whisky-migrate = "whisky.bootstrap.migrate:main"
 whisky-catalog-publish = "whisky.bootstrap.catalog:main"
+whisky-control-reconcile = "whisky.bootstrap.control_reconcile:main"
 
 [build-system]
 requires = ["hatchling==1.32.4"]

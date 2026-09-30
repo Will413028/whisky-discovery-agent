@@ -39,6 +39,8 @@ class Settings:
     issuer: str
     audience: str
     temporal: TemporalSettings | None = None
+    control_enabled: bool = False
+    recovery_required: bool = False
 
     @classmethod
     def from_environment(cls, values: Mapping[str, str]) -> "Settings | None":
@@ -58,7 +60,20 @@ class Settings:
                 "WHISKY_TEMPORAL_TASK_QUEUE",
             )
         ]
-        if not any(items) and not any(temporal_items):
+        control_value = values.get("WHISKY_CONTROL_ENABLED", "")
+        if control_value not in {"", "0", "1"}:
+            raise ValueError("Control enabled flag must be 0 or 1")
+        control_enabled = control_value == "1"
+        recovery_value = values.get("WHISKY_RECOVERY_REQUIRED", "")
+        if recovery_value not in {"", "0", "1"}:
+            raise ValueError("Recovery required flag must be 0 or 1")
+        recovery_required = recovery_value == "1"
+        if (
+            not any(items)
+            and not any(temporal_items)
+            and not control_enabled
+            and not recovery_required
+        ):
             return None
         if not all(items):
             raise ValueError("All identity configuration values are required")
@@ -80,4 +95,13 @@ class Settings:
             if not all(temporal_items):
                 raise ValueError("All Temporal configuration values are required")
             temporal = TemporalSettings(*temporal_items)
-        return cls(items[0], items[1], items[2], temporal=temporal)
+        if control_enabled and temporal is None:
+            raise ValueError("Control start requires Temporal configuration")
+        return cls(
+            items[0],
+            items[1],
+            items[2],
+            temporal=temporal,
+            control_enabled=control_enabled,
+            recovery_required=recovery_required,
+        )

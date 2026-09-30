@@ -1,5 +1,12 @@
 import { expect, test } from "@playwright/test";
 
+test("public readiness fails closed without its API in Node", async ({request}) => {
+  const response = await request.get("/health/ready");
+  expect(response.status()).toBe(503);
+  expect(response.headers()["cache-control"]).toBe("no-store");
+  expect(await response.json()).toEqual({status:"unavailable"});
+});
+
 test("observe route fails closed without a private API origin in Node", async ({ request }) => {
   const response = await request.post("/agent/observe", {data:{taskId:crypto.randomUUID(), runId:crypto.randomUUID(), conditionsRevision:1}});
   expect(response.status()).toBe(503);
