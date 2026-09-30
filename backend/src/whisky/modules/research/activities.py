@@ -17,6 +17,7 @@ from whisky.modules.catalog.public import (
 from whisky.modules.research.agent_v2 import PROMPT_VERSION_V2
 from whisky.modules.research.agent_v3 import PROMPT_VERSION_V3
 from whisky.modules.research.agent_v4 import PROMPT_VERSION_V4
+from whisky.modules.research.catalog_snapshot import research_catalog_snapshot
 from whisky.modules.research.clarification import ClarificationStore
 from whisky.modules.research.contracts import (
     AnswerReceipt,
@@ -26,20 +27,18 @@ from whisky.modules.research.contracts import (
     QuestionExpiry,
     ReadSourceRequest,
     ReportCommit,
-    ResearchCatalogItem,
     ResearchCatalogSnapshot,
     ResearchRunContext,
-    ResearchSourceOption,
     ReviewedVersionQuestionCommit,
     SourceObservation,
     SourceObservationReceipt,
 )
 from whisky.modules.research.contracts_v4 import (
     PreferenceQuestionCommitV4,
+    ReportCommitV4,
     ResearchExecutionV4,
 )
 from whisky.modules.research.quota import QuotaError, QuotaStore
-from whisky.modules.research.report import ReportClaim
 from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.run_store import ResearchRunStore
 from whisky.modules.research.source_observation import SourceObservationStore
@@ -117,58 +116,7 @@ class ResearchActivities:
         catalog = reviewed_catalog_snapshot(
             self.engine, context.as_of, context.conditions.budget_twd
         )
-        items: list[ResearchCatalogItem] = []
-        sources: list[ResearchSourceOption] = []
-        for index, candidate in enumerate(catalog.candidates, start=1):
-            item = candidate.item
-            eligible = item.id in catalog.eligible_item_ids
-            facts = {fact.field: fact.value for fact in item.facts}
-            claims = tuple(
-                ReportClaim("fact", fact.field, fact.value, fact.evidence_ids)
-                for fact in item.facts
-            ) + tuple(
-                ReportClaim("tag", tag.label, tag.label, tag.evidence_ids)
-                for tag in item.flavor_tags
-            )
-            items.append(
-                ResearchCatalogItem(
-                    index=index,
-                    release_id=candidate.release_id,
-                    item_id=item.id,
-                    bottle_version_id=item.bottle.version_id,
-                    name=item.name,
-                    official_name=facts.get("official_name", ""),
-                    version_label=facts.get("version_label", ""),
-                    tasting_notes=facts.get("producer_tasting_notes", ""),
-                    flavor_tags=tuple(tag.label for tag in item.flavor_tags),
-                    eligible=eligible,
-                    price_upper_bound_twd=(
-                        str(candidate.price_upper_bound)
-                        if candidate.price_upper_bound is not None
-                        else None
-                    ),
-                    price_ids=(
-                        tuple(price.id for price in candidate.prices)
-                        if eligible
-                        else ()
-                    ),
-                    claims=claims,
-                )
-            )
-            for reviewed_source in catalog.sources:
-                if reviewed_source.item_id != item.id:
-                    continue
-                sources.append(
-                    ResearchSourceOption(
-                        index=len(sources) + 1,
-                        item_index=index,
-                        release_id=candidate.release_id,
-                        bottle_version_id=item.bottle.version_id,
-                        evidence_id=reviewed_source.source.id,
-                        publisher=(reviewed_source.source.publisher or "來源未標示"),
-                    )
-                )
-        return ResearchCatalogSnapshot(catalog.release_id, tuple(items), tuple(sources))
+        return research_catalog_snapshot(catalog)
 
     @activity.defn(name="whisky_read_source_v3")
     async def read_source_v3(
@@ -311,6 +259,16 @@ class ResearchActivities:
                 source_observation_ids=commit.source_observation_ids,
             )
         except ResearchConflict as error:
+            raise ApplicationError(str(error), non_retryable=True) from error
+        return str(saved.id)
+
+    @activity.defn(name="whisky_save_report_v4")
+    async def save_report_v4(self, commit: ReportCommitV4) -> str:
+        try:
+            saved = await asyncio.to_thread(
+                self.reports.save_v4, commit.report, commit.comparison
+            )
+        except (ResearchConflict, ValueError) as error:
             raise ApplicationError(str(error), non_retryable=True) from error
         return str(saved.id)
 

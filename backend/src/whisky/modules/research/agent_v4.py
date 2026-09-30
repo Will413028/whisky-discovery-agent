@@ -12,6 +12,7 @@ from pydantic_ai.models import Model
 from temporalio.common import RetryPolicy
 
 from whisky.modules.discovery.public import PreferenceProposal
+from whisky.modules.research.comparison_v4 import ComparisonArtifactV4
 from whisky.modules.research.model import NoThinkingModel
 from whisky.modules.research.proposal_agent_v4 import (
     PROPOSAL_PROMPT_VERSION_V4,
@@ -42,7 +43,10 @@ PROMPT_VERSION_V4 = (
                 TypeAdapter(ResearchSourceChoiceV4).json_schema(), sort_keys=True
             )
             + SELECTION_POLICY_VERSION
-            + "research-render-v4-1"
+            + json.dumps(
+                TypeAdapter(ComparisonArtifactV4).json_schema(), sort_keys=True
+            )
+            + "research-render-v4-2"
         ).encode()
     ).hexdigest()[:12]
 )

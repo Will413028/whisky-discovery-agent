@@ -229,6 +229,13 @@ async def test_proposal_restart_keeps_question_and_unconfirmed_preferences(
             report_id = await asyncio.wait_for(handle.result(), timeout=30)
         history = await handle.fetch_history()
     report = ReportStore(engine).read(actor.id, report_id)
+    with engine.connect() as connection:
+        comparison = connection.scalar(
+            text("SELECT content FROM research_report_comparisons WHERE report_id=:id"),
+            {"id": report_id},
+        )
+        assert comparison is not None
+        assert len(comparison["candidates"]) == expected_candidates
     assert report.clarified_bottle is None
     assert len(report.candidates) == expected_candidates
     assert calls == {"proposal": 1, "source": expected_candidates}

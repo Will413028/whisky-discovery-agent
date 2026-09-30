@@ -19,6 +19,7 @@ from whisky.modules.research.agent_v4 import (
     proposal_agent_v4,
     source_agent_v4,
 )
+from whisky.modules.research.comparison_v4 import comparison_artifact_v4
 from whisky.modules.research.contracts import (
     AnswerReceipt,
     AnswerResult,
@@ -33,6 +34,7 @@ from whisky.modules.research.contracts import (
 )
 from whisky.modules.research.contracts_v4 import (
     PreferenceQuestionCommitV4,
+    ReportCommitV4,
     ResearchExecutionV4,
 )
 from whisky.modules.research.report import ReportCandidate, ReportDraft
@@ -168,19 +170,28 @@ class ResearchWorkflowV4(PydanticAIWorkflow):
                     context, snapshot, selection, intent
                 )
                 saved = await workflow.execute_activity(
-                    "whisky_save_report_v1",
-                    ReportCommit(
-                        self.task_id,
-                        context.owner_id,
-                        context.generation,
-                        f"final:v4:{task_id}",
-                        report,
-                        context.policy_version,
-                        context.prompt_version,
-                        model_name,
-                        version_answer.question_id if version_answer else None,
-                        UUID(version_answer.answer) if version_answer else None,
-                        observations,
+                    "whisky_save_report_v4",
+                    ReportCommitV4(
+                        ReportCommit(
+                            self.task_id,
+                            context.owner_id,
+                            context.generation,
+                            f"final:v4:{task_id}",
+                            report,
+                            context.policy_version,
+                            context.prompt_version,
+                            model_name,
+                            version_answer.question_id if version_answer else None,
+                            UUID(version_answer.answer) if version_answer else None,
+                            observations,
+                        ),
+                        comparison_artifact_v4(
+                            context.conditions,
+                            snapshot,
+                            version_answer.answer if version_answer else None,
+                            intent,
+                            selection,
+                        ),
                     ),
                     start_to_close_timeout=TIMEOUT,
                     retry_policy=RETRY,

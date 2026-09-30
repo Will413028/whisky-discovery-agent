@@ -163,6 +163,7 @@ def research_worker(
             db.catalog_snapshot_v3,
             db.read_source_v3,
             db.save_report,
+            db.save_report_v4,
             db.fail_research,
             db.publish_question,
             db.publish_question_v3,

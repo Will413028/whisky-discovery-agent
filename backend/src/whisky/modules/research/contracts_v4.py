@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from datetime import datetime
 
 from whisky.modules.discovery.public import PreferenceProposal
-from whisky.modules.research.contracts import ResearchRunContext
+from whisky.modules.research.comparison_v4 import ComparisonArtifactV4
+from whisky.modules.research.contracts import ReportCommit, ResearchRunContext
 from whisky.modules.research.inputs_v4 import ResearchInputV4
 
 
@@ -21,3 +22,9 @@ class PreferenceQuestionCommitV4:
     source_text: str
     proposal: PreferenceProposal
     expires_at: datetime
+
+
+@dataclass(frozen=True)
+class ReportCommitV4:
+    report: ReportCommit
+    comparison: ComparisonArtifactV4

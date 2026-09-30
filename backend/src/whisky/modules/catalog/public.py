@@ -68,52 +68,57 @@ def reviewed_catalog_snapshot(
     engine: Engine, as_of: date, budget: Decimal | None
 ) -> ReviewedCatalogSnapshot:
     """Pin one immutable sealed release for eligibility and source selection."""
-    from whisky.modules.catalog.store import CatalogStore
 
     with engine.connect().execution_options(
         isolation_level="REPEATABLE READ"
     ) as connection:
         release_id = current_release_id(connection)
-        candidates = CatalogStore.candidates_in_release(
-            connection, release_id, as_of, None
+        return reviewed_catalog_snapshot_in_release(
+            connection, release_id, as_of, budget
         )
-        eligible_ids = frozenset(
-            candidate.item.id
-            for candidate in candidates
-            if fits_budget(candidate.price_upper_bound, budget)
-        )
-        sources = []
-        if release_id is not None:
-            for candidate in candidates:
-                item = candidate.item
-                evidence_ids = sorted(
-                    (
-                        {
-                            evidence_id
-                            for fact in item.facts
-                            for evidence_id in fact.evidence_ids
-                        }
-                        | {
-                            evidence_id
-                            for tag in item.flavor_tags
-                            for evidence_id in tag.evidence_ids
-                        }
-                    ),
-                    key=str,
+
+
+def reviewed_catalog_snapshot_in_release(
+    connection: Connection,
+    release_id: UUID | None,
+    as_of: date,
+    budget: Decimal | None,
+) -> ReviewedCatalogSnapshot:
+    """Read a pinned release inside the caller's artifact transaction."""
+    from whisky.modules.catalog.store import CatalogStore
+
+    candidates = CatalogStore.candidates_in_release(connection, release_id, as_of, None)
+    eligible_ids = frozenset(
+        candidate.item.id
+        for candidate in candidates
+        if fits_budget(candidate.price_upper_bound, budget)
+    )
+    sources = []
+    if release_id is not None:
+        for candidate in candidates:
+            item = candidate.item
+            evidence_ids = sorted(
+                {
+                    evidence_id
+                    for fact in item.facts
+                    for evidence_id in fact.evidence_ids
+                }
+                | {
+                    evidence_id
+                    for tag in item.flavor_tags
+                    for evidence_id in tag.evidence_ids
+                },
+                key=str,
+            )
+            for evidence_id in evidence_ids:
+                source = published_source(
+                    connection, release_id, evidence_id, item.bottle.version_id
                 )
-                for evidence_id in evidence_ids:
-                    source = published_source(
-                        connection, release_id, evidence_id, item.bottle.version_id
+                if source is not None:
+                    sources.append(
+                        ReviewedCatalogSource(item.id, item.bottle.version_id, source)
                     )
-                    if source is not None:
-                        sources.append(
-                            ReviewedCatalogSource(
-                                item.id, item.bottle.version_id, source
-                            )
-                        )
-        return ReviewedCatalogSnapshot(
-            release_id, candidates, eligible_ids, tuple(sources)
-        )
+    return ReviewedCatalogSnapshot(release_id, candidates, eligible_ids, tuple(sources))
 
 
 @dataclass(frozen=True)

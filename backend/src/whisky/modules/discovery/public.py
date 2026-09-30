@@ -49,6 +49,21 @@ def locked_plan(connection: Connection, plan_id: UUID, owner: UUID) -> Plan | No
     return PlanStore._read(connection, plan_id, owner, lock=True)
 
 
+def preference_proposal_for_task(
+    connection: Connection,
+    task_id: UUID,
+    owner_id: UUID,
+    generation: int,
+    conditions_revision: int,
+) -> PreferenceProposal | None:
+    """Read a fenced draft through its owning module in the caller's transaction."""
+    from whisky.modules.discovery.proposal_store import preference_proposal_for_task
+
+    return preference_proposal_for_task(
+        connection, task_id, owner_id, generation, conditions_revision
+    )
+
+
 def owned_plan(connection: Connection, plan_id: UUID, owner: UUID) -> Plan | None:
     """Read a live owned plan without acquiring a write lock."""
     from whisky.modules.discovery.store import PlanStore

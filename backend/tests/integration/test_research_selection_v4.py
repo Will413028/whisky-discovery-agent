@@ -14,6 +14,7 @@ from whisky.modules.discovery.conditions import (
     ResearchConditions,
 )
 from whisky.modules.research.activities import ResearchActivities
+from whisky.modules.research.comparison_v4 import comparison_artifact_v4
 from whisky.modules.research.contracts import ResearchRunContext
 from whisky.modules.research.selection_v4 import (
     ExplorationIntent,
@@ -22,6 +23,63 @@ from whisky.modules.research.selection_v4 import (
 )
 
 pytestmark = pytest.mark.integration
+
+
+def test_comparison_artifact_keeps_both_reviewed_sides(snapshot):
+    origin = snapshot.items[0]
+    conditions = ResearchConditions(
+        entry="existing_bottle",
+        goal="從果香找相似風格",
+        starting_bottle=CatalogReference(
+            release_id=origin.release_id, item_id=origin.item_id
+        ),
+        budget_twd=Decimal("1000"),
+    )
+    intent = ExplorationIntent(mode="similar")
+    selection = select_research(conditions, snapshot, None, intent=intent)
+    artifact = comparison_artifact_v4(conditions, snapshot, None, intent, selection)
+    assert artifact.schema_version == 4
+    assert len(artifact.candidates) == len(selection.candidate_indices) == 1
+    candidate = artifact.candidates[0]
+    assert candidate.origin == conditions.starting_bottle
+    assert candidate.common_tags
+    assert {claim.key for claim in candidate.origin_claims} == set(
+        candidate.common_tags
+    )
+    assert {claim.key for claim in candidate.candidate_claims} == set(
+        candidate.common_tags
+    )
+    assert all(claim.evidence_ids for claim in candidate.origin_claims)
+    assert all(claim.evidence_ids for claim in candidate.candidate_claims)
+    assert candidate.origin_description.evidence_ids
+    assert candidate.candidate_description.evidence_ids
+    assert candidate.origin_description.value == origin.tasting_notes
+    assert candidate.candidate_description.value != candidate.origin_description.value
+
+
+def test_comparison_artifact_rejects_fabricated_selection(snapshot):
+    conditions = ResearchConditions(entry="beginner", goal="看看風格")
+    intent = ExplorationIntent()
+    selection = select_research(conditions, snapshot, None, intent=intent)
+    forged = replace(
+        selection,
+        comparisons=(
+            replace(selection.comparisons[0], common_tags=("不存在的風味",)),
+            *selection.comparisons[1:],
+        ),
+    )
+    with pytest.raises(ValueError, match="COMPARISON_MISMATCH"):
+        comparison_artifact_v4(conditions, snapshot, None, intent, forged)
+
+
+def test_unlisted_comparison_artifact_does_not_substitute_origin(snapshot):
+    conditions = ResearchConditions(entry="beginner", goal="喜歡庫外酒款")
+    intent = ExplorationIntent(origin_query="Ardbeg Ten", mode="similar")
+    selection = select_research(conditions, snapshot, None, intent=intent)
+    artifact = comparison_artifact_v4(conditions, snapshot, None, intent, selection)
+    assert artifact.candidates == ()
+    assert artifact.intent == intent
+    assert artifact.unlisted_name == "Ardbeg Ten"
 
 
 @pytest.fixture

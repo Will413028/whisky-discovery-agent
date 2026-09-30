@@ -9,6 +9,29 @@ from whisky.modules.discovery.proposal import PreferenceProposal
 from whisky.modules.discovery.store import Plan
 
 
+def preference_proposal_for_task(
+    connection: Connection,
+    task_id: UUID,
+    owner_id: UUID,
+    generation: int,
+    conditions_revision: int,
+) -> PreferenceProposal | None:
+    payload = connection.scalar(
+        text("""
+            SELECT proposal FROM preference_proposals
+            WHERE task_id=:task AND owner_id=:owner AND generation=:generation
+              AND conditions_revision=:revision
+        """),
+        dict(
+            task=task_id,
+            owner=owner_id,
+            generation=generation,
+            revision=conditions_revision,
+        ),
+    )
+    return PreferenceProposal.model_validate(payload) if payload is not None else None
+
+
 def persist_preference_proposal(
     connection: Connection,
     task_id: UUID,
