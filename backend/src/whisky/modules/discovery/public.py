@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from whisky.modules.discovery.conditions import CatalogReference as CatalogReference
 from whisky.modules.discovery.conditions import ResearchConditions as ResearchConditions
 from whisky.modules.discovery.conditions_v1 import (
     ResearchConditionsV1 as ResearchConditionsV1,
