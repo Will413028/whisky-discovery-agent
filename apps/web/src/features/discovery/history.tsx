@@ -39,6 +39,7 @@ export function PlanHistory({planId, revision}: {planId:string; revision:number}
   if (!isAuthenticated || auth.isLoading) return null;
   return <section aria-label="研究紀錄">
     <h2>研究紀錄</h2>
+    <a href={`/plans/${planId}/conclusions`}>查看保存的探索結論</a>
     {error && <p role="alert">暫時無法讀取研究紀錄。<button disabled={busy} onClick={()=>load(cursor,life.current,items===null)}>重新讀取研究紀錄</button></p>}
     {!items && !error && <p>讀取研究紀錄中…</p>}
     {items?.length===0 && <p>尚未有研究紀錄。</p>}

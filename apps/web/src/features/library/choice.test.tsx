@@ -1,0 +1,30 @@
+import {cleanup,fireEvent,render,screen,waitFor} from "@testing-library/react";
+import {afterEach,expect,test,vi} from "vitest";
+import {ConclusionChoice} from "./choice";
+import {saveConclusion,ConclusionRejected} from "./client";
+vi.mock("./client",async importOriginal=>({...await importOriginal<typeof import("./client")>(),saveConclusion:vi.fn()}));
+afterEach(()=>{cleanup();vi.clearAllMocks();});
+const id="00000000-0000-4000-8000-000000000001";
+test("saving no suitable choice is explicit and retry keeps the original command",async()=>{
+  vi.mocked(saveConclusion).mockRejectedValueOnce(new Error("REQUEST_FAILED")).mockResolvedValueOnce({id} as Awaited<ReturnType<typeof saveConclusion>>);
+  render(<ConclusionChoice planId={id} reportId={id} revision={1} candidates={[]} getToken={async()=>"fixture"}/>);
+  fireEvent.click(screen.getByLabelText("這次沒有適合的"));
+  fireEvent.change(screen.getByLabelText("選擇理由"),{target:{value:"目前資料不足"}});
+  fireEvent.click(screen.getByRole("button",{name:"保存探索結論"}));
+  await screen.findByRole("button",{name:"重送同一結論"});
+  expect((screen.getByLabelText("選擇理由").closest("fieldset") as HTMLFieldSetElement).disabled).toBe(true);
+  fireEvent.click(screen.getByRole("button",{name:"重送同一結論"}));
+  await waitFor(()=>expect(saveConclusion).toHaveBeenCalledTimes(2));
+  expect(vi.mocked(saveConclusion).mock.calls[1]).toEqual(vi.mocked(saveConclusion).mock.calls[0]);
+  expect(vi.mocked(saveConclusion).mock.calls[0]?.[0]).toMatchObject({selectedVersionId:null,reason:"目前資料不足",expectedConditionsRevision:1});
+  await screen.findByText("探索結論已保存。");
+});
+test("an acknowledged revision rejection offers recovery instead of resending the rejected command",async()=>{
+  vi.mocked(saveConclusion).mockRejectedValue(new ConclusionRejected("REVISION_CONFLICT",409));
+  render(<ConclusionChoice planId={id} reportId={id} revision={1} candidates={[]} getToken={async()=>"fixture"}/>);
+  fireEvent.click(screen.getByLabelText("這次沒有適合的"));
+  fireEvent.change(screen.getByLabelText("選擇理由"),{target:{value:"先保留方向"}});
+  fireEvent.click(screen.getByRole("button",{name:"保存探索結論"}));
+  expect((await screen.findByRole("link",{name:"回到目前探索計畫"})).getAttribute("href")).toBe(`/plans/${id}`);
+  expect(screen.queryByRole("button",{name:"重送同一結論"})).toBeNull();
+});

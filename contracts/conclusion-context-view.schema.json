@@ -1,0 +1,45 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "conditionsRevision": {
+      "minimum": 1,
+      "title": "Conditionsrevision",
+      "type": "integer"
+    },
+    "currentConditionsRevision": {
+      "minimum": 1,
+      "title": "Currentconditionsrevision",
+      "type": "integer"
+    },
+    "planId": {
+      "format": "uuid",
+      "title": "Planid",
+      "type": "string"
+    },
+    "reportId": {
+      "format": "uuid",
+      "title": "Reportid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "taskId": {
+      "format": "uuid",
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "planId",
+    "taskId",
+    "reportId",
+    "conditionsRevision",
+    "currentConditionsRevision"
+  ],
+  "title": "ConclusionContextViewV1",
+  "type": "object"
+}

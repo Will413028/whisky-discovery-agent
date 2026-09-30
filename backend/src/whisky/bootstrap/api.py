@@ -26,6 +26,8 @@ from whisky.modules.discovery.http import plan_router as discovery_router
 from whisky.modules.discovery.store import PlanStore
 from whisky.modules.identity.public import IdentityAccess, router
 from whisky.modules.identity.tokens import TokenVerifier
+from whisky.modules.library.http import library_router as make_library_router
+from whisky.modules.library.store import LibraryStore
 from whisky.modules.research.acceptance import AcceptResearch
 from whisky.modules.research.answer import AnswerResearch
 from whisky.modules.research.clarification import ClarificationStore
@@ -95,6 +97,9 @@ def configured_app(
             IdentityAccess(engine, verifier), control_store, control_controller
         ),
         catalog_router=make_catalog_router(engine),
+        library_router=make_library_router(
+            IdentityAccess(engine, verifier), LibraryStore(engine)
+        ),
     )
 
     @asynccontextmanager
@@ -122,6 +127,7 @@ def create_app(
     plan_router: APIRouter | None = None,
     control_router: APIRouter | None = None,
     catalog_router: APIRouter | None = None,
+    library_router: APIRouter | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Whisky Discovery Agent",
@@ -150,6 +156,11 @@ def create_app(
         control_router
         if control_router is not None
         else make_control_router(IdentityAccess(None, None), None, None)
+    )
+    app.include_router(
+        library_router
+        if library_router is not None
+        else make_library_router(IdentityAccess(None, None), None)
     )
 
     @app.middleware("http")

@@ -1,0 +1,355 @@
+{
+  "$defs": {
+    "CatalogReference": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "item_id"
+      ],
+      "title": "CatalogReference",
+      "type": "object"
+    },
+    "ConclusionViewV1": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "else": {
+            "properties": {
+              "alternativeVersionIds": {
+                "maxItems": 3
+              },
+              "selectedBottleName": {
+                "type": "null"
+              },
+              "selectedVersionId": {
+                "type": "null"
+              }
+            }
+          },
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "selected"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "alternativeVersionIds": {
+                "maxItems": 2
+              },
+              "selectedBottleName": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "selectedVersionId": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "alternativeVersionIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Alternativeversionids",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "catalogReleaseId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Catalogreleaseid"
+        },
+        "conditions": {
+          "$ref": "#/$defs/ResearchConditions"
+        },
+        "conditionsRevision": {
+          "minimum": 1,
+          "title": "Conditionsrevision",
+          "type": "integer"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "title": "Createdat",
+          "type": "string"
+        },
+        "evaluatedOn": {
+          "format": "date",
+          "title": "Evaluatedon",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "selected",
+            "no_suitable"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "planId": {
+          "format": "uuid",
+          "title": "Planid",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "reportId": {
+          "format": "uuid",
+          "title": "Reportid",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "default": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "selectedBottleName": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selectedbottlename"
+        },
+        "selectedVersionId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selectedversionid"
+        },
+        "taskId": {
+          "format": "uuid",
+          "title": "Taskid",
+          "type": "string"
+        },
+        "tradeoff": {
+          "title": "Tradeoff",
+          "type": "string"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "planId",
+        "taskId",
+        "reportId",
+        "conditionsRevision",
+        "conditions",
+        "catalogReleaseId",
+        "evaluatedOn",
+        "revision",
+        "outcome",
+        "selectedVersionId",
+        "selectedBottleName",
+        "alternativeVersionIds",
+        "reason",
+        "tradeoff",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "ConclusionViewV1",
+      "type": "object"
+    },
+    "Preference": {
+      "additionalProperties": false,
+      "properties": {
+        "certainty": {
+          "enum": [
+            "user_stated",
+            "inferred",
+            "unknown"
+          ],
+          "title": "Certainty",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "prefer",
+            "keep",
+            "change",
+            "avoid"
+          ],
+          "title": "Intent",
+          "type": "string"
+        },
+        "strength": {
+          "enum": [
+            "soft",
+            "hard"
+          ],
+          "title": "Strength",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "intent",
+        "certainty",
+        "strength"
+      ],
+      "title": "Preference",
+      "type": "object"
+    },
+    "ResearchConditions": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_twd": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Budget Twd"
+        },
+        "entry": {
+          "enum": [
+            "beginner",
+            "existing_bottle"
+          ],
+          "title": "Entry",
+          "type": "string"
+        },
+        "goal": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "preferences": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Preference"
+          },
+          "maxItems": 64,
+          "title": "Preferences",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "starting_bottle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CatalogReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "entry",
+        "goal"
+      ],
+      "title": "ResearchConditions",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "items": {
+      "items": {
+        "$ref": "#/$defs/ConclusionViewV1"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "nextCursor": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Nextcursor"
+    },
+    "planId": {
+      "format": "uuid",
+      "title": "Planid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "planId",
+    "items",
+    "nextCursor"
+  ],
+  "title": "ConclusionListViewV1",
+  "type": "object"
+}

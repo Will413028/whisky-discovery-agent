@@ -24,6 +24,19 @@ const waiting: TaskView = {
   reportId:null, error:null, observedAt:"2026-09-29T00:00:00Z", activeRunId:null,
 };
 
+test("a completed report exposes explicit saving using the server-owned plan context",async()=>{
+  const completed={...waiting,status:"completed",question:null,reportId,stage:"完成"};
+  vi.stubGlobal("fetch",vi.fn(async input=>{
+    const path=String(input);
+    if(path.endsWith("/conclusion-context")) return Response.json({schemaVersion:1,planId:id,taskId:id,reportId,conditionsRevision:1,currentConditionsRevision:1});
+    if(path.endsWith("/comparison")) return new Response(null,{status:404});
+    return path.includes(`/tasks/${id}`) ? Response.json(completed) : Response.json({id:reportId,taskId:id,summary:"已完成報告",candidates:[]});
+  }));
+  render(<ResearchTask taskId={id}/>);
+  expect(await screen.findByRole("button",{name:"保存探索結論"})).toBeTruthy();
+  expect(screen.getByLabelText("這次沒有適合的")).toBeTruthy();
+});
+
 test("reopening a proposal question restores original clues and unconfirmed taste mapping",async()=>{
   vi.stubGlobal("fetch",vi.fn(async input=>{
     if(String(input).endsWith("/preference-proposal")) return Response.json({schemaVersion:4,taskId:id,planId:id,questionId,conditionsRevision:1,waitingVersion:1,sourceText:"我喜歡水果甜點",proposal:{summary:"原文只是線索",intent:{mode:"style_options",smoke_comparison:false},preferences:[{description:"可能喜歡果香",intent:"prefer",source_quote:"喜歡水果甜點",source_kind:"food_clue",certainty:"inferred",strength:"soft",mapping:{feature_key:"果香",reference:{release_id:id,item_id:id},evidence_ids:[id]}}],budget:null}});

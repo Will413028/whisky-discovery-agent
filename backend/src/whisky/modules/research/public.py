@@ -2,6 +2,9 @@
 
 from ag_ui.core import Interrupt, RunFinishedEvent, RunFinishedInterruptOutcome
 
+from whisky.modules.research.conclusion_public import (
+    concludable_report as concludable_report,
+)
 from whisky.modules.research.control_public import (
     actor_tasks_closed as actor_tasks_closed,
 )

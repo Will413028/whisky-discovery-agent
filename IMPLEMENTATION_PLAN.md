@@ -11,7 +11,7 @@
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
 | 持久研究骨架與樣本 | T03–T09 | 已驗收；首次實際 schedule 與正式 control 放行證據見 T09 文末 |
 | 雙入口與探索計畫 | T10 | 進行中；公開 catalog／可靠 patch／plan與history UI／proposal slice 已本機 GREEN；完整雙入口與模型／部署出口仍待完成 |
-| 比較、回訪與資料管理 | T11 | 未開始 |
+| 比較、回訪與資料管理 | T11 | 保存結論／私人回訪的本機增量實作中；T10 未驗收，完整 T11 出口仍待完成 |
 | 展示資料與完整驗收 | T12 | 未開始 |
 
 狀態可為未開始、RED、GREEN、REFACTOR、已驗收、受阻。只有本階段的必要自動化與外部 gate 均通過才標已驗收；blocked 的整合不得用 mock 結果代替。規劃階段已結束，現依 T00 開始實作；下載、登入與部署授權仍依當次工作範圍處理。
@@ -268,6 +268,18 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - RED→GREEN：重開用目前 catalog／價格判資格，歷史理由保持當時快照；偏好與回饋修改有 owner／revision 與重送保障。
 - RED→GREEN：匯出僅包含自己的完整可匯出資料；刪除涵蓋 DB、相關 history、debug traces 與備份保存政策，重跑 T07／T09 對新增資料的防復活案例。
 - 出口：比較→選擇→收藏／喝過→重開→匯出／刪除旅程及跨帳號負例通過；不拿匯出檔代替備份。
+
+### T11 保存結論與私人回訪增量（2026-10-01，未驗收）
+
+- 前提：T10 尚未通過真模型／人工 rubric／正式部署出口；本增量於獨立 `feat/t11-library` worktree 接續 `230dd12`，不將提前實作稱為依賴已驗收。唯讀核對 Oracle：schema `0012_recovery_gate`、5 plans／5 tasks／3 reports，沒有 library tables；正式資料與 runtime 未變更。
+- 有效 RED：選擇 domain 8／取捨上限 1；結論 view 關聯 5；真 DB 保存與 receipt 7、刪除後 receipt 隱藏 1、重讀／移除可見性 2、分頁 1；signed JWT HTTP 2／分頁 query 5／報告 parent context 1。DDL JSON literal 被 SQLAlchemy 誤認 bind parameter 的 fixture error 不算 RED。交易故障回滾與 generation 變更負例是既有保障的回歸，沒有假稱 RED。
+- `0018_library_conclusions` 增 library 自有結論與一般 CRUD receipt。identity→plan 鎖定後，交易內驗 owner／generation、目前 plan revision、completed report／task 關係及選中版本資格；結論與 receipt 原子保存。重送先重驗可見性，再回原結果；已刪除或舊 generation 不藉 receipt 重新暴露。無適合保留當輪替代版本；選擇、理由、取捨不暗推收藏、喜歡或長期偏好。
+- 私人 POST／GET 結論、plan-scoped cursor 列表與 report conclusion-context 都接入 configured API／固定 Node proxy。context 由後端解析 plan，不以 URL 推測關聯；它只是 UI 提示，POST 仍交易重驗。原 `TaskView`、V1 conditions／control codec 與 workflow 未修改。
+- Web client／proxy／保存表單／回訪／context／頁面接線依次取得 7／3／1／1／3／2／2／1 有效 RED。保存「無適合」是明確選擇；未知結果保留同 key／body 重送，已知 401／404／409／422 拒絕保留 code 並提供恢復出口。條件已變更的歷史報告不露出保存表單；切換 subject 立即卸載舊私人清單。既有 browser 合成研究旅程增加保存→關頁→再登入找回理由，不代替真 Auth0 驗收。
+- 最後核對發現選中歷史結論缺酒名：真 DB／UI 各 1 RED→由 research 經 catalog public 解析原 sealed release／item／version，將選中名稱保存於結論與 receipt 快照。client 不可提交名稱；歷史頁明示「當時選擇」，不宣稱符合目前價格。
+- fresh backend／Web design-review 各發現 1 項：plan-scoped 索引缺 `plan_id`、已知拒絕被混成結果不明。兩項皆改；累積 ledger fixed 2／open 0，追加 context 與歷史名稱複查均 `NO DESIGN FINDINGS`。拒絕分類與恢復出口另取得 3 RED→library 23 GREEN；補酒名後 library 24 GREEN。fresh correctness／security review 無 findings，既有 owner／generation／revision／rollback／subject 負例屬 already protected。指令檔現行路徑與規則對帳 0 處修改。
+- 最終本機：backend **649 passed／345.61 秒**（`/tmp/whisky-t11-backend-release.log`）；installed wheel **4 passed／12.07 秒**、head0018（`/tmp/whisky-t11-wheel-release.log`）；ruff check／format、mypy95 source files、Python／Web boundaries、scripts unittest11、private startup gate 通過。Web **225 passed**（`/tmp/whisky-t11-web-release.log`）、typecheck、原生 Next build 通過；Node／workerd Playwright **13 passed／10.3 秒**（`/tmp/whisky-t11-browser-release.log`），包括明示合成的保存／關頁／再登入回訪。契約重生 hash 無 drift，frozen TaskView／V1 conditions／control codec 無 diff，whitespace 檢查通過。獨立空測試 DB 的 `EXPLAIN` 使用新增索引，Index Cond 含 owner／generation／plan（`/tmp/whisky-t11-query-plan.log`）；這不是實際負載效能驗收。
+- 尚未完成：目前 catalog／價格重新解析及移除酒款出口、收藏／喝過／偏好修改、完整私人匯出、DB／Temporal history／trace／備份清除與防復活；T11 完整旅程及正式跨瀏覽器 gate 未驗收。
 
 ## T12 — 真實資料覆蓋與展示驗收
 

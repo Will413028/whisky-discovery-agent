@@ -2,7 +2,7 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { safeReturnTo } from "../identity";
 import { observeTask } from "./observe";
 import { answerQuestion, createPlan, listOpenTasks, readReport, readTask, startResearchV4, type ReportView, type ResearchInputV4 } from "./client";
@@ -11,6 +11,7 @@ import {PreferenceProposalCard} from "./proposal-ui";
 import type { TaskView } from "./state";
 import {readComparison, type ComparisonReportView} from "./comparison-client";
 import {ComparisonReport} from "./comparison-ui";
+import {ReportConclusion} from "../library";
 
 function configured() {
   return Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN && process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID && process.env.NEXT_PUBLIC_AUTH0_AUDIENCE);
@@ -156,6 +157,7 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
   const [refresh, setRefresh] = useState(0);
   const {isAuthenticated, getAccessTokenSilently} = auth;
   const activeRunId = task?.activeRunId;
+  const conclusionToken=useCallback(async()=>requiredToken(await getAccessTokenSilently()),[getAccessTokenSilently]);
 
   useEffect(()=>{
     setProposal(null);setProposalError(false);
@@ -300,6 +302,7 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
           {candidate.prices.map(price => <p key={price.id}>參考價格：{price.amount ?? "未提供"} {price.currency}／{price.volumeMl ?? "?"} ml，{price.market}，查核日期 {price.checkedOn ?? "未提供"}</p>)}
           {candidate.claims.flatMap(claim => claim.sources).map(source => <p key={source.evidenceId}>來源：<a href={source.url} target="_blank" rel="noopener noreferrer">{source.publisher ?? source.url}</a>（{source.checkedOn}）</p>)}
         </section>)}
+        <ReportConclusion key={`${report.id}:${task.conditionsRevision}`} reportId={report.id} taskId={task.taskId} revision={task.conditionsRevision} candidates={report.candidates.map(candidate=>({versionId:candidate.bottleVersionId,name:candidate.name}))} getToken={conclusionToken}/>
         {Boolean(report.sourceObservations?.length) && <section><h3>本次來源讀取（未覆核）</h3>
           <p>以下是本次讀取的頁面觀察，尚未納入已覆核事實、推薦或預算判定。</p>
           {report.sourceObservations.map(observation => <div key={observation.id}>

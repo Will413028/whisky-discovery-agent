@@ -21,6 +21,7 @@ from fastapi.responses import (
     StreamingResponse,
 )
 
+from whisky.modules.library.contracts import ConclusionViewV1, SaveConclusionV1
 from whisky.modules.research.public import TaskView, waiting_event
 
 app = FastAPI()
@@ -39,6 +40,7 @@ RESEARCH_FIXTURE = (
     Path(__file__).resolve().parents[3] / "apps/web/.artifacts/research-fixture"
 )
 research_task: TaskView | None = None
+saved_conclusions: list[dict[str, object]] = []
 
 
 def fixture_auth(request: Request) -> None:
@@ -50,6 +52,7 @@ def fixture_auth(request: Request) -> None:
 def reset_research():
     global research_task
     research_task = None
+    saved_conclusions.clear()
     return {"reset": True}
 
 
@@ -57,6 +60,7 @@ def reset_research():
 @app.get("/research/{task_id}", response_class=HTMLResponse)
 @app.get("/plans", response_class=HTMLResponse)
 @app.get("/plans/{plan_id}", response_class=HTMLResponse)
+@app.get("/plans/{plan_id}/conclusions", response_class=HTMLResponse)
 def research_page(task_id: str | None = None, plan_id: str | None = None):
     return HTMLResponse((RESEARCH_FIXTURE / "index.html").read_text())
 
@@ -205,6 +209,77 @@ def read_research_report(report_id: str, request: Request):
             "summary": "已依補充版本重新查核",
             "candidates": [],
         },
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.get("/api/v1/library/reports/{report_id}/conclusion-context")
+def read_conclusion_context(report_id: str, request: Request):
+    fixture_auth(request)
+    if research_task is None or research_task.status != "completed":
+        raise HTTPException(404)
+    if report_id != RESEARCH_REPORT:
+        raise HTTPException(404)
+    return JSONResponse(
+        dict(
+            schemaVersion=1,
+            planId=RESEARCH_PLAN,
+            taskId=RESEARCH_TASK,
+            reportId=RESEARCH_REPORT,
+            conditionsRevision=1,
+            currentConditionsRevision=1,
+        ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.post("/api/v1/library/conclusions")
+def save_synthetic_conclusion(command: SaveConclusionV1, request: Request):
+    fixture_auth(request)
+    if (
+        str(command.plan_id) != RESEARCH_PLAN
+        or str(command.report_id) != RESEARCH_REPORT
+        or command.selected_version_id is not None
+        or command.expected_conditions_revision != 1
+        or research_task is None
+        or research_task.status != "completed"
+    ):
+        raise HTTPException(409)
+    view = ConclusionViewV1(
+        id=uuid4(),
+        plan_id=UUID(RESEARCH_PLAN),
+        task_id=UUID(RESEARCH_TASK),
+        report_id=UUID(RESEARCH_REPORT),
+        conditions_revision=1,
+        conditions={"entry": "beginner", "goal": "合成測試果香"},
+        catalog_release_id=None,
+        evaluated_on=datetime.now(UTC).date(),
+        revision=1,
+        outcome="no_suitable",
+        selected_version_id=None,
+        selected_bottle_name=None,
+        alternative_version_ids=(),
+        reason=command.reason,
+        tradeoff=command.tradeoff,
+        created_at=datetime.now(UTC),
+        updated_at=datetime.now(UTC),
+    ).model_dump(mode="json", by_alias=True)
+    saved_conclusions.append(view)
+    return JSONResponse(view, status_code=201, headers={"Cache-Control": "no-store"})
+
+
+@app.get("/api/v1/library/conclusions")
+def list_synthetic_conclusions(request: Request):
+    fixture_auth(request)
+    if request.query_params.get("planId") != RESEARCH_PLAN:
+        raise HTTPException(404)
+    return JSONResponse(
+        dict(
+            schemaVersion=1,
+            planId=RESEARCH_PLAN,
+            items=saved_conclusions,
+            nextCursor=None,
+        ),
         headers={"Cache-Control": "no-store"},
     )
 

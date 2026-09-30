@@ -7,6 +7,11 @@ from whisky.bootstrap.api import create_app
 from whisky.modules.catalog.http import CatalogView
 from whisky.modules.control.http import ControlView
 from whisky.modules.discovery.http import PlanListView, PlanView
+from whisky.modules.library.contracts import (
+    ConclusionContextViewV1,
+    ConclusionListViewV1,
+    ConclusionViewV1,
+)
 from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.inputs_v4 import StartCommandV4
 from whisky.modules.research.proposal_view_v4 import PreferenceProposalViewV4
@@ -50,6 +55,9 @@ for name, model in (
     ("comparison-report-view", ComparisonReportViewV4),
     ("preference-proposal-view", PreferenceProposalViewV4),
     ("restart-context-view", RestartContextViewV4),
+    ("conclusion-view", ConclusionViewV1),
+    ("conclusion-list-view", ConclusionListViewV1),
+    ("conclusion-context-view", ConclusionContextViewV1),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

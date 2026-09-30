@@ -48,6 +48,7 @@ Web feature 與後端模組各有公開介面，不跨界引用內部檔案；�
 | `catalog_releases`／`catalog_items` | 不可變發布版本、酒款版本 ID、來源與 reviewed 狀態；報告保留引用的 release／item，不能因更新 catalog 讓歷史引用指向不同內容。 |
 | `evidence`／`price_observations` | 來源 ID／URL、酒款版本、擷取／查核時間、欄位值、覆核狀態；價格保存 TW／TWD、容量、ABV 與條件。Agent 觀察不直接變成 reviewed。 |
 | `reports` | task、artifact key、條件／catalog／policy／prompt／model 版本、內容與 evidence IDs；`(task_id, artifact_key)` 唯一。第一段每 task 一份 final report。 |
+| `library_conclusions`／`library_commands` | owner／generation、plan／task／report 關聯、當輪條件、選中或無適合、歷史選中名稱、替代版本、理由與取捨；一般保存與 receipt 同交易。plan-scoped 分頁索引含 owner／generation／plan／時間／ID，排除 hidden rows。收藏與喝過回饋獨立於結論。 |
 
 API 用 owner scope 查詢；外部傳入的 owner、workflow 名稱、queue、工具設定一律不可信。計畫列表以 `(owner_id, updated_at, id)` 為索引候選；單一 task snapshot 依主鍵查詢，不為 view version 重複加索引。問題用 task／question 定位，pending 唯一性以 partial unique index 保護；實際索引依 migration 與 query plan 驗證。
 
@@ -68,6 +69,9 @@ API 用 owner scope 查詢；外部傳入的 owner、workflow 名稱、queue、�
 | `POST /api/v1/tasks/{id}/cancel` | 啟動既有 control command；返回 receipt，嚴格區分待確認／已提出／已完成。 |
 | `GET /api/v1/commands/{id}` | 回應遺失後查 command outcome；仍驗 owner。 |
 | `GET /api/v1/reports/{id}` | 已保存報告及引用；不重新呼叫模型。 |
+| `GET /api/v1/library/reports/{id}/conclusion-context` | owner 範圍的報告 parent 與歷史／目前條件 revision；只作 UI 提示，保存仍須交易驗證。 |
+| `POST /api/v1/library/conclusions` | 保存目前條件的 completed report 選擇或無適合；一般 DB CRUD，回 `201` 與歷史快照；同 key 同內容回原 receipt，先重驗資料可見性。 |
+| `GET /api/v1/library/conclusions`、`GET /api/v1/library/conclusions/{id}` | 私人歷史結論；列表必填 planId，以有上限的 cursor 分頁；歷史名稱／理由／條件不代表目前 catalog／價格資格。 |
 
 所有 mutation 都有 command key；payload hash 由後端對驗證後的正規化內容計算，不接受 client 自報 hash。revision mismatch 回 `409`；格式錯誤 `422`；未登入 `401`；不存在或非 owner 統一 `404`；容量拒絕 `429`。錯誤格式包含 `code`、安全的 message、request ID、retryable 與需要時的 command ID。
 

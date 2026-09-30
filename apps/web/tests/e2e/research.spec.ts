@@ -27,6 +27,17 @@ test("a new login finds unfinished work and answers its saved question", async (
   await reopened.getByLabel("15 年").click();
   await reopened.getByRole("button", {name:"送出答覆"}).click();
   await expect(reopened.getByText("已依補充版本重新查核")).toBeVisible();
+  await reopened.getByLabel("這次沒有適合的").check();
+  await reopened.getByLabel("選擇理由").fill("合成測試：目前沒有適合的候選");
+  await reopened.getByRole("button",{name:"保存探索結論"}).click();
+  await expect(reopened.getByText("探索結論已保存。")).toBeVisible();
+  await reopened.close();
+  const savedPage=await context.newPage();
+  savedPage.on("pageerror",error=>errors.push(error.message));
+  await savedPage.goto("http://127.0.0.1:8419/plans/00000000-0000-4000-8000-000000000014/conclusions");
+  await savedPage.getByRole("button",{name:"登入查看保存結論"}).click();
+  await expect(savedPage.getByText("合成測試：目前沒有適合的候選")).toBeVisible();
+  await expect(savedPage.getByText("未重新查詢前，不代表仍符合目前預算或價格。")).toBeVisible();
   expect(errors).toEqual([]);
   await context.close();
 });

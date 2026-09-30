@@ -34,6 +34,12 @@ test("initial read failure is not an empty history", async () => {
   expect(screen.queryByText("尚未有研究紀錄。")).toBeNull();
 });
 
+test("plan history links to its saved exploration conclusions",async()=>{
+  read.mockResolvedValue({items:[],nextCursor:null});
+  render(<PlanHistory planId={id} revision={1}/>);
+  expect((await screen.findByRole("link",{name:"查看保存的探索結論"})).getAttribute("href")).toBe(`/plans/${id}/conclusions`);
+});
+
 test("completed history offers an explicit restart direction without treating an unfinished task as reusable",async()=>{
   read.mockResolvedValue({items:[item,{...item,task:{...item.task,taskId:id,status:"needs_input"}}],nextCursor:null});
   render(<PlanHistory planId={id} revision={2}/>);

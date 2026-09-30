@@ -4,6 +4,7 @@ import { researchReadProxy } from "../../../features/research/proxy";
 import {controlProxy, isControlPath} from "../../../features/control/proxy";
 import { apiUpstream } from "../../../shared/api/upstream.server";
 import {catalogProxy} from "../../../features/catalog/proxy";
+import {libraryProxy} from "../../../features/library/proxy";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,6 +12,7 @@ export const dynamic = "force-dynamic";
 function forward(request: Request) {
   const pathname = new URL(request.url).pathname;
   const adapter = pathname === "/api/v1/catalog" || pathname.startsWith("/api/v1/catalog/") ? catalogProxy
+    : pathname.startsWith("/api/v1/library/") ? libraryProxy
     : isControlPath(pathname) ? controlProxy
     : pathname === "/api/v1/plans" || pathname.startsWith("/api/v1/plans/") ? planProxy
     : pathname === "/api/v1/tasks" || pathname.startsWith("/api/v1/tasks/") || pathname.startsWith("/api/v1/commands/") || pathname.startsWith("/api/v1/reports/") ? researchReadProxy : proxy;
