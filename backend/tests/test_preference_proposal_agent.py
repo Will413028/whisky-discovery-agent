@@ -3,8 +3,10 @@ from pydantic_ai.exceptions import UnexpectedModelBehavior
 from pydantic_ai.messages import ModelResponse, ToolCallPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.usage import UsageLimits
+from test_proposal_mapping_agent_v4 import reviewed_mapping
 
 from whisky.modules.research.proposal_agent_v4 import preference_proposal_agent_v4
+from whisky.modules.research.proposal_context_v4 import ProposalContextV4
 
 
 def proposal(quote="喜歡甜點"):
@@ -18,6 +20,7 @@ def proposal(quote="喜歡甜點"):
                 "source_kind": "food_clue",
                 "certainty": "inferred",
                 "strength": "soft",
+                "mapping": reviewed_mapping().model_dump(mode="json"),
             }
         ],
     }
@@ -32,7 +35,7 @@ async def test_proposal_agent_preserves_food_clue_as_unconfirmed_and_exposes_no_
 
     result = await preference_proposal_agent_v4(FunctionModel(model)).run(
         "原描述：我喜歡甜點",
-        deps="我喜歡甜點",
+        deps=ProposalContextV4("我喜歡甜點", (reviewed_mapping(),)),
         usage_limits=UsageLimits(request_limit=2),
     )
     assert result.output.preferences[0].certainty == "inferred"
@@ -50,7 +53,7 @@ async def test_invalid_quote_is_retried_once_against_original_description():
 
     result = await preference_proposal_agent_v4(FunctionModel(model)).run(
         "原描述：我喜歡甜點",
-        deps="我喜歡甜點",
+        deps=ProposalContextV4("我喜歡甜點", (reviewed_mapping(),)),
         usage_limits=UsageLimits(request_limit=2),
     )
     assert calls == 2
@@ -70,7 +73,7 @@ async def test_repeated_fabricated_quotes_fail_without_returning_a_proposal():
     with pytest.raises(UnexpectedModelBehavior):
         await preference_proposal_agent_v4(FunctionModel(model)).run(
             "原描述：我喜歡甜點",
-            deps="我喜歡甜點",
+            deps=ProposalContextV4("我喜歡甜點", (reviewed_mapping(),)),
             usage_limits=UsageLimits(request_limit=2),
         )
     assert calls == 2

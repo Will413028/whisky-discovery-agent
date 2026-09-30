@@ -1936,6 +1936,16 @@
             "title": "Intent",
             "type": "string"
           },
+          "mapping": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewedFlavorMapping"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "source_kind": {
             "enum": [
               "direct_description",
@@ -2771,6 +2781,36 @@
           "status"
         ],
         "title": "ResumeEntry",
+        "type": "object"
+      },
+      "ReviewedFlavorMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "feature_key": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Feature Key",
+            "type": "string"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/CatalogReference"
+          }
+        },
+        "required": [
+          "feature_key",
+          "reference",
+          "evidence_ids"
+        ],
+        "title": "ReviewedFlavorMapping",
         "type": "object"
       },
       "RunAgentInput": {

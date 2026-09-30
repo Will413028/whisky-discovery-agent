@@ -2,16 +2,23 @@
 
 from decimal import Decimal
 from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from whisky.modules.discovery.condition_patch import ConditionPatch
-from whisky.modules.discovery.conditions import Preference
+from whisky.modules.discovery.conditions import CatalogReference, Preference
 from whisky.modules.discovery.intent import ExplorationIntent
 
 
 class ProposalModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
+
+
+class ReviewedFlavorMapping(ProposalModel):
+    feature_key: str = Field(min_length=1, max_length=1000)
+    reference: CatalogReference
+    evidence_ids: tuple[UUID, ...] = Field(min_length=1)
 
 
 class PreferenceSuggestion(ProposalModel):
@@ -21,6 +28,7 @@ class PreferenceSuggestion(ProposalModel):
     source_kind: Literal["direct_description", "food_clue", "uncertain"]
     certainty: Literal["inferred"] = "inferred"
     strength: Literal["soft"] = "soft"
+    mapping: ReviewedFlavorMapping | None = None
 
 
 class BudgetSuggestion(ProposalModel):
@@ -42,6 +50,27 @@ class PreferenceProposal(ProposalModel):
     intent: ExplorationIntent = Field(default_factory=ExplorationIntent)
     preferences: tuple[PreferenceSuggestion, ...] = Field(default=(), max_length=8)
     budget: BudgetSuggestion | None = None
+
+    def validate_mappings(
+        self,
+        allowed: tuple[ReviewedFlavorMapping, ...],
+        *,
+        require_mapping: bool = False,
+    ) -> None:
+        for suggestion in self.preferences:
+            mapping = suggestion.mapping
+            if mapping is None:
+                if require_mapping:
+                    raise ValueError("REVIEWED_MAPPING_REQUIRED")
+                continue
+            if len(set(mapping.evidence_ids)) != len(mapping.evidence_ids) or not any(
+                mapping.feature_key == candidate.feature_key
+                and mapping.reference.release_id == candidate.reference.release_id
+                and mapping.reference.item_id == candidate.reference.item_id
+                and set(mapping.evidence_ids) == set(candidate.evidence_ids)
+                for candidate in allowed
+            ):
+                raise ValueError("REVIEWED_MAPPING_NOT_FOUND")
 
     def validate_source(self, source_text: str) -> None:
         quotes = [value.source_quote for value in self.preferences]
@@ -68,17 +97,22 @@ class PreferenceProposal(ProposalModel):
             or (include_budget and self.budget is None)
         ):
             raise ValueError("INVALID_SELECTION")
-        preferences = tuple(
-            Preference(
-                description=self.preferences[index].description,
-                intent=self.preferences[index].intent,
-                certainty="user_stated",
-                strength="hard" if index in hard else "soft",
+        preferences: list[Preference] = []
+        for index in selected:
+            suggestion = self.preferences[index]
+            mapping = suggestion.mapping
+            preferences.append(
+                Preference(
+                    description=mapping.feature_key
+                    if mapping is not None
+                    else suggestion.description,
+                    intent=suggestion.intent,
+                    certainty="user_stated",
+                    strength="hard" if index in hard else "soft",
+                )
             )
-            for index in selected
-        )
         if include_budget and self.budget is not None:
             return ConditionPatch(
-                upsert_preferences=preferences, budget_twd=self.budget.amount_twd
+                upsert_preferences=tuple(preferences), budget_twd=self.budget.amount_twd
             )
-        return ConditionPatch(upsert_preferences=preferences)
+        return ConditionPatch(upsert_preferences=tuple(preferences))

@@ -13,7 +13,9 @@ from whisky.modules.catalog.public import (
     current_release_id,
     published_source,
     reviewed_catalog_snapshot,
+    reviewed_flavor_references,
 )
+from whisky.modules.discovery.public import ReviewedFlavorMapping
 from whisky.modules.research.agent_v2 import PROMPT_VERSION_V2
 from whisky.modules.research.agent_v3 import PROMPT_VERSION_V3
 from whisky.modules.research.agent_v4 import PROMPT_VERSION_V4
@@ -38,6 +40,7 @@ from whisky.modules.research.contracts_v4 import (
     ReportCommitV4,
     ResearchExecutionV4,
 )
+from whisky.modules.research.proposal_context_v4 import proposal_context_v4
 from whisky.modules.research.quota import QuotaError, QuotaStore
 from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.run_store import ResearchRunStore
@@ -111,6 +114,19 @@ class ResearchActivities:
         self, context: ResearchRunContext
     ) -> ResearchCatalogSnapshot:
         return await asyncio.to_thread(self._catalog_snapshot, context)
+
+    @activity.defn(name="whisky_proposal_mappings_v4")
+    async def proposal_mappings_v4(self) -> tuple[ReviewedFlavorMapping, ...]:
+        return await asyncio.to_thread(self._proposal_mappings_v4)
+
+    def _proposal_mappings_v4(self) -> tuple[ReviewedFlavorMapping, ...]:
+        with self.engine.connect().execution_options(
+            isolation_level="REPEATABLE READ"
+        ) as connection:
+            references = reviewed_flavor_references(
+                connection, current_release_id(connection)
+            )
+            return proposal_context_v4("", references).mappings
 
     def _catalog_snapshot(self, context: ResearchRunContext) -> ResearchCatalogSnapshot:
         catalog = reviewed_catalog_snapshot(

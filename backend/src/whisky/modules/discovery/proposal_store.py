@@ -4,8 +4,9 @@ from uuid import UUID
 
 from sqlalchemy import Connection, text
 
-from whisky.modules.discovery.conditions import ResearchConditions
-from whisky.modules.discovery.proposal import PreferenceProposal
+from whisky.modules.catalog.public import reviewed_flavor_references
+from whisky.modules.discovery.conditions import CatalogReference, ResearchConditions
+from whisky.modules.discovery.proposal import PreferenceProposal, ReviewedFlavorMapping
 from whisky.modules.discovery.store import Plan
 
 
@@ -42,6 +43,24 @@ def persist_preference_proposal(
 ) -> None:
     """Caller holds identity, plan and task locks; this never edits conditions."""
     proposal.validate_source(source_text)
+    allowed: list[ReviewedFlavorMapping] = []
+    releases = {
+        suggestion.mapping.reference.release_id
+        for suggestion in proposal.preferences
+        if suggestion.mapping is not None
+    }
+    for release_id in releases:
+        for reference in reviewed_flavor_references(connection, release_id):
+            allowed.append(
+                ReviewedFlavorMapping(
+                    feature_key=reference.label,
+                    reference=CatalogReference(
+                        release_id=release_id, item_id=reference.item_id
+                    ),
+                    evidence_ids=reference.evidence_ids,
+                )
+            )
+    proposal.validate_mappings(tuple(allowed))
     existing = (
         connection.execute(
             text("SELECT * FROM preference_proposals WHERE task_id=:task FOR UPDATE"),

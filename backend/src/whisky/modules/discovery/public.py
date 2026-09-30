@@ -18,6 +18,9 @@ from whisky.modules.discovery.intent import ExplorationIntent as ExplorationInte
 from whisky.modules.discovery.intent import ExplorationMode as ExplorationMode
 from whisky.modules.discovery.intent import FlavorContrast as FlavorContrast
 from whisky.modules.discovery.proposal import PreferenceProposal as PreferenceProposal
+from whisky.modules.discovery.proposal import (
+    ReviewedFlavorMapping as ReviewedFlavorMapping,
+)
 from whisky.platform.domain_errors import DomainRejection
 
 if TYPE_CHECKING:

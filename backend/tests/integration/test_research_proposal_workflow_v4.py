@@ -1,10 +1,11 @@
 import asyncio
+import json
 from dataclasses import replace
 from uuid import uuid4
 
 import pytest
 from pydantic_ai.durable_exec.temporal import PydanticAIPlugin
-from pydantic_ai.messages import ModelResponse, ToolCallPart
+from pydantic_ai.messages import ModelResponse, ToolCallPart, UserPromptPart
 from pydantic_ai.models.function import FunctionModel
 from sqlalchemy import text
 from temporalio.client import Client, WorkflowExecutionStatus
@@ -36,6 +37,7 @@ pytestmark = pytest.mark.integration
 
 
 def proposal_model(messages, info):
+    mappings = provided_mappings(messages)
     return ModelResponse(
         parts=[
             ToolCallPart(
@@ -48,12 +50,23 @@ def proposal_model(messages, info):
                             "intent": "prefer",
                             "source_quote": "喜歡甜點",
                             "source_kind": "food_clue",
+                            "mapping": mappings[0],
                         }
-                    ],
+                    ]
+                    if mappings
+                    else [],
                 },
             )
         ]
     )
+
+
+def provided_mappings(messages):
+    for message in messages:
+        for part in message.parts:
+            if isinstance(part, UserPromptPart) and isinstance(part.content, str):
+                return json.loads(part.content)["reviewed_mappings"]
+    raise AssertionError("V4 proposal prompt must provide its reviewed mappings")
 
 
 async def test_model_proposal_becomes_a_durable_question_without_changing_conditions(
@@ -129,6 +142,7 @@ async def test_proposal_restart_keeps_question_and_unconfirmed_preferences(
     def model(messages, info):
         if "preferences" in info.output_tools[0].parameters_json_schema["properties"]:
             calls["proposal"] += 1
+            mappings = provided_mappings(messages)
             return ModelResponse(
                 parts=[
                     ToolCallPart(
@@ -142,6 +156,7 @@ async def test_proposal_restart_keeps_question_and_unconfirmed_preferences(
                                     "intent": "prefer",
                                     "source_quote": "喜歡甜點",
                                     "source_kind": "food_clue",
+                                    "mapping": mappings[0],
                                 }
                             ],
                         },
@@ -200,6 +215,8 @@ async def test_proposal_restart_keeps_question_and_unconfirmed_preferences(
                 }:
                     await asyncio.sleep(0.05)
             waiting = research.task(receipt.task_id, actor.id)
+            if waiting.status == "failed":
+                await handle.result()
             assert waiting.status == "needs_input"
         reopened = research.task(receipt.task_id, actor.id)
         assert reopened.question == waiting.question

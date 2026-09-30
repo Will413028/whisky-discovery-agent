@@ -160,6 +160,7 @@ def research_worker(
             db.begin_research_v3,
             db.begin_research_v4,
             db.publish_preference_question_v4,
+            db.proposal_mappings_v4,
             db.catalog_snapshot_v3,
             db.read_source_v3,
             db.save_report,

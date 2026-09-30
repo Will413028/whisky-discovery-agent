@@ -12,7 +12,7 @@ from temporalio import workflow
 from temporalio.common import RetryPolicy
 from temporalio.exceptions import ApplicationError
 
-from whisky.modules.discovery.public import ExplorationIntent
+from whisky.modules.discovery.public import ExplorationIntent, ReviewedFlavorMapping
 from whisky.modules.research.agent_v4 import (
     PROMPT_VERSION_V4,
     SOURCE_PROMPT_V4,
@@ -37,6 +37,7 @@ from whisky.modules.research.contracts_v4 import (
     ReportCommitV4,
     ResearchExecutionV4,
 )
+from whisky.modules.research.proposal_context_v4 import ProposalContextV4
 from whisky.modules.research.report import ReportCandidate, ReportDraft
 from whisky.modules.research.selection_v4 import ExplorationSelection, select_research
 
@@ -94,9 +95,25 @@ class ResearchWorkflowV4(PydanticAIWorkflow):
             if execution.input.phase == "proposal":
                 source = execution.input.source_text
                 assert source is not None
+                proposal_mappings = await workflow.execute_activity(
+                    "whisky_proposal_mappings_v4",
+                    start_to_close_timeout=TIMEOUT,
+                    retry_policy=RETRY,
+                    result_type=tuple[ReviewedFlavorMapping, ...],
+                )
+                proposal_context = ProposalContextV4(source, proposal_mappings)
                 result = await proposal_agent_v4().run(
-                    "原描述（僅供整理）：" + json.dumps(source, ensure_ascii=False),
-                    deps=source,
+                    json.dumps(
+                        {
+                            "source_text": source,
+                            "reviewed_mappings": [
+                                mapping.model_dump(mode="json")
+                                for mapping in proposal_context.mappings
+                            ],
+                        },
+                        ensure_ascii=False,
+                    ),
+                    deps=proposal_context,
                     usage_limits=UsageLimits(
                         request_limit=2,
                         total_tokens_limit=4000,

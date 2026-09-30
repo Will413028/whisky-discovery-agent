@@ -38,6 +38,27 @@
       "title": "BudgetSuggestion",
       "type": "object"
     },
+    "CatalogReference": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "item_id"
+      ],
+      "title": "CatalogReference",
+      "type": "object"
+    },
     "ExplorationIntent": {
       "additionalProperties": false,
       "properties": {
@@ -193,6 +214,17 @@
           "title": "Intent",
           "type": "string"
         },
+        "mapping": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReviewedFlavorMapping"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
         "source_kind": {
           "enum": [
             "direct_description",
@@ -222,6 +254,36 @@
         "source_kind"
       ],
       "title": "PreferenceSuggestion",
+      "type": "object"
+    },
+    "ReviewedFlavorMapping": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_ids": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "feature_key": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Feature Key",
+          "type": "string"
+        },
+        "reference": {
+          "$ref": "#/$defs/CatalogReference"
+        }
+      },
+      "required": [
+        "feature_key",
+        "reference",
+        "evidence_ids"
+      ],
+      "title": "ReviewedFlavorMapping",
       "type": "object"
     }
   },

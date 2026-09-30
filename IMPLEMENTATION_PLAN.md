@@ -223,6 +223,15 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 - 最新Node／workerd Playwright **10 passed（47.7秒）**（`/tmp/whisky-t10-start-proposal-e2e-green.log`）。前次8個browser案例在launch前因全機cache的executable不存在而失敗，未執行產品assertion；依本session既有下載授權，以 `PLAYWRIGHT_BROWSERS_PATH=/tmp/whisky-playwright-browsers pnpm --dir apps/web exec playwright install chromium` 安裝專案獨立暫存cache後重跑通過，未改產品或測試assertion，也不推論原cache消失根因。原start／dispatch審查追加StartCommandV4生成物，累積0 findings／open0。
 
+- `e6f5565` PR CI run `36751734332` 的 backend／web jobs各自success；backend實際558 passed（267.60秒）、wheel4 passed（6.44秒）。這是V4受理與草稿讀取slice的CI，不取代T10完整旅程。
+- 偏好映射新增 typed reviewed anchor：保留原描述與 source_quote，標籤引用含 release／item／evidence IDs，模型建議仍為 inferred／soft；使用者明確選取才以 canonical feature key 產生條件 patch，硬限制與預算另行確認。純規則7 RED→GREEN、context2 RED＋空庫baseline1 GREEN；Agent typed context缺失3 RED→3 GREEN，未提供／缺失映射重試一次後拒絕，不捏造來源。logs為 `/tmp/whisky-t10-{preference-mapping,proposal-context,proposal-mapping-agent}-{red,green}.log`。
+- 真DB publication最初會接受偽造標籤／item／evidence（三項 DID NOT RAISE RED，合法引用baseline1 GREEN）；保存邊界現於原caller交易內独立驗證，拒絕後 task仍researching且草稿／問題皆0筆，4 GREEN（`/tmp/whisky-t10-mapping-publication-green.log`）。首次測試relative import與實作錯誤import只屬準備／實作修正，不計行為RED。
+- mapping設計審查唯一B「借完整研究snapshot做純風味驗證」已改為catalog公開窄 `reviewed_flavor_references` 與專用V4 activity，V3 activity不動；複核 `NO DESIGN FINDINGS`，累積改1／記0／提0／駁回0／open0。窄query先空tuple1 RED＋空庫baseline1 GREEN，再驗 sealed／reviewed精確citation與不讀catalog_prices；沒有增加價格依賴或跨模組表操作。
+- 真Temporal暴露sandbox model class身分使相同引用比對失敗；改按release ID／item ID與evidence集合比對，持久等待／重啟4 GREEN。窄query改後 publication／proposal workflow／真HTTP→Temporal 11 passed（24.28秒，`/tmp/whisky-t10-mapping-narrow-integration.log`）；偏好／Agent／context／frozen replay18 passed（1.44秒，`/tmp/whisky-t10-mapping-unit-replay-final.log`）。混排測試路徑曾出fixture scope收集錯誤，分開integration與unit後通過；不把收集錯誤當產品RED。
+- 窄query改動前完整backend575 passed（315.51秒）、wheel4 passed（18.72秒）；改後mypy88 source files、ruff check／format與邊界通過，完整backend／wheel須由最新檢查覆蓋。生成契約只擴充V4 proposal mapping，舊TaskView／V1 conditions codec及V1–V3 executor不變；未部署，T10新手／熟手與偏好卡完整旅程、真模型rubric仍待驗收。
+- 窄query最終2 passed（5.45秒，`/tmp/whisky-t10-flavor-query-green.log`），installed wheel4 passed（11.80秒，`/tmp/whisky-t10-mapping-narrow-wheel.log`）。獨立correctness唯一P2「合法17 citations被草稿16上限拒絕」先1 RED／3 baseline GREEN，移除無SSOT依據的上限後context／mapping／Agent14 GREEN（1.03秒），仍要求非空UUID、完整相符集合與模型配額；schema／OpenAPI／TS／validator同步，複核 `NO CORRECTNESS FINDINGS`，改1／駁回0／open0。
+- 最終完整backend **578 passed（289.95秒）**（`/tmp/whisky-t10-mapping-backend-reviewed.log`）；ruff check／format177 files、mypy88 files、Python boundaries與diff check通過。這是映射slice本機出口；雙入口Web仍是後續未提交變更，不計入此後端版本或T10驗收。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

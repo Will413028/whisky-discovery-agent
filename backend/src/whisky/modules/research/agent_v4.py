@@ -18,6 +18,7 @@ from whisky.modules.research.proposal_agent_v4 import (
     PROPOSAL_PROMPT_VERSION_V4,
     preference_proposal_agent_v4,
 )
+from whisky.modules.research.proposal_context_v4 import ProposalContextV4
 from whisky.modules.research.selection_v4 import SELECTION_POLICY_VERSION
 
 
@@ -51,11 +52,11 @@ PROMPT_VERSION_V4 = (
     ).hexdigest()[:12]
 )
 
-_proposal: Agent[str, PreferenceProposal] | None = None
+_proposal: Agent[ProposalContextV4, PreferenceProposal] | None = None
 _source: Agent[None, ResearchSourceChoiceV4] | None = None
 
 
-def proposal_agent_v4() -> Agent[str, PreferenceProposal]:
+def proposal_agent_v4() -> Agent[ProposalContextV4, PreferenceProposal]:
     if _proposal is None:
         raise RuntimeError("V4 proposal agent is not configured")
     return _proposal

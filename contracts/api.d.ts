@@ -1147,6 +1147,7 @@ export interface components {
              * @enum {string}
              */
             intent: "prefer" | "keep" | "change" | "avoid";
+            mapping?: components["schemas"]["ReviewedFlavorMapping"] | null;
             /**
              * Source Kind
              * @enum {string}
@@ -1507,6 +1508,14 @@ export interface components {
             status: "resolved" | "cancelled";
         } & {
             [key: string]: unknown;
+        };
+        /** ReviewedFlavorMapping */
+        ReviewedFlavorMapping: {
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Feature Key */
+            feature_key: string;
+            reference: components["schemas"]["CatalogReference"];
         };
         /**
          * RunAgentInput

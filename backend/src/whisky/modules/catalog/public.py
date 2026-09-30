@@ -50,6 +50,46 @@ class PublishedSource:
 
 
 @dataclass(frozen=True)
+class ReviewedFlavorReference:
+    release_id: UUID
+    item_id: UUID
+    label: str
+    evidence_ids: tuple[UUID, ...]
+
+
+def reviewed_flavor_references(
+    connection: Connection, release_id: UUID | None
+) -> tuple[ReviewedFlavorReference, ...]:
+    """Read only sealed, reviewed tag citations; no price or research projection."""
+    if release_id is None:
+        return ()
+    citations: dict[tuple[UUID, str], list[UUID]] = {}
+    for row in connection.execute(
+        text("""
+        SELECT i.id AS item_id,c.value AS label,e.id AS evidence_id
+        FROM catalog_releases r
+        JOIN catalog_items i ON i.release_id=r.id
+        JOIN catalog_claims c ON c.release_id=i.release_id AND c.item_id=i.id
+        JOIN catalog_citations q ON q.release_id=c.release_id AND q.item_id=c.item_id
+            AND q.kind=c.kind AND q.key=c.key
+        JOIN catalog_evidence e ON e.release_id=q.release_id AND e.id=q.evidence_id
+            AND e.bottle_version_id=i.bottle_version_id
+        WHERE r.id=:release AND r.sealed AND i.reviewed AND e.reviewed
+            AND c.kind='tag'
+        ORDER BY i.id,c.value,e.id
+        """),
+        {"release": release_id},
+    ).mappings():
+        citations.setdefault((row["item_id"], row["label"]), []).append(
+            row["evidence_id"]
+        )
+    return tuple(
+        ReviewedFlavorReference(release_id, item_id, label, tuple(evidence_ids))
+        for (item_id, label), evidence_ids in citations.items()
+    )
+
+
+@dataclass(frozen=True)
 class ReviewedCatalogSource:
     item_id: UUID
     bottle_version_id: UUID
