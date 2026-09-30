@@ -24,6 +24,16 @@ const waiting: TaskView = {
   reportId:null, error:null, observedAt:"2026-09-29T00:00:00Z", activeRunId:null,
 };
 
+test("reopening a proposal question restores original clues and unconfirmed taste mapping",async()=>{
+  vi.stubGlobal("fetch",vi.fn(async input=>{
+    if(String(input).endsWith("/preference-proposal")) return Response.json({schemaVersion:4,taskId:id,planId:id,questionId,conditionsRevision:1,waitingVersion:1,sourceText:"我喜歡水果甜點",proposal:{summary:"原文只是線索",intent:{mode:"style_options",smoke_comparison:false},preferences:[{description:"可能喜歡果香",intent:"prefer",source_quote:"喜歡水果甜點",source_kind:"food_clue",certainty:"inferred",strength:"soft",mapping:{feature_key:"果香",reference:{release_id:id,item_id:id},evidence_ids:[id]}}],budget:null}});
+    return Response.json(waiting);
+  }));
+  render(<ResearchTask taskId={id}/>);
+  expect(await screen.findByText("我喜歡水果甜點")).toBeTruthy();
+  expect(screen.getByText("飲食線索；偏好仍待確認")).toBeTruthy();
+});
+
 test("reopening a completed V4 task loads its sourced comparison independently of the legacy summary",async()=>{
   const completed={...waiting,status:"completed",question:null,reportId,stage:"完成"};
   vi.stubGlobal("fetch",vi.fn(async(input)=>{
@@ -128,7 +138,7 @@ test("beginner form creates a plan and starts a durable AG-UI turn before naviga
   fireEvent.click(screen.getByRole("button", {name:"開始探索"}));
   await waitFor(() => expect(push).toHaveBeenCalledWith(`/research/${id}`));
   expect(await requests.find(request => request.url.endsWith("/api/v1/plans"))?.json()).toMatchObject({conditions:{entry:"beginner", goal:"果香"}});
-  expect(await requests.find(request => request.url.endsWith("/agent"))?.json()).toMatchObject({forwardedProps:{type:"start", planId:id, conditionsRevision:1}});
+  expect(await requests.find(request => request.url.endsWith("/agent"))?.json()).toMatchObject({forwardedProps:{type:"start_v4", planId:id, conditionsRevision:1,input:{phase:"proposal",sourceText:"果香"}}});
   expect(requests.every(request => request.headers.get("authorization") === "Bearer fixture-token")).toBe(true);
 });
 

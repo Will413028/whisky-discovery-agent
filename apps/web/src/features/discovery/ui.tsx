@@ -4,7 +4,7 @@ import {useAuth0} from "@auth0/auth0-react";
 import {useRouter} from "next/navigation";
 import {useEffect, useRef, useState, type FormEvent} from "react";
 import {safeReturnTo} from "../identity";
-import {startResearch} from "../research";
+import {startResearchV4,ProposalPlanEditor,readActivePlanProposal,proposalIdentity,type ProposalPatch} from "../research";
 import {PlanHistory} from "./history";
 import {listPlans, patchPlan, readControl, readPlan, RequestRejected, type ControlView, type PatchRequest, type PlanView} from "./client";
 
@@ -63,17 +63,20 @@ export function PlansEntry() {
   return configured() ? <Plans /> : <p>帳號功能準備中。</p>;
 }
 
-export function PlanDetailEntry({planId}: {planId:string}) {
+export function PlanDetailEntry({planId,proposalTaskId}: {planId:string;proposalTaskId?:string}) {
   if (!configured()) return <p>帳號功能準備中。</p>;
-  return <PlanDetail planId={planId} />;
+  return <PlanDetail planId={planId} proposalTaskId={proposalTaskId} />;
 }
 
-export function PlanDetail({planId}: {planId:string}) {
+export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskId?:string}) {
   const auth = useAuth0();
   const router = useRouter();
   const [plan, setPlan] = useState<PlanView | null>(null);
   const [goal, setGoal] = useState("");
-  const [budget, setBudget] = useState("");
+  const [budgetDraft, setBudgetDraft] = useState<{value:string;source:"saved"|"manual"|"proposal"}>({value:"",source:"saved"});
+  const budget=budgetDraft.value;
+  const proposalIdentityRef=useRef<string|null>(null);
+  const [proposalPatch,setProposalPatch]=useState<ProposalPatch | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
@@ -86,7 +89,14 @@ export function PlanDetail({planId}: {planId:string}) {
   const subject = auth.user?.sub;
 
   const acceptPlan = (value:PlanView) => {
-    setPlan(value); setGoal(value.conditions.goal); setBudget(value.conditions.budget_twd ?? "");
+    setProposalPatch(null);
+    setPlan(value); setGoal(value.conditions.goal); setBudgetDraft({value:value.conditions.budget_twd ?? "",source:"saved"});
+  };
+
+  const acceptProposalBudget=(value:string|null|undefined)=>{
+    setBudgetDraft(previous=>value!==undefined
+      ? {value:value ?? "",source:"proposal"}
+      : previous.source==="proposal" ? {value:plan?.conditions.budget_twd ?? "",source:"saved"} : previous);
   };
 
   useEffect(() => {
@@ -104,7 +114,7 @@ export function PlanDetail({planId}: {planId:string}) {
       } catch {if (generation === life.current) setLoadError(true);}
     })();
     return () => {life.current++; controller.abort();};
-  }, [planId, isAuthenticated, getAccessTokenSilently, subject, refresh]);
+  }, [planId, proposalTaskId,isAuthenticated, getAccessTokenSilently, subject, refresh]);
 
   const confirm = (current:Attempt) => {
     const generation = life.current;
@@ -138,13 +148,28 @@ export function PlanDetail({planId}: {planId:string}) {
     })();
   };
 
-  const submit = (event:FormEvent<HTMLFormElement>) => {
+  const submit = async (event:FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!plan || busy || attempt || startAttempt) return;
-    const patch:PatchRequest["patch"] = {upsert_preferences:[], remove_preferences:[]};
+    if(proposalTaskId && (proposalPatch || budgetDraft.source==="proposal")) {
+      const generation=life.current;
+      setBusy(true);
+      try {
+        const token=await getAccessTokenSilently();
+        if(generation!==life.current) return;
+        if(!token) throw new Error("AUTH_REQUIRED");
+        const draft=await readActivePlanProposal(proposalTaskId,planId,plan.conditionsRevision,token);
+        if(generation!==life.current) return;
+        if(!draft || proposalIdentity(draft.view)!==proposalIdentityRef.current) {
+          setProposalPatch(null);acceptProposalBudget(undefined);setError("此草稿已關閉，請重新確認目前條件。");return;
+        }
+      } catch {if(generation===life.current) setError("無法確認草稿是否有效，請重試。");return;}
+      finally {if(generation===life.current) setBusy(false);}
+    }
+    const patch:PatchRequest["patch"] = proposalPatch ? {...proposalPatch} : {upsert_preferences:[], remove_preferences:[]};
     if (goal.trim() !== plan.conditions.goal) patch.goal = goal.trim();
     if (budget !== (plan.conditions.budget_twd ?? "")) patch.budget_twd = budget || null;
-    if (!("goal" in patch) && !("budget_twd" in patch)) return;
+    if (!proposalPatch && !("goal" in patch) && !("budget_twd" in patch)) return;
     confirm({body:{key:crypto.randomUUID(), expectedRevision:plan.conditionsRevision, baseConditions:plan.conditions, patch}, receipt:null});
   };
 
@@ -158,7 +183,7 @@ export function PlanDetail({planId}: {planId:string}) {
         const token = await getAccessTokenSilently();
         if (generation !== life.current) return;
         if (!token) throw new Error("AUTH_REQUIRED");
-        const task = await startResearch(token,current.plan,current.key,current.threadId,current.runId);
+        const task = await startResearchV4(token,current.plan,current.key,current.threadId,current.runId,{schemaVersion:4,phase:"research",sourceText:null,intent:{mode:"style_options",origin_query:null,explore_feature:null,contrast:null,smoke_comparison:false}});
         if (generation === life.current) router.push(`/research/${task.taskId}`);
       } catch {if (generation === life.current) setError("委託暫時無法確認；重試會使用同一筆指令。");}
       finally {if (generation === life.current) setBusy(false);}
@@ -168,7 +193,7 @@ export function PlanDetail({planId}: {planId:string}) {
   if (auth.isLoading) return <p>載入帳號中…</p>;
   if (!isAuthenticated) return <><button onClick={() => void auth.loginWithRedirect({appState:{returnTo:safeReturnTo(window.location.href,window.location.origin)}}).catch(() => setError("暫時無法登入，請重試。"))}>登入查看探索計畫</button>{error && <p role="alert">{error}</p>}</>;
   const visible = plan?.id === planId ? plan : null;
-  const dirty = Boolean(visible && (goal.trim() !== visible.conditions.goal || budget !== (visible.conditions.budget_twd ?? "")));
+  const dirty = Boolean(visible && (proposalPatch || goal.trim() !== visible.conditions.goal || budget !== (visible.conditions.budget_twd ?? "")));
   return <section>
     {loadError && <p role="alert">暫時無法讀取計畫。<button onClick={() => setRefresh(value => value + 1)}>重新讀取計畫</button></p>}
     {error && <p role="alert">{error}</p>}
@@ -176,9 +201,10 @@ export function PlanDetail({planId}: {planId:string}) {
     {visible && <>
       <p>條件版本：{visible.conditionsRevision}</p>
       <form onSubmit={submit}>
+        {proposalTaskId && <ProposalPlanEditor taskId={proposalTaskId} planId={visible.id} revision={visible.conditionsRevision} disabled={busy || Boolean(attempt) || Boolean(startAttempt)} onChange={setProposalPatch} onBudgetChange={acceptProposalBudget} budgetSelected={budgetDraft.source==="proposal"} onIdentity={identity=>{proposalIdentityRef.current=identity;}}/>}
         <fieldset disabled={busy || Boolean(attempt) || Boolean(startAttempt)}>
           <label>本次探索目標<input required maxLength={2000} value={goal} onChange={event => setGoal(event.target.value)} /></label>
-          <label>本次預算上限（新台幣，可留空）<input type="number" min="0.01" step="0.01" value={budget} onChange={event => setBudget(event.target.value)} /></label>
+          <label>本次預算上限（新台幣，可留空）<input type="number" min="0.01" step="0.01" value={budget} onChange={event => setBudgetDraft({value:event.target.value,source:"manual"})} /></label>
           <button type="submit" disabled={!dirty}>保存指定修改</button>
         </fieldset>
       </form>

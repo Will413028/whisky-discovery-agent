@@ -232,6 +232,11 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 窄query最終2 passed（5.45秒，`/tmp/whisky-t10-flavor-query-green.log`），installed wheel4 passed（11.80秒，`/tmp/whisky-t10-mapping-narrow-wheel.log`）。獨立correctness唯一P2「合法17 citations被草稿16上限拒絕」先1 RED／3 baseline GREEN，移除無SSOT依據的上限後context／mapping／Agent14 GREEN（1.03秒），仍要求非空UUID、完整相符集合與模型配額；schema／OpenAPI／TS／validator同步，複核 `NO CORRECTNESS FINDINGS`，改1／駁回0／open0。
 - 最終完整backend **578 passed（289.95秒）**（`/tmp/whisky-t10-mapping-backend-reviewed.log`）；ruff check／format177 files、mypy88 files、Python boundaries與diff check通過。這是映射slice本機出口；雙入口Web仍是後續未提交變更，不計入此後端版本或T10驗收。
 
+- 映射 commit `dc74daf` 的 PR／push runs `36759753734`／`36759747585` backend、web jobs各success；PR backend實際 **578 passed（275.72秒）**、wheel **4 passed（6.75秒）**。這是已提交後端slice的CI證據，仍未部署。
+- Web雙入口接線：新手保留原描述並使用typed V4 proposal；熟手明確填起點與similar／small_step／contrast／style_options，small_step要求explore_feature、contrast要求雙端descriptor，不以文字差異或缺少煙燻標籤推論強度。V4 transport兩項RED→GREEN；入口small_step／contrast各一項RED→GREEN，三個入口定向GREEN。草稿卡保留原文／推測／reviewed來源，偏好、硬限制與本次預算由使用者分別選取；沿用同一immutable patch command／receipt，不自動另開研究。
+- Web草稿確認的初始整合測試因syntax及BudgetSuggestion fixture錯誤未取得有效RED；這些僅列準備錯誤，不宣稱整合TDD。純editor／card先前取得有效RED。後續review回歸先取得預算還原1 RED與跨分頁草稿關閉1 RED（`/tmp/whisky-t10-budget-authority-red.log`、`/tmp/whisky-t10-closed-proposal-red.log`），再改為單一parent預算draft／source，editor只發選取事件，並追蹤active question／deadline、清除草稿來源修改、保留手動預算、提交前重新核對identity。定向15 GREEN（`/tmp/whisky-t10-proposal-validity-green.log`），最新全Web **183 passed（6.84秒）**（`/tmp/whisky-t10-proposal-ui-reviewed-full.log`）。
+- 本輪fresh design-review B「預算雙重權威」改1／open0，correctness P2「改回原金額仍提交草稿」及「關閉草稿仍可保存」改2／open0；複核均無新增發現。原生Next build、typecheck與Web boundaries通過；Node／workerd Playwright **11 passed（8.9秒）**（`/tmp/whisky-t10-proposal-ui-reviewed-e2e.log`），新增草稿重開→選取偏好→intent_confirmed等待→completed新revision→明確start_v4旅程。首次synthetic harness未轉送proposalTaskId而未出現editor，修正測試入口query傳遞後通過；正式Next route已傳遞，不列產品RED。不以synthetic browser替代T10真登入旅程或真模型人工rubric。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。
