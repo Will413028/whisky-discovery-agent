@@ -9,15 +9,27 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Connection, Engine, RowMapping, text
 
-from whisky.modules.discovery.public import locked_plan
+from whisky.modules.discovery.public import locked_plan, owned_plan
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.commands import StartTurn
 from whisky.modules.research.domain import workflow_id_for
-from whisky.modules.research.views import ResearchCommandView, TaskView
+from whisky.modules.research.views import ResearchCommandView, TaskHistoryItem, TaskView
 
 
 class ResearchConflict(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class TaskHistoryCursor:
+    created_at: datetime
+    id: UUID
+
+
+@dataclass(frozen=True)
+class TaskHistoryPage:
+    items: tuple[TaskHistoryItem, ...]
+    next_cursor: TaskHistoryCursor | None
 
 
 @dataclass(frozen=True)
@@ -329,6 +341,61 @@ class ResearchStore:
                 dict(owner=owner, generation=generation),
             ).mappings()
             return tuple(self._task_view(row) for row in rows)
+
+    def history(
+        self,
+        plan_id: UUID,
+        owner: UUID,
+        limit: int,
+        cursor: TaskHistoryCursor | None = None,
+    ) -> TaskHistoryPage | None:
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            plan = owned_plan(connection, plan_id, owner)
+            if plan is None or generation is None or plan.generation != generation:
+                return None
+            predicate = (
+                "AND (t.created_at,t.id)<(:created_at,:cursor_id)" if cursor else ""
+            )
+            rows = (
+                connection.execute(
+                    text(
+                        """
+                SELECT t.*, (
+                    SELECT a.run_id FROM agent_turns a
+                    WHERE a.task_id=t.id AND a.owner_id=t.owner_id AND a.outcome IS NULL
+                    LIMIT 1
+                ) AS active_run_id
+                FROM research_tasks t
+                WHERE t.plan_id=:plan AND t.owner_id=:owner AND t.generation=:generation
+                """
+                        + predicate
+                        + " ORDER BY t.created_at DESC,t.id DESC LIMIT :limit"
+                    ),
+                    dict(
+                        plan=plan_id,
+                        owner=owner,
+                        generation=generation,
+                        limit=limit + 1,
+                        created_at=cursor.created_at if cursor else None,
+                        cursor_id=cursor.id if cursor else None,
+                    ),
+                )
+                .mappings()
+                .all()
+            )
+            visible = rows[:limit]
+            return TaskHistoryPage(
+                tuple(
+                    TaskHistoryItem(
+                        task=self._task_view(row), created_at=row["created_at"]
+                    )
+                    for row in visible
+                ),
+                TaskHistoryCursor(visible[-1]["created_at"], visible[-1]["id"])
+                if len(rows) > limit
+                else None,
+            )
 
     @staticmethod
     def _task_view(row: RowMapping) -> TaskView:

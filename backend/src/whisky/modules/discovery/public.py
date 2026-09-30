@@ -29,6 +29,13 @@ def locked_plan(connection: Connection, plan_id: UUID, owner: UUID) -> Plan | No
     return PlanStore._read(connection, plan_id, owner, lock=True)
 
 
+def owned_plan(connection: Connection, plan_id: UUID, owner: UUID) -> Plan | None:
+    """Read a live owned plan without acquiring a write lock."""
+    from whisky.modules.discovery.store import PlanStore
+
+    return PlanStore._read(connection, plan_id, owner)
+
+
 def change_conditions(
     connection: Connection,
     plan_id: UUID,

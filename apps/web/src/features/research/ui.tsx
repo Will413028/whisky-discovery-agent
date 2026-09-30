@@ -204,7 +204,7 @@ export function ResearchTask({taskId}: {taskId:string}) {
         <button type="submit" disabled={busy || (!selected && !answerAttempt)}>{busy ? "送出中…" : answerAttempt ? "重送同一答覆" : "送出答覆"}</button>
         {answerAttempt?.pending && <p>答覆已保存，等待工作流程確認。必要時可重送同一答覆。</p>}
       </form>}
-      {task.status === "completed" && (report ? <article><h2>探索報告</h2><p>{report.summary}</p>
+      {task.status === "completed" && (report ? <article><h2>探索報告</h2><p>此報告採用條件版本 {task.conditionsRevision}；修改條件後需另開研究。</p><p>{report.summary}</p>
         {report.clarifiedBottle && <p>已補充版本：{report.clarifiedBottle.name}{!report.clarifiedBottle.reviewedInRelease && "（目前資料未覆核）"}</p>}
         {report.unresolved?.map(value => <p key={value}>待確認：{value}</p>)}
         {report.candidates.map(candidate => <section key={candidate.itemId}><h3>{candidate.name}</h3><p>{candidate.reason}</p>

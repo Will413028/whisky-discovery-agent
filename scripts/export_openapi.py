@@ -8,6 +8,7 @@ from whisky.modules.catalog.http import CatalogView
 from whisky.modules.control.http import ControlView
 from whisky.modules.discovery.http import PlanListView, PlanView
 from whisky.modules.research.public import TaskView
+from whisky.modules.research.views import TaskHistoryView
 
 target = Path(__file__).resolve().parents[1] / "contracts/openapi.json"
 target.parent.mkdir(exist_ok=True)
@@ -34,6 +35,7 @@ for name, model in (
     ("plan-view", PlanView),
     ("plan-list-view", PlanListView),
     ("control-view", ControlView),
+    ("task-history-view", TaskHistoryView),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

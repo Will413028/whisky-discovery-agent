@@ -4,8 +4,9 @@ export async function planProxy(request: Request, upstream?: PrivateAPI): Promis
   const url = new URL(request.url);
   const collection = url.pathname === "/api/v1/plans";
   const resource = /^\/api\/v1\/plans\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(url.pathname);
-  if (!collection && !resource) return privateFailure(404, "NOT_FOUND");
-  if (url.search && (!collection || request.method !== "GET")) return privateFailure(404, "NOT_FOUND");
+  const history = /^\/api\/v1\/plans\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/tasks$/.test(url.pathname);
+  if (!collection && !resource && !history) return privateFailure(404, "NOT_FOUND");
+  if (url.search && (!(collection || history) || request.method !== "GET")) return privateFailure(404, "NOT_FOUND");
   if (request.method !== "GET" && !(collection && request.method === "POST")) return privateFailure(405, "METHOD_NOT_ALLOWED");
   for (const name of url.searchParams.keys()) {
     if (name !== "limit" && name !== "cursor") return privateFailure(404, "NOT_FOUND");

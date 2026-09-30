@@ -92,6 +92,16 @@ class TaskView(ViewModel):
         return self
 
 
+class TaskHistoryItem(ViewModel):
+    task: TaskView
+    created_at: AwareDatetime
+
+
+class TaskHistoryView(ViewModel):
+    items: tuple[TaskHistoryItem, ...]
+    next_cursor: str | None
+
+
 class ReportSourceView(ViewModel):
     evidence_id: UUID
     url: str

@@ -15,6 +15,7 @@ vi.mock("./client", async () => ({...await vi.importActual<typeof import("./clie
 vi.mock("@auth0/auth0-react", () => ({useAuth0:() => auth}));
 vi.mock("next/navigation", () => ({useRouter:() => ({push})}));
 vi.mock("../research", () => ({startResearch:research}));
+vi.mock("./history-client", () => ({listHistory:async () => ({items:[],nextCursor:null})}));
 afterEach(() => {cleanup(); vi.resetAllMocks(); auth.isAuthenticated = true; auth.getAccessTokenSilently.mockResolvedValue("fixture-token");});
 
 test("plan pagination preserves earlier plans on failure and retries the same cursor", async () => {

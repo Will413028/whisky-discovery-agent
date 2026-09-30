@@ -23,6 +23,16 @@ const waiting: TaskView = {
   reportId:null, error:null, observedAt:"2026-09-29T00:00:00Z", activeRunId:null,
 };
 
+test("a reopened completed report states its original task revision", async () => {
+  const completed:TaskView={...waiting,conditionsRevision:1,status:"completed",question:null,reportId,stage:"完成"};
+  vi.stubGlobal("fetch",vi.fn(async(input)=>String(input).includes(`/tasks/${id}`)
+    ? Response.json(completed)
+    : Response.json({id:reportId,taskId:id,summary:"原條件的歷史報告",candidates:[]})));
+  render(<ResearchTask taskId={id} />);
+  await screen.findByText("原條件的歷史報告");
+  expect(screen.getByText("此報告採用條件版本 1；修改條件後需另開研究。")).toBeTruthy();
+});
+
 test("beginner form creates a plan and starts a durable AG-UI turn before navigation", async () => {
   const requests: Request[] = [];
   vi.stubGlobal("fetch", vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => {

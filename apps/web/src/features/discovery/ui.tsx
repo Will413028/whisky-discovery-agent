@@ -5,6 +5,7 @@ import {useRouter} from "next/navigation";
 import {useEffect, useRef, useState, type FormEvent} from "react";
 import {safeReturnTo} from "../identity";
 import {startResearch} from "../research";
+import {PlanHistory} from "./history";
 import {listPlans, patchPlan, readControl, readPlan, RequestRejected, type ControlView, type PatchRequest, type PlanView} from "./client";
 
 type Attempt = {body:PatchRequest; receipt:ControlView | null};
@@ -189,6 +190,7 @@ export function PlanDetail({planId}: {planId:string}) {
           : <button disabled={busy} onClick={() => confirm(attempt)}>{attempt.receipt ? "重新確認變更" : "重試同一變更"}</button>}
       </>}
       <button disabled={busy || Boolean(attempt) || dirty} onClick={start}>使用已保存條件開始研究</button>
+      <PlanHistory planId={visible.id} revision={visible.conditionsRevision} />
     </>}
   </section>;
 }
