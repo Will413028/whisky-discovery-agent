@@ -14,6 +14,10 @@ from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.commands import StartTurn
 from whisky.modules.research.domain import workflow_id_for
 from whisky.modules.research.inputs_v4 import StartTurnV4
+from whisky.modules.research.proposal_view_v4 import (
+    PreferenceProposalViewV4,
+    read_preference_proposal_v4,
+)
 from whisky.modules.research.views import ResearchCommandView, TaskHistoryItem, TaskView
 
 
@@ -44,6 +48,29 @@ class StartReceipt:
 class ResearchStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def workflow_type_for_task(
+        self, task_id: UUID
+    ) -> Literal["ResearchWorkflowV3", "ResearchWorkflowV4"]:
+        with self.engine.connect() as connection:
+            is_v4 = connection.execute(
+                text("""
+                    SELECT (i.task_id IS NOT NULL)
+                    FROM research_tasks t
+                    LEFT JOIN research_v4_inputs i
+                        ON i.task_id=t.id AND i.owner_id=t.owner_id
+                    WHERE t.id=:task
+                """),
+                {"task": task_id},
+            ).scalar_one_or_none()
+        if is_v4 is None:
+            raise ResearchConflict("NOT_FOUND")
+        return "ResearchWorkflowV4" if is_v4 else "ResearchWorkflowV3"
+
+    def preference_proposal(
+        self, task_id: UUID, owner: UUID
+    ) -> PreferenceProposalViewV4 | None:
+        return read_preference_proposal_v4(self.engine, owner, task_id)
 
     def reserve_turn_v4(
         self, owner: UUID, generation: int, turn: StartTurnV4

@@ -214,6 +214,15 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 - comparison API installed wheel **4 passed（26.35秒）**（`/tmp/whisky-t10-comparison-api-wheel.log`，head0015）；原TaskView生成物與frozen V1 codec差異核對無變更。API／UI slice完整backend由推送後的隔離CI核對，不把新增HTTP兩項與上一版539相加冒充一次完整執行。
 
+- comparison API／UI commit `72123dc` 的 PR run [`36746849168`](https://github.com/Will413028/whisky-discovery-agent/actions/runs/36746849168) backend／web jobs均success；backend **541 passed（263.80秒）**、installed wheel4 passed（6.29秒）。這是該slice完整CI出口，仍未部署或標T10驗收。
+- V4正式start接線（2026-10-01，本機）：`start_v4`先於真DB／JWT HTTP取得1 RED（合法命令回422）／invalid-input baseline1 GREEN（`/tmp/whisky-t10-agent-start-v4-red.log`）。加入獨立V4 parser與typed reserve後，immutable原文／intent、同receipt重送與變更原文409保留既有受理政策。起初20ms合成SSE lifetime未留下初始snapshot而IndexError，改回既有2秒policy，屬harness修正，不列產品RED。
+- persisted executor dispatch先取得3 RED（缺typed lookup／adapter注入），以task的immutable V4 input決定V3／V4，bootstrap注入同模組lookup；重送request不指定任意workflow，沿用lazy Temporal client／同ID USE_EXISTING／closed history對帳。V4 start／dispatch／legacy HTTP定向9 GREEN（36.17秒，`/tmp/whisky-t10-start-v4-final-green.log`）；HTTP→真PostgreSQL→真Temporal V4 proposal workflow另3 GREEN（14.43秒，`/tmp/whisky-t10-http-v4-temporal-green.log`），原Plan不被模型推論改寫。最後V4 HTTP／dispatch／proposal等待重啟與frozen V2 replay共12 GREEN（71.20秒，`/tmp/whisky-t10-start-proposal-execution-green.log`）；使用合成provider，不當真模型品質證據。首個組合命令誤寫不存在的replay路徑、無測試收集，亦不列RED。
+- 偏好草稿read投影stub取得8 RED／foreign-missing baseline1 GREEN（`/tmp/whisky-t10-proposal-read-v4-red.log`）；同一REPEATABLE READ snapshot經identity／discovery公開契約核對owner／generation／revision，只在仍可寫且needs_input的active pending、未過期preference question公開原文與草稿。API缺路由2 RED→真DB HTTP／read **11 GREEN（44.93秒）**（`/tmp/whisky-t10-proposal-api-final-green.log`）。初次把question pointer／answered欄位寫成非法測試狀態，既有DB constraints已保護；改用合法researching／cancelled轉換與真reserve_answer／accept_answer，未放寬constraints。
+- Web proposal proxy缺新路徑1 RED→GREEN，proposal client stub10 RED→10 GREEN（`/tmp/whisky-t10-proposal-client-{red,green}.log`；連proxy共18 GREEN）；generated schema驗證並核對task／question／revision／waiting version，401與依賴錯誤不冒充無草稿。StartCommandV4公開typed component的validation defs用Input後綴，保留response serialization schema；未改TaskView或V1–V3 payload／workflow。此slice提供read client，卡片／條件套用仍在後續，不將helper驗過等同產品旅程。
+- fresh start／dispatch與proposal read／HTTP／generator／client設計審查均0 findings，改／記／提／駁回均0；shared checkout與second-brain其他會話變更保留。此slice本機Web完整**167 passed（10.07秒）**、typecheck／boundaries／原生Next build通過；ruff check／format、mypy87 source files、Python boundaries、frozen生成物差異與diff check通過；installed wheel **4 passed（14.65秒）**（`/tmp/whisky-t10-start-proposal-wheel.log`，head0015）。完整backend與最新Node／workerd出口待CI／下述結果，不冒充T10真模型人工rubric／真瀏覽器／部署通過。
+
+- 最新Node／workerd Playwright **10 passed（47.7秒）**（`/tmp/whisky-t10-start-proposal-e2e-green.log`）。前次8個browser案例在launch前因全機cache的executable不存在而失敗，未執行產品assertion；依本session既有下載授權，以 `PLAYWRIGHT_BROWSERS_PATH=/tmp/whisky-playwright-browsers pnpm --dir apps/web exec playwright install chromium` 安裝專案獨立暫存cache後重跑通過，未改產品或測試assertion，也不推論原cache消失根因。原start／dispatch審查追加StartCommandV4生成物，累積0 findings／open0。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

@@ -345,6 +345,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tasks/{task_id}/preference-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Preference Proposal */
+        get: operations["read_preference_proposal_api_v1_tasks__task_id__preference_proposal_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health/live": {
         parameters: {
             query?: never;
@@ -483,6 +500,18 @@ export interface components {
             url?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** BudgetSuggestion */
+        BudgetSuggestion: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "set" | "clear";
+            /** Amount Twd */
+            amount_twd?: string | null;
+            /** Source Quote */
+            source_quote: string;
         };
         /** CandidateComparisonV4 */
         CandidateComparisonV4: {
@@ -872,8 +901,47 @@ export interface components {
              */
             smoke_comparison: boolean;
         };
+        /** ExplorationIntent */
+        ExplorationIntentInput: {
+            /** @default null */
+            contrast: components["schemas"]["FlavorContrastInput"] | null;
+            /**
+             * Explore Feature
+             * @default null
+             */
+            explore_feature: string | null;
+            /**
+             * Mode
+             * @default style_options
+             * @enum {string}
+             */
+            mode: "style_options" | "similar" | "small_step" | "contrast";
+            /**
+             * Origin Query
+             * @default null
+             */
+            origin_query: string | null;
+            /**
+             * Smoke Comparison
+             * @default false
+             */
+            smoke_comparison: boolean;
+        };
         /** FlavorContrast */
         FlavorContrast: {
+            /**
+             * Axis
+             * @default flavor_description
+             * @constant
+             */
+            axis: "flavor_description";
+            /** Candidate Feature */
+            candidate_feature: string;
+            /** Origin Feature */
+            origin_feature: string;
+        };
+        /** FlavorContrast */
+        FlavorContrastInput: {
             /**
              * Axis
              * @default flavor_description
@@ -1020,6 +1088,78 @@ export interface components {
              * @enum {string}
              */
             strength: "soft" | "hard";
+        };
+        /** PreferenceProposal */
+        PreferenceProposal: {
+            budget?: components["schemas"]["BudgetSuggestion"] | null;
+            intent?: components["schemas"]["ExplorationIntent"];
+            /**
+             * Preferences
+             * @default []
+             */
+            preferences: components["schemas"]["PreferenceSuggestion"][];
+            /** Summary */
+            summary: string;
+        };
+        /** PreferenceProposalViewV4 */
+        PreferenceProposalViewV4: {
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Planid
+             * Format: uuid
+             */
+            planId: string;
+            proposal: components["schemas"]["PreferenceProposal"];
+            /**
+             * Questionid
+             * Format: uuid
+             */
+            questionId: string;
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /** Sourcetext */
+            sourceText: string;
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+            /** Waitingversion */
+            waitingVersion: number;
+        };
+        /** PreferenceSuggestion */
+        PreferenceSuggestion: {
+            /**
+             * Certainty
+             * @default inferred
+             * @constant
+             */
+            certainty: "inferred";
+            /** Description */
+            description: string;
+            /**
+             * Intent
+             * @enum {string}
+             */
+            intent: "prefer" | "keep" | "change" | "avoid";
+            /**
+             * Source Kind
+             * @enum {string}
+             */
+            source_kind: "direct_description" | "food_clue" | "uncertain";
+            /** Source Quote */
+            source_quote: string;
+            /**
+             * Strength
+             * @default soft
+             * @constant
+             */
+            strength: "soft";
         };
         /** QuestionChoiceView */
         QuestionChoiceView: {
@@ -1322,6 +1462,27 @@ export interface components {
             schema_version: 1;
             starting_bottle?: components["schemas"]["CatalogReference"] | null;
         };
+        /** ResearchInputV4 */
+        ResearchInputV4Input: {
+            intent?: components["schemas"]["ExplorationIntentInput"];
+            /**
+             * Phase
+             * @default research
+             * @enum {string}
+             */
+            phase: "proposal" | "research";
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /**
+             * Sourcetext
+             * @default null
+             */
+            sourceText: string | null;
+        };
         /**
          * ResumeEntry
          * @description A per-interrupt response in the resume array of a RunAgentInput.
@@ -1372,6 +1533,24 @@ export interface components {
             tools: components["schemas"]["Tool"][];
         } & {
             [key: string]: unknown;
+        };
+        /** StartCommandV4 */
+        StartCommandV4: {
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            input: components["schemas"]["ResearchInputV4Input"];
+            /** Key */
+            key: string;
+            /**
+             * Planid
+             * Format: uuid
+             */
+            planId: string;
+            /**
+             * Type
+             * @constant
+             */
+            type: "start_v4";
         };
         /**
          * SystemMessage
@@ -3348,6 +3527,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResearchCommandView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_preference_proposal_api_v1_tasks__task_id__preference_proposal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferenceProposalViewV4"];
                 };
             };
             /** @description Unauthorized */

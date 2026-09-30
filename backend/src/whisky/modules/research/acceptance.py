@@ -8,6 +8,7 @@ from uuid import UUID
 from temporalio.service import RPCError, RPCStatusCode
 
 from whisky.modules.research.commands import StartTurn
+from whisky.modules.research.inputs_v4 import StartTurnV4
 from whisky.modules.research.store import ResearchStore, StartReceipt
 
 
@@ -34,11 +35,16 @@ class AcceptResearch:
         return await self._accept(owner, generation, receipt)
 
     async def execute_turn(
-        self, owner: UUID, generation: int, turn: StartTurn
+        self, owner: UUID, generation: int, turn: StartTurn | StartTurnV4
     ) -> StartReceipt:
-        receipt = await asyncio.to_thread(
-            self.store.reserve_turn, owner, generation, turn
-        )
+        if isinstance(turn, StartTurnV4):
+            receipt = await asyncio.to_thread(
+                self.store.reserve_turn_v4, owner, generation, turn
+            )
+        else:
+            receipt = await asyncio.to_thread(
+                self.store.reserve_turn, owner, generation, turn
+            )
         return await self._accept(owner, generation, receipt)
 
     async def _accept(

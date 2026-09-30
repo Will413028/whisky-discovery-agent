@@ -2,6 +2,16 @@
 import { expect, test, vi } from "vitest";
 import { researchReadProxy, researchStreamProxy } from "../src/features/research/proxy";
 
+test("private preference proposal path forwards through the same fixed upstream",async()=>{
+  const path="/api/v1/tasks/00000000-0000-4000-8000-000000000001/preference-proposal";
+  const fetch=vi.fn(async(_request:Request)=>Response.json({schemaVersion:4}));
+  const response=await researchReadProxy(new Request(`https://fixture.example${path}`,{headers:{Authorization:"Bearer fixture"}}),{fetch});
+  expect(response.status).toBe(200);
+  expect(fetch.mock.calls[0][0].url).toBe(`http://whisky-api.internal${path}`);
+  expect(fetch.mock.calls[0][0].headers.get("authorization")).toBe("Bearer fixture");
+  expect(response.headers.get("cache-control")).toBe("no-store");
+});
+
 test("comparison read forwards only the authenticated fixed report path", async () => {
   const id = "00000000-0000-4000-8000-000000000001";
   const fetch = vi.fn(async (_request: Request) => Response.json({schemaVersion:4}));

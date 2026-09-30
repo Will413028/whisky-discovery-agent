@@ -1,0 +1,52 @@
+"""Persisted input, never a retry's request payload, chooses the executor."""
+
+from uuid import uuid4
+
+import pytest
+from temporalio.testing import WorkflowEnvironment
+from test_research_inputs_v4 import make_turn
+
+from whisky.modules.research.domain import workflow_id_for
+from whisky.modules.research.store import ResearchConflict
+from whisky.modules.research.temporal_start import ConnectingTemporalResearchStarter
+
+pytestmark = pytest.mark.integration
+
+
+def test_workflow_type_is_pinned_by_persisted_v4_input(research_context):
+    _, store, (actor, _), plan = research_context
+    legacy = store.reserve(actor.id, actor.generation, plan.id, 1, "legacy-type")
+    current = store.reserve_turn_v4(
+        actor.id, actor.generation, make_turn(plan, "current-type")
+    )
+    assert store.workflow_type_for_task(legacy.task_id) == "ResearchWorkflowV3"
+    assert store.workflow_type_for_task(current.task_id) == "ResearchWorkflowV4"
+    with pytest.raises(ResearchConflict, match="NOT_FOUND"):
+        store.workflow_type_for_task(uuid4())
+
+
+@pytest.mark.parametrize("version", ["ResearchWorkflowV3", "ResearchWorkflowV4"])
+async def test_lazy_starter_dispatches_and_reuses_the_persisted_execution(version):
+    task_id = uuid4()
+    looked_up = []
+
+    def lookup(current):
+        looked_up.append(current)
+        return version
+
+    async with await WorkflowEnvironment.start_local() as env:
+        starter = ConnectingTemporalResearchStarter(
+            "unused-fixture-address",
+            "default",
+            f"test-dispatch-{uuid4()}",
+            workflow_type_for_task=lookup,
+        )
+        starter._client = env.client
+        first = await starter.start(task_id)
+        retry = await starter.start(task_id)
+        assert first == retry
+        description = await env.client.get_workflow_handle(
+            workflow_id_for(task_id), run_id=first
+        ).describe()
+        assert description.workflow_type == version
+        assert looked_up == [task_id, task_id]

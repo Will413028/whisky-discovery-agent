@@ -1,0 +1,278 @@
+{
+  "$defs": {
+    "BudgetSuggestion": {
+      "additionalProperties": false,
+      "properties": {
+        "action": {
+          "enum": [
+            "set",
+            "clear"
+          ],
+          "title": "Action",
+          "type": "string"
+        },
+        "amount_twd": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Amount Twd"
+        },
+        "source_quote": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Source Quote",
+          "type": "string"
+        }
+      },
+      "required": [
+        "action",
+        "source_quote"
+      ],
+      "title": "BudgetSuggestion",
+      "type": "object"
+    },
+    "ExplorationIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "contrast": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlavorContrast"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "explore_feature": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Explore Feature"
+        },
+        "mode": {
+          "default": "style_options",
+          "enum": [
+            "style_options",
+            "similar",
+            "small_step",
+            "contrast"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "origin_query": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Origin Query"
+        },
+        "smoke_comparison": {
+          "default": false,
+          "title": "Smoke Comparison",
+          "type": "boolean"
+        }
+      },
+      "title": "ExplorationIntent",
+      "type": "object"
+    },
+    "FlavorContrast": {
+      "additionalProperties": false,
+      "properties": {
+        "axis": {
+          "const": "flavor_description",
+          "default": "flavor_description",
+          "title": "Axis",
+          "type": "string"
+        },
+        "candidate_feature": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Candidate Feature",
+          "type": "string"
+        },
+        "origin_feature": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Origin Feature",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origin_feature",
+        "candidate_feature"
+      ],
+      "title": "FlavorContrast",
+      "type": "object"
+    },
+    "PreferenceProposal": {
+      "additionalProperties": false,
+      "properties": {
+        "budget": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BudgetSuggestion"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "intent": {
+          "$ref": "#/$defs/ExplorationIntent"
+        },
+        "preferences": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PreferenceSuggestion"
+          },
+          "maxItems": 8,
+          "title": "Preferences",
+          "type": "array"
+        },
+        "summary": {
+          "maxLength": 1600,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "summary"
+      ],
+      "title": "PreferenceProposal",
+      "type": "object"
+    },
+    "PreferenceSuggestion": {
+      "additionalProperties": false,
+      "properties": {
+        "certainty": {
+          "const": "inferred",
+          "default": "inferred",
+          "title": "Certainty",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "prefer",
+            "keep",
+            "change",
+            "avoid"
+          ],
+          "title": "Intent",
+          "type": "string"
+        },
+        "source_kind": {
+          "enum": [
+            "direct_description",
+            "food_clue",
+            "uncertain"
+          ],
+          "title": "Source Kind",
+          "type": "string"
+        },
+        "source_quote": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Source Quote",
+          "type": "string"
+        },
+        "strength": {
+          "const": "soft",
+          "default": "soft",
+          "title": "Strength",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "intent",
+        "source_quote",
+        "source_kind"
+      ],
+      "title": "PreferenceSuggestion",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conditionsRevision": {
+      "title": "Conditionsrevision",
+      "type": "integer"
+    },
+    "planId": {
+      "format": "uuid",
+      "title": "Planid",
+      "type": "string"
+    },
+    "proposal": {
+      "$ref": "#/$defs/PreferenceProposal"
+    },
+    "questionId": {
+      "format": "uuid",
+      "title": "Questionid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 4,
+      "default": 4,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sourceText": {
+      "title": "Sourcetext",
+      "type": "string"
+    },
+    "taskId": {
+      "format": "uuid",
+      "title": "Taskid",
+      "type": "string"
+    },
+    "waitingVersion": {
+      "title": "Waitingversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "taskId",
+    "planId",
+    "questionId",
+    "conditionsRevision",
+    "waitingVersion",
+    "sourceText",
+    "proposal"
+  ],
+  "title": "PreferenceProposalViewV4",
+  "type": "object"
+}

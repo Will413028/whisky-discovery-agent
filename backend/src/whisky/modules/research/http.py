@@ -19,12 +19,14 @@ from whisky.modules.research.commands import parse_resume, parse_start
 from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.contracts import AnswerInput
 from whisky.modules.research.db_observation import DBObservationSource
+from whisky.modules.research.inputs_v4 import parse_start_v4
 from whisky.modules.research.observation import (
     ObservationPolicy,
     ObservationSource,
     ObserveInput,
     Observer,
 )
+from whisky.modules.research.proposal_view_v4 import PreferenceProposalViewV4
 from whisky.modules.research.report_store import ReportStore
 from whisky.modules.research.store import (
     ResearchConflict,
@@ -170,6 +172,20 @@ def observation_router(
             raise HTTPException(404, "NOT_FOUND")
         return view
 
+    @routes.get(
+        "/api/v1/tasks/{task_id}/preference-proposal",
+        response_model=PreferenceProposalViewV4,
+    )
+    def read_preference_proposal(
+        task_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> PreferenceProposalViewV4:
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = store.preference_proposal(task_id, session.actor_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
+
     @routes.get("/api/v1/reports/{report_id}", response_model=ReportView)
     def read_report(
         report_id: UUID, session: AccessSession = Depends(authenticate)
@@ -308,7 +324,11 @@ def observation_router(
             response.headers["X-Command-Id"] = str(result.command_id)
             return response
         try:
-            start_turn = parse_start(request)
+            start_turn = (
+                parse_start_v4(request)
+                if request.forwarded_props.get("type") == "start_v4"
+                else parse_start(request)
+            )
         except ValueError:
             raise PublicAPIError(422, "INVALID_REQUEST") from None
         if acceptance is None:

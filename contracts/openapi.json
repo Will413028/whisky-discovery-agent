@@ -306,6 +306,43 @@
         "title": "BinaryInputContent",
         "type": "object"
       },
+      "BudgetSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "set",
+              "clear"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "amount_twd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Twd"
+          },
+          "source_quote": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "source_quote"
+        ],
+        "title": "BudgetSuggestion",
+        "type": "object"
+      },
       "CandidateComparisonV4": {
         "properties": {
           "candidate": {
@@ -1373,7 +1410,98 @@
         "title": "ExplorationIntent",
         "type": "object"
       },
+      "ExplorationIntentInput": {
+        "additionalProperties": false,
+        "properties": {
+          "contrast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlavorContrastInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "explore_feature": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Explore Feature"
+          },
+          "mode": {
+            "default": "style_options",
+            "enum": [
+              "style_options",
+              "similar",
+              "small_step",
+              "contrast"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "origin_query": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Origin Query"
+          },
+          "smoke_comparison": {
+            "default": false,
+            "title": "Smoke Comparison",
+            "type": "boolean"
+          }
+        },
+        "title": "ExplorationIntent",
+        "type": "object"
+      },
       "FlavorContrast": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "const": "flavor_description",
+            "default": "flavor_description",
+            "title": "Axis",
+            "type": "string"
+          },
+          "candidate_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Candidate Feature",
+            "type": "string"
+          },
+          "origin_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Origin Feature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin_feature",
+          "candidate_feature"
+        ],
+        "title": "FlavorContrast",
+        "type": "object"
+      },
+      "FlavorContrastInput": {
         "additionalProperties": false,
         "properties": {
           "axis": {
@@ -1691,6 +1819,152 @@
           "strength"
         ],
         "title": "Preference",
+        "type": "object"
+      },
+      "PreferenceProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "budget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetSuggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntent"
+          },
+          "preferences": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PreferenceSuggestion"
+            },
+            "maxItems": 8,
+            "title": "Preferences",
+            "type": "array"
+          },
+          "summary": {
+            "maxLength": 1600,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "PreferenceProposal",
+        "type": "object"
+      },
+      "PreferenceProposalViewV4": {
+        "additionalProperties": false,
+        "properties": {
+          "conditionsRevision": {
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/PreferenceProposal"
+          },
+          "questionId": {
+            "format": "uuid",
+            "title": "Questionid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceText": {
+            "title": "Sourcetext",
+            "type": "string"
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          },
+          "waitingVersion": {
+            "title": "Waitingversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "taskId",
+          "planId",
+          "questionId",
+          "conditionsRevision",
+          "waitingVersion",
+          "sourceText",
+          "proposal"
+        ],
+        "title": "PreferenceProposalViewV4",
+        "type": "object"
+      },
+      "PreferenceSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "certainty": {
+            "const": "inferred",
+            "default": "inferred",
+            "title": "Certainty",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "intent": {
+            "enum": [
+              "prefer",
+              "keep",
+              "change",
+              "avoid"
+            ],
+            "title": "Intent",
+            "type": "string"
+          },
+          "source_kind": {
+            "enum": [
+              "direct_description",
+              "food_clue",
+              "uncertain"
+            ],
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "source_quote": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          },
+          "strength": {
+            "const": "soft",
+            "default": "soft",
+            "title": "Strength",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "intent",
+          "source_quote",
+          "source_kind"
+        ],
+        "title": "PreferenceSuggestion",
         "type": "object"
       },
       "QuestionChoiceView": {
@@ -2415,6 +2689,45 @@
         "title": "ResearchConditions",
         "type": "object"
       },
+      "ResearchInputV4Input": {
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntentInput"
+          },
+          "phase": {
+            "default": "research",
+            "enum": [
+              "proposal",
+              "research"
+            ],
+            "title": "Phase",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceText": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourcetext"
+          }
+        },
+        "title": "ResearchInputV4",
+        "type": "object"
+      },
       "ResumeEntry": {
         "additionalProperties": true,
         "description": "A per-interrupt response in the resume array of a RunAgentInput.\n\n``metadata`` carries envelope data about the response — signatures, routing\nkeys — as opposed to ``payload``, which is the answer the agent asked for\nand will act on.",
@@ -2568,6 +2881,44 @@
           "forwardedProps"
         ],
         "title": "RunAgentInput",
+        "type": "object"
+      },
+      "StartCommandV4": {
+        "additionalProperties": false,
+        "properties": {
+          "conditionsRevision": {
+            "minimum": 1,
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ResearchInputV4Input"
+          },
+          "key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "type": {
+            "const": "start_v4",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "key",
+          "planId",
+          "conditionsRevision",
+          "input"
+        ],
+        "title": "StartCommandV4",
         "type": "object"
       },
       "SystemMessage": {
@@ -5504,6 +5855,111 @@
           }
         ],
         "summary": "Answer Question"
+      }
+    },
+    "/api/v1/tasks/{task_id}/preference-proposal": {
+      "get": {
+        "operationId": "read_preference_proposal_api_v1_tasks__task_id__preference_proposal_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenceProposalViewV4"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Preference Proposal"
       }
     },
     "/health/live": {

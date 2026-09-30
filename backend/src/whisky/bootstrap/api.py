@@ -59,6 +59,7 @@ def configured_app(
             settings.temporal.address,
             settings.temporal.namespace,
             settings.temporal.task_queue,
+            workflow_type_for_task=research_store.workflow_type_for_task,
         )
         acceptance = AcceptResearch(
             research_store,
