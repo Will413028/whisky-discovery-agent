@@ -2,7 +2,7 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { safeReturnTo } from "../identity";
 import { observeTask } from "./observe";
 import { answerQuestion, createPlan, listOpenTasks, readReport, readTask, startResearch, type ReportView } from "./client";
@@ -36,8 +36,20 @@ function usePrivateLogin() {
 }
 
 export function ResearchStart() {
+  const auth = useAuth0();
+  return <ResearchStartSession key={JSON.stringify([auth.isAuthenticated,auth.user?.sub])} />;
+}
+
+function usePrivateLifetime() {
+  const generation=useRef(0);
+  useEffect(()=>{generation.current++; return ()=>{generation.current++;};},[]);
+  return generation;
+}
+
+function ResearchStartSession() {
   const router = useRouter();
   const {auth, login, loginError} = usePrivateLogin();
+  const life=usePrivateLifetime();
   const [goal, setGoal] = useState("");
   const [budget, setBudget] = useState("");
   const [busy, setBusy] = useState(false);
@@ -66,6 +78,7 @@ export function ResearchStart() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy || !goal.trim()) return;
+    const generation=life.current;
     const current = attempt ?? {planKey:crypto.randomUUID(), startKey:crypto.randomUUID(), threadId:crypto.randomUUID(), runId:crypto.randomUUID()};
     setAttempt(current);
     setBusy(true);
@@ -73,14 +86,16 @@ export function ResearchStart() {
     void (async () => {
       try {
         const token = requiredToken(await auth.getAccessTokenSilently());
+        if(generation!==life.current) return;
         const plan = current.plan ?? await createPlan(token, current.planKey, goal.trim(), budget ? budget : null);
+        if(generation!==life.current) return;
         current.plan = plan;
         const task = await startResearch(token, plan, current.startKey, current.threadId, current.runId);
-        router.push(`/research/${task.taskId}`);
+        if(generation===life.current) router.push(`/research/${task.taskId}`);
       } catch {
-        setError(true);
+        if(generation===life.current) setError(true);
       } finally {
-        setBusy(false);
+        if(generation===life.current) setBusy(false);
       }
     })();
   };
@@ -97,7 +112,13 @@ export function ResearchStart() {
 }
 
 export function ResearchTask({taskId}: {taskId:string}) {
+  const auth = useAuth0();
+  return <ResearchTaskSession key={JSON.stringify([auth.isAuthenticated,auth.user?.sub,taskId])} taskId={taskId} />;
+}
+
+function ResearchTaskSession({taskId}: {taskId:string}) {
   const {auth, login, loginError} = usePrivateLogin();
+  const life=usePrivateLifetime();
   const [task, setTask] = useState<TaskView | null>(null);
   const [report, setReport] = useState<ReportView | null>(null);
   const [selected, setSelected] = useState("");
@@ -166,6 +187,7 @@ export function ResearchTask({taskId}: {taskId:string}) {
   const submitAnswer = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!task?.question || busy) return;
+    const generation=life.current;
     const previous = answerAttempt?.questionId === task.question.id ? answerAttempt : null;
     const answer = previous?.answer ?? selected;
     if (!task.question.choices.some(choice => choice.id === answer)) return;
@@ -176,11 +198,13 @@ export function ResearchTask({taskId}: {taskId:string}) {
     void (async () => {
       try {
         const token = requiredToken(await getAccessTokenSilently());
+        if(generation!==life.current) return;
         const result = await answerQuestion(task, current.answer, current.key, token);
+        if(generation!==life.current) return;
         setAnswerAttempt({...current, pending:result.acceptance === "acceptance_pending"});
         setRefresh(value => value + 1);
-      } catch {setError("答覆暫時無法確認；請用同一答覆重試。");}
-      finally {setBusy(false);}
+      } catch {if(generation===life.current)setError("答覆暫時無法確認；請用同一答覆重試。");}
+      finally {if(generation===life.current)setBusy(false);}
     })();
   };
 

@@ -9,12 +9,13 @@ const reportId = "00000000-0000-4000-8000-000000000003";
 const selectedVersionId = "00000000-0000-4000-8000-000000000005";
 const auth = vi.hoisted(() => ({
   isAuthenticated:true, isLoading:false, loginWithRedirect:vi.fn(),
+  user:{sub:"fixture-owner-a"},
   getAccessTokenSilently:vi.fn().mockResolvedValue("fixture-token"),
 }));
 const push = vi.hoisted(() => vi.fn());
 vi.mock("@auth0/auth0-react", () => ({useAuth0:() => auth}));
 vi.mock("next/navigation", () => ({useRouter:() => ({push, replace:vi.fn()})}));
-afterEach(() => {cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); auth.isAuthenticated = true;});
+afterEach(() => {cleanup(); vi.unstubAllGlobals(); vi.clearAllMocks(); auth.isAuthenticated = true; auth.user={sub:"fixture-owner-a"}; auth.getAccessTokenSilently.mockResolvedValue("fixture-token");});
 
 const waiting: TaskView = {
   schemaVersion:1, taskId:id, threadId:"00000000-0000-4000-8000-000000000004",
@@ -22,6 +23,52 @@ const waiting: TaskView = {
   question:{id:questionId, prompt:"你指的是哪個版本？", choices:[{id:"00000000-0000-4000-8000-000000000006",label:"12 年"},{id:selectedVersionId,label:"15 年"}], waitingVersion:1, expiresAt:"2026-10-06T00:00:00Z"},
   reportId:null, error:null, observedAt:"2026-09-29T00:00:00Z", activeRunId:null,
 };
+
+test("switching authenticated subjects immediately hides the previous owner's completed report",async()=>{
+  const completed={...waiting,status:"completed",question:null,reportId,stage:"完成"};
+  vi.stubGlobal("fetch",vi.fn(async(input)=>{
+    if(auth.user.sub!=="fixture-owner-a") return new Response(null,{status:404});
+    return String(input).includes(`/tasks/${id}`) ? Response.json(completed)
+      : Response.json({id:reportId,taskId:id,summary:"第一帳號私人報告",candidates:[]});
+  }));
+  const view=render(<ResearchTask taskId={id} />);
+  await screen.findByText("第一帳號私人報告");
+  auth.user={sub:"fixture-owner-b"};
+  view.rerender(<ResearchTask taskId={id} />);
+  expect(screen.queryByText("第一帳號私人報告")).toBeNull();
+  expect((await screen.findByRole("alert")).textContent).toContain("暫時無法讀取委託");
+});
+
+test("switching authenticated subjects removes unfinished work and the previous private form",async()=>{
+  vi.stubGlobal("fetch",vi.fn(async()=>Response.json(auth.user.sub==="fixture-owner-a" ? [waiting] : [])));
+  const view=render(<ResearchStart />);
+  await screen.findByRole("link",{name:"繼續上次探索"});
+  fireEvent.change(screen.getByLabelText("想探索什麼風味？"),{target:{value:"第一帳號私人描述"}});
+  auth.user={sub:"fixture-owner-b"};
+  view.rerender(<ResearchStart />);
+  expect(screen.queryByRole("link",{name:"繼續上次探索"})).toBeNull();
+  expect(screen.queryByDisplayValue("第一帳號私人描述")).toBeNull();
+});
+
+test("a plan creation returning after subject change never starts or navigates the old owner's research",async()=>{
+  let complete!:(value:Response)=>void;
+  const fetch=vi.fn(async(input)=>{
+    if(String(input).endsWith("/tasks")) return Response.json([]);
+    if(String(input).endsWith("/plans")) return new Promise<Response>(resolve=>{complete=resolve;});
+    throw new Error("Old research must not start");
+  });
+  vi.stubGlobal("fetch",fetch);
+  const view=render(<ResearchStart />);
+  fireEvent.change(screen.getByLabelText("想探索什麼風味？"),{target:{value:"果香"}});
+  fireEvent.click(screen.getByRole("button",{name:"開始探索"}));
+  await waitFor(()=>expect(complete).toBeTypeOf("function"));
+  auth.user={sub:"fixture-owner-b"};
+  view.rerender(<ResearchStart />);
+  complete(Response.json({id,conditionsRevision:1}));
+  await new Promise(resolve=>setTimeout(resolve,0));
+  expect(fetch.mock.calls.some(call=>String(call[0]).endsWith("/agent"))).toBe(false);
+  expect(push).not.toHaveBeenCalled();
+});
 
 test("a reopened completed report states its original task revision", async () => {
   const completed:TaskView={...waiting,conditionsRevision:1,status:"completed",question:null,reportId,stage:"完成"};
@@ -31,6 +78,20 @@ test("a reopened completed report states its original task revision", async () =
   render(<ResearchTask taskId={id} />);
   await screen.findByText("原條件的歷史報告");
   expect(screen.getByText("此報告採用條件版本 1；修改條件後需另開研究。")).toBeTruthy();
+});
+
+test("changing task routes hides the old report before the next task responds",async()=>{
+  const nextId="00000000-0000-4000-8000-000000000009";
+  const completed={...waiting,status:"completed",question:null,reportId,stage:"完成"};
+  vi.stubGlobal("fetch",vi.fn(async(input)=>{
+    if(String(input).includes(nextId)) return new Promise<Response>(()=>{});
+    return String(input).includes(`/tasks/${id}`) ? Response.json(completed)
+      : Response.json({id:reportId,taskId:id,summary:"上一任務私人報告",candidates:[]});
+  }));
+  const view=render(<ResearchTask taskId={id} />);
+  await screen.findByText("上一任務私人報告");
+  view.rerender(<ResearchTask taskId={nextId} />);
+  expect(screen.queryByText("上一任務私人報告")).toBeNull();
 });
 
 test("beginner form creates a plan and starts a durable AG-UI turn before navigation", async () => {
