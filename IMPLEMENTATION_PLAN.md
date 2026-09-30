@@ -156,6 +156,8 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 公開 adapter GREEN：同一真 DB 測試 3 passed；新增過期資格投影補證沿用已受測 domain 規則，舊參考價格仍有查核日但 qualified=false／upper bound=null。Web route 最初匿名200與POST405期望各收到404（2 RED），加入無 credentials 的固定 upstream 後2 GREEN。UI 最小介面先無卡片／錯誤（3 RED），完成讀取與錯誤出口後3 GREEN；非HTTP來源仍顯示卡片的反例先RED，再從 Pydantic pattern→JSON Schema→AJV validator 生成後 GREEN。Vitest 檔名未被收集、錯誤 envelope 名稱誤用與 Next route-announcer selector 歧義只算測試準備修正，不算產品 RED。
 - 已驗 backend `pytest backend/tests -q` →459 passed（303.34秒）、wheel4、ruff check／format、mypy73 files、Python boundaries（root=backend/src）。Web 完整Vitest111，新增URL反例後catalog相關6 passed；typecheck／boundaries／Next build通過。原 TaskView schema／validator 生成物 `git diff --numstat -- contracts/task-view.*` 無差異。Node/workerd 原7條E2E通過，新增鍵盤catalog案例修正selector後單獨重跑1 passed；完整T10新手／熟手／修正旅程仍未完成，catalog尚未部署。
 - design-review：新鮮唯讀 reviewer 對 base `c209f8d` 核對 ID／sealed release、transaction、價格、匿名 transport、cache、schema generator、client lifecycle，0 findings（改／記／提／駁回均0）；AGENTS.md 路徑與現行規則對帳0處修正。review未檢查尚未實作的私人T10草稿，也不拿設計結論代替正確性測試。
+- `b2f1c54` 的 push run `36667581648`／PR run `36667672605`：backend jobs各success（3m34／4m14）、web各success（1m22／1m35）、GitGuardian pass；draft PR #9 尚未合併。T09 main push run `36665005129` 的 public-readiness job success，但 event=push，不取代 first schedule。已啟动有界背景觀察，只有實際 schedule run 的 job結論才作出口。
+- `backend/evals/t10_cases.v1.json` 在首次T10真模型呼叫前保存13條語料與定性rubric；JSON解析及case ID唯一性通過（`python3`讀JSON並印`len(cases)`／`runs_per_case`，13／2）。來源為產品契約與T08／T09已知負例，沒有從T10模型輸出改題；尚無runner／執行结果／人工評分。對照T08原始corpus與兩份result各12筆，T08是六題×兩次×兩模型的24次研究流程對照，不能稱為24次模型呼叫。
 
 ## T11 — 比較、探索結論、回訪與資料管理
 

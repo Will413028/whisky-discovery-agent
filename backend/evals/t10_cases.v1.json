@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "frozen_on": "2026-09-30",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "catalog_manifest": "data/catalog/first-journey.reviewed.json",
+  "runs_per_case": 2,
+  "scope": "T10 preference proposals, explicit version selection, evidence-backed exploration and bounded source fallback; not a completed eval run",
+  "hard_gates": [
+    "Only the current sealed reviewed catalog can supply candidates, facts or budget qualification",
+    "Preference proposals remain inferred and cannot enable a hard constraint without explicit user confirmation",
+    "A proposed mapping cites a span present in the user's input and a reviewed catalog tag; it is not proof of whisky preference",
+    "Expert entry has an exact user-confirmed release/item reference before recommending from a starting bottle",
+    "At most three candidates; no fill, automatic relaxation, missing-tag negatives or fabricated intensities",
+    "Clicks and confirmed language proposals apply the same condition command; unmentioned fields remain unchanged",
+    "Source failures are retained; fallback is limited to provided reviewed source references and cannot publish its observations",
+    "Revision, owner, receipt replay and historical-result fences remain enforced"
+  ],
+  "human_rubric": {
+    "scale": "1–5 per category with per-case reasons; not yet reviewed",
+    "traditional_chinese": "Readable Traditional Chinese distinguishes cited facts, editorial tags, inferred clues and unknowns",
+    "preference_confirmation": "A beginner can confirm or reject individual clues; temporary budget is not a permanent preference",
+    "version_question": "Version choices are specific, complete for the matched reviewed name, and precede starting-bottle comparison",
+    "comparison_evidence": "Each retained or explored feature links to positive reviewed evidence; no inferred intensity or claimed absence",
+    "source_recovery": "A failed source is auditable and a bounded valid alternative is selected, or the limitation remains explicit"
+  },
+  "cases": [
+    {
+      "id": "beginner_daily_food_clues",
+      "input": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+      "expected": ["Confirmable fruit and buttery-sweet clues remain inferred", "The budget applies only to this exploration", "No whisky preference is silently confirmed"]
+    },
+    {
+      "id": "beginner_unknown",
+      "input": "我完全不知道口味，想先看看有來源的選擇",
+      "expected": ["Unknown preferences remain unknown", "No claim of familiar taste without a start or confirmed preference", "At most three sourced style options"]
+    },
+    {
+      "id": "expert_generic_name",
+      "input": "我喜歡格蘭菲迪，想找下一款",
+      "expected": ["Ask or require selection between reviewed 12 year and 15 year Solera", "Do not infer a starting version from generic brand preference"]
+    },
+    {
+      "id": "expert_explicit_origin",
+      "starting_name": "格蘭菲迪 12 年",
+      "input": "保留果香，想試試來源描述有太妃糖的下一款",
+      "budget_twd": "1000",
+      "expected": ["Use the exact selected origin", "Glenlivet 12 is the single budget-qualified alternative", "Retained fruit and the quoted toffee description cite evidence", "Do not fill three slots"]
+    },
+    {
+      "id": "similar_only",
+      "starting_name": "格蘭菲迪 12 年",
+      "input": "這次只想接近熟悉的果香，不要替我安排不同風格",
+      "expected": ["Use positively cited common fruit evidence", "Do not impose a contrast slot", "Disclose remaining differences without promising equal taste"]
+    },
+    {
+      "id": "less_smoke_no_scale",
+      "starting_name": "格蘭菲迪 12 年",
+      "input": "保留果香，少一點煙燻",
+      "expected": ["The reviewed catalog has no consistent smoke comparison scale", "Do not treat absence of a smoke tag as less smoky", "Keep confirmed fruit and ask to confirm an evidence-supported alternative direction"]
+    },
+    {
+      "id": "hard_smoke_comparison",
+      "starting_name": "格蘭菲迪 12 年",
+      "input": "只接受有依據證明比起點更少煙燻的酒",
+      "confirmed_hard_preference": "少煙燻",
+      "expected": ["No candidates qualify under this unsupported hard comparison", "Do not relax the condition", "Explain the missing comparison evidence"]
+    },
+    {
+      "id": "strict_budget_empty",
+      "input": "想找帶果香、每瓶 800 元以下的酒",
+      "budget_twd": "800",
+      "expected": ["No current qualified candidates", "The user chooses whether to raise the budget", "No synthetic or conditional price substitution"]
+    },
+    {
+      "id": "conditional_price_not_qualification",
+      "input": "格蘭菲迪 15 年 Solera 可以在 1500 元內嗎？",
+      "budget_twd": "1500",
+      "expected": ["Solera's unclear conditional observation does not qualify", "Do not assert current purchasability", "Offer only qualified alternatives with their sources"]
+    },
+    {
+      "id": "patch_budget_only",
+      "input": "預算改成 900 元，其他條件不變",
+      "expected": ["A confirmable budget patch changes only budget_twd", "The start, goal and existing preferences remain unchanged", "Same-key retry replays one revision change"]
+    },
+    {
+      "id": "patch_one_preference",
+      "input": "保留果香，只把想探索的方向改成太妃糖",
+      "expected": ["Only the specified exploration direction changes", "Confirmed fruit and budget survive", "Old report stays historical until a new task completes"]
+    },
+    {
+      "id": "source_failure_fallback",
+      "input": "查格蘭利威 12 年雙橡木桶常規版的版本與台灣參考價",
+      "expected": ["After an unavailable source, try a different allowed reviewed source within the bound", "Persist the unavailable attempt and successful requested/final URL provenance", "Unreviewed observations never alter qualified catalog facts"]
+    },
+    {
+      "id": "unlisted_origin",
+      "input": "喜歡 Ardbeg Ten，想找少一點煙燻的下一款",
+      "expected": ["Explain that the origin is not in the reviewed release", "Do not replace it with an arbitrary catalog version", "Offer a beginner description or explicit catalog selection route"]
+    }
+  ]
+}
