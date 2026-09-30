@@ -306,6 +306,105 @@
         "title": "BinaryInputContent",
         "type": "object"
       },
+      "CandidateComparisonV4": {
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/CatalogReference"
+          },
+          "candidateClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Candidateclaims",
+            "type": "array"
+          },
+          "candidateDescription": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "commonTags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Commontags",
+            "type": "array"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DescriptorDifferenceV4"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exploreClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Exploreclaims",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "style_options",
+              "similar",
+              "small_step",
+              "contrast"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "originClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Originclaims",
+            "type": "array"
+          },
+          "originDescription": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "candidate",
+          "mode",
+          "origin",
+          "commonTags",
+          "originClaims",
+          "candidateClaims",
+          "originDescription",
+          "candidateDescription",
+          "difference",
+          "exploreClaims"
+        ],
+        "title": "CandidateComparisonV4",
+        "type": "object"
+      },
       "CatalogClaimView": {
         "properties": {
           "key": {
@@ -719,6 +818,141 @@
         "title": "ClarifiedBottleView",
         "type": "object"
       },
+      "ComparisonArtifactV4": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateComparisonV4"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntent"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "unlistedName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unlistedname"
+          },
+          "unresolved": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unresolved",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "candidates",
+          "unresolved",
+          "unlistedName"
+        ],
+        "title": "ComparisonArtifactV4",
+        "type": "object"
+      },
+      "ComparisonItemEvidenceV4": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/CatalogReference"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ReportSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "sources"
+        ],
+        "title": "ComparisonItemEvidenceV4",
+        "type": "object"
+      },
+      "ComparisonReportViewV4": {
+        "additionalProperties": false,
+        "properties": {
+          "catalogReleaseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalogreleaseid"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/ComparisonArtifactV4"
+          },
+          "conditionsRevision": {
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "evaluatedOn": {
+            "format": "date",
+            "title": "Evaluatedon",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonItemEvidenceV4"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "reportId": {
+            "format": "uuid",
+            "title": "Reportid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reportId",
+          "taskId",
+          "conditionsRevision",
+          "catalogReleaseId",
+          "evaluatedOn",
+          "comparison",
+          "items"
+        ],
+        "title": "ComparisonReportViewV4",
+        "type": "object"
+      },
       "ConditionPatch": {
         "additionalProperties": false,
         "properties": {
@@ -895,6 +1129,46 @@
         "title": "CreatePlanInput",
         "type": "object"
       },
+      "DescriptorDifferenceV4": {
+        "properties": {
+          "axis": {
+            "const": "flavor_description",
+            "title": "Axis",
+            "type": "string"
+          },
+          "candidateClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Candidateclaims",
+            "type": "array"
+          },
+          "candidateFeature": {
+            "title": "Candidatefeature",
+            "type": "string"
+          },
+          "originClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Originclaims",
+            "type": "array"
+          },
+          "originFeature": {
+            "title": "Originfeature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "axis",
+          "originFeature",
+          "candidateFeature",
+          "originClaims",
+          "candidateClaims"
+        ],
+        "title": "DescriptorDifferenceV4",
+        "type": "object"
+      },
       "DeveloperMessage": {
         "additionalProperties": true,
         "description": "A developer message.",
@@ -1038,6 +1312,94 @@
           "retryable"
         ],
         "title": "ErrorView",
+        "type": "object"
+      },
+      "ExplorationIntent": {
+        "additionalProperties": false,
+        "properties": {
+          "contrast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlavorContrast"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "explore_feature": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explore Feature"
+          },
+          "mode": {
+            "default": "style_options",
+            "enum": [
+              "style_options",
+              "similar",
+              "small_step",
+              "contrast"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "origin_query": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Query"
+          },
+          "smoke_comparison": {
+            "default": false,
+            "title": "Smoke Comparison",
+            "type": "boolean"
+          }
+        },
+        "title": "ExplorationIntent",
+        "type": "object"
+      },
+      "FlavorContrast": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "const": "flavor_description",
+            "default": "flavor_description",
+            "title": "Axis",
+            "type": "string"
+          },
+          "candidate_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Candidate Feature",
+            "type": "string"
+          },
+          "origin_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Origin Feature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin_feature",
+          "candidate_feature"
+        ],
+        "title": "FlavorContrast",
         "type": "object"
       },
       "FunctionCall": {
@@ -1506,6 +1868,38 @@
           "prices"
         ],
         "title": "ReportCandidateView",
+        "type": "object"
+      },
+      "ReportClaim": {
+        "properties": {
+          "evidenceIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Evidenceids",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "value",
+          "evidenceIds"
+        ],
+        "title": "ReportClaim",
         "type": "object"
       },
       "ReportClaimView": {
@@ -4563,6 +4957,111 @@
           }
         ],
         "summary": "Read Report"
+      }
+    },
+    "/api/v1/reports/{report_id}/comparison": {
+      "get": {
+        "operationId": "read_comparison_api_v1_reports__report_id__comparison_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonReportViewV4"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Comparison"
       }
     },
     "/api/v1/tasks": {

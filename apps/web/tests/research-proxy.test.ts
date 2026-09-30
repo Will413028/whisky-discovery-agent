@@ -1,6 +1,25 @@
 // @vitest-environment node
 import { expect, test, vi } from "vitest";
-import { researchStreamProxy } from "../src/features/research/proxy";
+import { researchReadProxy, researchStreamProxy } from "../src/features/research/proxy";
+
+test("comparison read forwards only the authenticated fixed report path", async () => {
+  const id = "00000000-0000-4000-8000-000000000001";
+  const fetch = vi.fn(async (_request: Request) => Response.json({schemaVersion:4}));
+  const path = `/api/v1/reports/${id}/comparison`;
+  const response = await researchReadProxy(new Request(`https://fixture.example${path}`, {
+    headers:{Authorization:"Bearer fixture",Cookie:"private=1"},
+  }), {fetch});
+  expect(response.status).toBe(200);
+  expect(fetch.mock.calls[0][0].url).toBe(`http://whisky-api.internal${path}`);
+  expect(fetch.mock.calls[0][0].headers.get("authorization")).toBe("Bearer fixture");
+  expect(fetch.mock.calls[0][0].headers.has("cookie")).toBe(false);
+  expect(response.headers.get("cache-control")).toBe("no-store");
+  for (const [suffix, method, status] of [["?upstream=other", "GET", 404], ["/extra", "GET", 404], ["", "POST", 405]] as const) {
+    fetch.mockClear();
+    expect((await researchReadProxy(new Request(`https://fixture.example${path}${suffix}`, {method}), {fetch})).status).toBe(status);
+    expect(fetch).not.toHaveBeenCalled();
+  }
+});
 
 test("observe proxy forwards bearer and body only to its fixed upstream", async () => {
   const fetch = vi.fn(async (_request: Request) => new Response('data: {}\n\n', {headers:{"Content-Type":"text/event-stream", "Set-Cookie":"private", "Cache-Control":"public"}}));

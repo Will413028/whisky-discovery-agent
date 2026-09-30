@@ -24,6 +24,18 @@ const waiting: TaskView = {
   reportId:null, error:null, observedAt:"2026-09-29T00:00:00Z", activeRunId:null,
 };
 
+test("reopening a completed V4 task loads its sourced comparison independently of the legacy summary",async()=>{
+  const completed={...waiting,status:"completed",question:null,reportId,stage:"完成"};
+  vi.stubGlobal("fetch",vi.fn(async(input)=>{
+    const path=String(input);
+    if(path.endsWith("/comparison")) return Response.json({schemaVersion:4,reportId,taskId:id,conditionsRevision:1,catalogReleaseId:null,evaluatedOn:"2026-09-30",comparison:{schemaVersion:4,intent:{mode:"style_options",smoke_comparison:false},candidates:[],unresolved:["目前起點的煙燻強度沒有覆核資料。"],unlistedName:null},items:[]});
+    return path.includes(`/tasks/${id}`) ? Response.json(completed) : Response.json({id:reportId,taskId:id,summary:"已保存的摘要",candidates:[]});
+  }));
+  render(<ResearchTask taskId={id}/>);
+  expect(await screen.findByText("已保存的摘要")).toBeTruthy();
+  expect(await screen.findByText("目前起點的煙燻強度沒有覆核資料。")).toBeTruthy();
+});
+
 test("switching authenticated subjects immediately hides the previous owner's completed report",async()=>{
   const completed={...waiting,status:"completed",question:null,reportId,stage:"完成"};
   vi.stubGlobal("fetch",vi.fn(async(input)=>{

@@ -260,6 +260,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/{report_id}/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Comparison */
+        get: operations["read_comparison_api_v1_reports__report_id__comparison_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tasks": {
         parameters: {
             query?: never;
@@ -467,6 +484,27 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** CandidateComparisonV4 */
+        CandidateComparisonV4: {
+            candidate: components["schemas"]["CatalogReference"];
+            /** Candidateclaims */
+            candidateClaims: components["schemas"]["ReportClaim"][];
+            candidateDescription: components["schemas"]["ReportClaim"] | null;
+            /** Commontags */
+            commonTags: string[];
+            difference: components["schemas"]["DescriptorDifferenceV4"] | null;
+            /** Exploreclaims */
+            exploreClaims: components["schemas"]["ReportClaim"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "style_options" | "similar" | "small_step" | "contrast";
+            origin: components["schemas"]["CatalogReference"] | null;
+            /** Originclaims */
+            originClaims: components["schemas"]["ReportClaim"][];
+            originDescription: components["schemas"]["ReportClaim"] | null;
+        };
         /** CatalogClaimView */
         CatalogClaimView: {
             /** Key */
@@ -621,6 +659,61 @@ export interface components {
             /** Reviewedinrelease */
             reviewedInRelease: boolean;
         };
+        /** ComparisonArtifactV4 */
+        ComparisonArtifactV4: {
+            /** Candidates */
+            candidates: components["schemas"]["CandidateComparisonV4"][];
+            intent: components["schemas"]["ExplorationIntent"];
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /** Unlistedname */
+            unlistedName: string | null;
+            /** Unresolved */
+            unresolved: string[];
+        };
+        /** ComparisonItemEvidenceV4 */
+        ComparisonItemEvidenceV4: {
+            /** Name */
+            name: string;
+            reference: components["schemas"]["CatalogReference"];
+            /** Sources */
+            sources: components["schemas"]["ReportSourceView"][];
+        };
+        /** ComparisonReportViewV4 */
+        ComparisonReportViewV4: {
+            /** Catalogreleaseid */
+            catalogReleaseId: string | null;
+            comparison: components["schemas"]["ComparisonArtifactV4"];
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Evaluatedon
+             * Format: date
+             */
+            evaluatedOn: string;
+            /** Items */
+            items: components["schemas"]["ComparisonItemEvidenceV4"][];
+            /**
+             * Reportid
+             * Format: uuid
+             */
+            reportId: string;
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+        };
         /** ConditionPatch */
         ConditionPatch: {
             /** Budget Twd */
@@ -686,6 +779,22 @@ export interface components {
             /** Key */
             key: string;
         };
+        /** DescriptorDifferenceV4 */
+        DescriptorDifferenceV4: {
+            /**
+             * Axis
+             * @constant
+             */
+            axis: "flavor_description";
+            /** Candidateclaims */
+            candidateClaims: components["schemas"]["ReportClaim"][];
+            /** Candidatefeature */
+            candidateFeature: string;
+            /** Originclaims */
+            originClaims: components["schemas"]["ReportClaim"][];
+            /** Originfeature */
+            originFeature: string;
+        };
         /**
          * DeveloperMessage
          * @description A developer message.
@@ -743,6 +852,38 @@ export interface components {
             request_id: string;
             /** Retryable */
             retryable: boolean;
+        };
+        /** ExplorationIntent */
+        ExplorationIntent: {
+            contrast?: components["schemas"]["FlavorContrast"] | null;
+            /** Explore Feature */
+            explore_feature?: string | null;
+            /**
+             * Mode
+             * @default style_options
+             * @enum {string}
+             */
+            mode: "style_options" | "similar" | "small_step" | "contrast";
+            /** Origin Query */
+            origin_query?: string | null;
+            /**
+             * Smoke Comparison
+             * @default false
+             */
+            smoke_comparison: boolean;
+        };
+        /** FlavorContrast */
+        FlavorContrast: {
+            /**
+             * Axis
+             * @default flavor_description
+             * @constant
+             */
+            axis: "flavor_description";
+            /** Candidate Feature */
+            candidate_feature: string;
+            /** Origin Feature */
+            origin_feature: string;
         };
         /**
          * FunctionCall
@@ -962,6 +1103,17 @@ export interface components {
              * Format: uuid
              */
             releaseId: string;
+        };
+        /** ReportClaim */
+        ReportClaim: {
+            /** Evidenceids */
+            evidenceIds: string[];
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: string;
         };
         /** ReportClaimView */
         ReportClaimView: {
@@ -2764,6 +2916,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_comparison_api_v1_reports__report_id__comparison_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonReportViewV4"];
                 };
             };
             /** @description Unauthorized */

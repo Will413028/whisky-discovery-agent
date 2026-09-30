@@ -1,0 +1,458 @@
+{
+  "$defs": {
+    "CandidateComparisonV4": {
+      "properties": {
+        "candidate": {
+          "$ref": "#/$defs/CatalogReference"
+        },
+        "candidateClaims": {
+          "items": {
+            "$ref": "#/$defs/ReportClaim"
+          },
+          "title": "Candidateclaims",
+          "type": "array"
+        },
+        "candidateDescription": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReportClaim"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "commonTags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Commontags",
+          "type": "array"
+        },
+        "difference": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DescriptorDifferenceV4"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "exploreClaims": {
+          "items": {
+            "$ref": "#/$defs/ReportClaim"
+          },
+          "title": "Exploreclaims",
+          "type": "array"
+        },
+        "mode": {
+          "enum": [
+            "style_options",
+            "similar",
+            "small_step",
+            "contrast"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "origin": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CatalogReference"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "originClaims": {
+          "items": {
+            "$ref": "#/$defs/ReportClaim"
+          },
+          "title": "Originclaims",
+          "type": "array"
+        },
+        "originDescription": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ReportClaim"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "candidate",
+        "mode",
+        "origin",
+        "commonTags",
+        "originClaims",
+        "candidateClaims",
+        "originDescription",
+        "candidateDescription",
+        "difference",
+        "exploreClaims"
+      ],
+      "title": "CandidateComparisonV4",
+      "type": "object"
+    },
+    "CatalogReference": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "item_id"
+      ],
+      "title": "CatalogReference",
+      "type": "object"
+    },
+    "ComparisonArtifactV4": {
+      "properties": {
+        "candidates": {
+          "items": {
+            "$ref": "#/$defs/CandidateComparisonV4"
+          },
+          "title": "Candidates",
+          "type": "array"
+        },
+        "intent": {
+          "$ref": "#/$defs/ExplorationIntent"
+        },
+        "schemaVersion": {
+          "const": 4,
+          "default": 4,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "unlistedName": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Unlistedname"
+        },
+        "unresolved": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Unresolved",
+          "type": "array"
+        }
+      },
+      "required": [
+        "intent",
+        "candidates",
+        "unresolved",
+        "unlistedName"
+      ],
+      "title": "ComparisonArtifactV4",
+      "type": "object"
+    },
+    "ComparisonItemEvidenceV4": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "reference": {
+          "$ref": "#/$defs/CatalogReference"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/ReportSourceView"
+          },
+          "title": "Sources",
+          "type": "array"
+        }
+      },
+      "required": [
+        "reference",
+        "name",
+        "sources"
+      ],
+      "title": "ComparisonItemEvidenceV4",
+      "type": "object"
+    },
+    "DescriptorDifferenceV4": {
+      "properties": {
+        "axis": {
+          "const": "flavor_description",
+          "title": "Axis",
+          "type": "string"
+        },
+        "candidateClaims": {
+          "items": {
+            "$ref": "#/$defs/ReportClaim"
+          },
+          "title": "Candidateclaims",
+          "type": "array"
+        },
+        "candidateFeature": {
+          "title": "Candidatefeature",
+          "type": "string"
+        },
+        "originClaims": {
+          "items": {
+            "$ref": "#/$defs/ReportClaim"
+          },
+          "title": "Originclaims",
+          "type": "array"
+        },
+        "originFeature": {
+          "title": "Originfeature",
+          "type": "string"
+        }
+      },
+      "required": [
+        "axis",
+        "originFeature",
+        "candidateFeature",
+        "originClaims",
+        "candidateClaims"
+      ],
+      "title": "DescriptorDifferenceV4",
+      "type": "object"
+    },
+    "ExplorationIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "contrast": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlavorContrast"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "explore_feature": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Explore Feature"
+        },
+        "mode": {
+          "default": "style_options",
+          "enum": [
+            "style_options",
+            "similar",
+            "small_step",
+            "contrast"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "origin_query": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Origin Query"
+        },
+        "smoke_comparison": {
+          "default": false,
+          "title": "Smoke Comparison",
+          "type": "boolean"
+        }
+      },
+      "title": "ExplorationIntent",
+      "type": "object"
+    },
+    "FlavorContrast": {
+      "additionalProperties": false,
+      "properties": {
+        "axis": {
+          "const": "flavor_description",
+          "default": "flavor_description",
+          "title": "Axis",
+          "type": "string"
+        },
+        "candidate_feature": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Candidate Feature",
+          "type": "string"
+        },
+        "origin_feature": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Origin Feature",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origin_feature",
+        "candidate_feature"
+      ],
+      "title": "FlavorContrast",
+      "type": "object"
+    },
+    "ReportClaim": {
+      "properties": {
+        "evidenceIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "key",
+        "value",
+        "evidenceIds"
+      ],
+      "title": "ReportClaim",
+      "type": "object"
+    },
+    "ReportSourceView": {
+      "additionalProperties": false,
+      "properties": {
+        "checkedOn": {
+          "format": "date",
+          "title": "Checkedon",
+          "type": "string"
+        },
+        "evidenceId": {
+          "format": "uuid",
+          "title": "Evidenceid",
+          "type": "string"
+        },
+        "publisher": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Publisher"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidenceId",
+        "url",
+        "publisher",
+        "checkedOn"
+      ],
+      "title": "ReportSourceView",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "catalogReleaseId": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Catalogreleaseid"
+    },
+    "comparison": {
+      "$ref": "#/$defs/ComparisonArtifactV4"
+    },
+    "conditionsRevision": {
+      "title": "Conditionsrevision",
+      "type": "integer"
+    },
+    "evaluatedOn": {
+      "format": "date",
+      "title": "Evaluatedon",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/ComparisonItemEvidenceV4"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "reportId": {
+      "format": "uuid",
+      "title": "Reportid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 4,
+      "default": 4,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "taskId": {
+      "format": "uuid",
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "reportId",
+    "taskId",
+    "conditionsRevision",
+    "catalogReleaseId",
+    "evaluatedOn",
+    "comparison",
+    "items"
+  ],
+  "title": "ComparisonReportViewV4",
+  "type": "object"
+}

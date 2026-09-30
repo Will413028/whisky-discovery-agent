@@ -7,6 +7,7 @@ from whisky.bootstrap.api import create_app
 from whisky.modules.catalog.http import CatalogView
 from whisky.modules.control.http import ControlView
 from whisky.modules.discovery.http import PlanListView, PlanView
+from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.public import TaskView
 from whisky.modules.research.views import TaskHistoryView
 
@@ -36,6 +37,7 @@ for name, model in (
     ("plan-list-view", PlanListView),
     ("control-view", ControlView),
     ("task-history-view", TaskHistoryView),
+    ("comparison-report-view", ComparisonReportViewV4),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

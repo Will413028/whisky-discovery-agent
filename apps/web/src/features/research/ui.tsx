@@ -7,6 +7,8 @@ import { safeReturnTo } from "../identity";
 import { observeTask } from "./observe";
 import { answerQuestion, createPlan, listOpenTasks, readReport, readTask, startResearch, type ReportView } from "./client";
 import type { TaskView } from "./state";
+import {readComparison, type ComparisonReportView} from "./comparison-client";
+import {ComparisonReport} from "./comparison-ui";
 
 function configured() {
   return Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN && process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID && process.env.NEXT_PUBLIC_AUTH0_AUDIENCE);
@@ -121,6 +123,8 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
   const life=usePrivateLifetime();
   const [task, setTask] = useState<TaskView | null>(null);
   const [report, setReport] = useState<ReportView | null>(null);
+  const [comparison, setComparison] = useState<ComparisonReportView | null>(null);
+  const [comparisonError, setComparisonError] = useState(false);
   const [selected, setSelected] = useState("");
   const [answerAttempt, setAnswerAttempt] = useState<{questionId:string;answer:string;key:string;pending:boolean} | null>(null);
   const [busy, setBusy] = useState(false);
@@ -184,6 +188,23 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
     return () => {live = false; controller.abort();};
   }, [isAuthenticated, getAccessTokenSilently, task?.reportId, task?.status, task?.taskId, refresh]);
 
+  useEffect(() => {
+    setComparison(null);
+    setComparisonError(false);
+    if (!isAuthenticated || task?.status !== "completed" || !task.reportId) return;
+    let live=true;
+    const controller=new AbortController();
+    void (async()=>{
+      try {
+        const token=requiredToken(await getAccessTokenSilently());
+        if (!live) return;
+        const next=await readComparison(task.reportId!,task.taskId,token,controller.signal);
+        if(live) setComparison(next);
+      } catch {if(live) setComparisonError(true);}
+    })();
+    return ()=>{live=false;controller.abort();};
+  }, [isAuthenticated,getAccessTokenSilently,task?.reportId,task?.status,task?.taskId,refresh]);
+
   const submitAnswer = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!task?.question || busy) return;
@@ -231,6 +252,8 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
       {task.status === "completed" && (report ? <article><h2>探索報告</h2><p>此報告採用條件版本 {task.conditionsRevision}；修改條件後需另開研究。</p><p>{report.summary}</p>
         {report.clarifiedBottle && <p>已補充版本：{report.clarifiedBottle.name}{!report.clarifiedBottle.reviewedInRelease && "（目前資料未覆核）"}</p>}
         {report.unresolved?.map(value => <p key={value}>待確認：{value}</p>)}
+        {comparison?.reportId === report.id && <ComparisonReport view={comparison}/>}
+        {comparisonError && <p>風味比較暫時無法讀取。<button type="button" onClick={()=>setRefresh(value=>value+1)}>重試比較</button></p>}
         {report.candidates.map(candidate => <section key={candidate.itemId}><h3>{candidate.name}</h3><p>{candidate.reason}</p>
           {candidate.prices.map(price => <p key={price.id}>參考價格：{price.amount ?? "未提供"} {price.currency}／{price.volumeMl ?? "?"} ml，{price.market}，查核日期 {price.checkedOn ?? "未提供"}</p>)}
           {candidate.claims.flatMap(claim => claim.sources).map(source => <p key={source.evidenceId}>來源：<a href={source.url} target="_blank" rel="noopener noreferrer">{source.publisher ?? source.url}</a>（{source.checkedOn}）</p>)}

@@ -16,6 +16,7 @@ from whisky.modules.identity.public import AccessSession, IdentityAccess
 from whisky.modules.research.acceptance import AcceptResearch
 from whisky.modules.research.answer import AnswerResearch
 from whisky.modules.research.commands import parse_resume, parse_start
+from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.contracts import AnswerInput
 from whisky.modules.research.db_observation import DBObservationSource
 from whisky.modules.research.observation import (
@@ -176,6 +177,20 @@ def observation_router(
         if reports is None:
             raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
         view = reports.read(session.actor_id, report_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
+
+    @routes.get(
+        "/api/v1/reports/{report_id}/comparison",
+        response_model=ComparisonReportViewV4,
+    )
+    def read_comparison(
+        report_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> ComparisonReportViewV4:
+        if reports is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = reports.read_comparison_v4(session.actor_id, report_id)
         if view is None:
             raise HTTPException(404, "NOT_FOUND")
         return view
