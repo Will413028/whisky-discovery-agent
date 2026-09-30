@@ -163,7 +163,7 @@ class ResearchWorkflowV4(PydanticAIWorkflow):
                         raise ValueError("Research exceeded its clarification limit")
                     waiting_version += 1
                     question = await workflow.execute_activity(
-                        "whisky_publish_question_v3",
+                        "whisky_publish_question_v4",
                         ReviewedVersionQuestionCommit(
                             context,
                             waiting_version,

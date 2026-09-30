@@ -36,6 +36,7 @@ class _ReviewedVersionContent:
     version_ids: tuple[UUID, ...]
     prompt_for: Callable[[list[dict[str, str]]], str]
     expected_release_id: UUID | None = None
+    minimum_choices: int = 2
 
 
 @dataclass(frozen=True)
@@ -112,6 +113,22 @@ class ClarificationStore:
             expected_release_id=release_id,
         )
 
+    def publish_reviewed_versions_v4(
+        self,
+        context: ResearchRunContext,
+        waiting_version: int,
+        version_ids: tuple[UUID, ...],
+        expires_at: datetime,
+        release_id: UUID,
+    ) -> PublishedQuestion:
+        """V4 also confirms an exact name with a single reviewed match."""
+        return self._publish_question(
+            context,
+            waiting_version,
+            expires_at,
+            _ReviewedVersionContent(version_ids, self._reviewed_prompt, release_id, 1),
+        )
+
     @staticmethod
     def _reviewed_prompt(versions: list[dict[str, str]]) -> str:
         return (
@@ -149,7 +166,9 @@ class ClarificationStore:
             stage = "等待版本補充"
             version_ids = content.version_ids
             prompt_for = content.prompt_for
+            minimum_choices = content.minimum_choices
         else:
+            minimum_choices = 2
             kind = "preference_proposal"
             stage = "等待偏好確認"
             version_ids = (
@@ -167,7 +186,7 @@ class ClarificationStore:
             prompt_for = preference_prompt
         if (
             waiting_version < 1
-            or not 2 <= len(version_ids) <= 5
+            or not minimum_choices <= len(version_ids) <= 5
             or len(set(version_ids)) != len(version_ids)
             or expires_at.utcoffset() is None
         ):

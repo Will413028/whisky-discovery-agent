@@ -244,6 +244,13 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - correctness新增P2「只改一筆同名偏好卻刪其他」含手動及proposal兩條路徑已修正：未消歧組禁止用途／hard修改與同名proposal套用，必須明確移除到唯一項目；純沿用舊資料不強迫遷移。新domain＋UI2 RED、proposal繞路另1 RED後GREEN，既有backend ambiguous upsert仍已保護。累積correctness四項fixed／open0，design唯一budget B fixed／open0，最後複核均無新增發現；不把design review當correctness證據。
 - Node／workerd Playwright **12 passed（9.6秒）**（`/tmp/whisky-t10-preference-final-e2e.log`）：新增瀏覽器刪除一項／明確hard確認／同receipt保存／預算保持／新revision重開，草稿確認與串流舊回歸通過。這是synthetic UI旅程，不取代真登入、T10 live model人工rubric或部署。
 
+- T10 eval 接線：保持凍結的 `backend/evals/t10_cases.v1.json` 不變，另存 typed controls `t10_inputs.v1.json`；13 題各兩次是 26 個 workflow samples，provider attempts 另計，不冒充 26 次模型呼叫。`--dry-run` 不讀 credentials 或呼叫模型；live runner 使用專用 loopback DB、真 migrations／reviewed release／Temporal worker／配額，逐筆保存輸出並拒絕覆寫。來源失敗測試必須明示 `--inject-source-failure`，只對指定 workflow 首次來源讀取注入 unavailable；替代來源仍由真 SourceReader 讀取，兩次 provenance 與 unreviewed 狀態分開保存。
+- controls／answer 回歸取得實際 RED 後 GREEN；版本 ID 原依 label 比對的設計 A finding 已改為精確 reviewed UUID，改寫 label 的回歸 1 RED→GREEN。來源 guard 在 fault 前檢查 URL，避免測試繞過正式允許來源；獨立 eval 設計審查 A fixed／open0。初次 runner integration 取得真 DB／Temporal 的缺 `release_id` 行為 RED，修正 public catalog 查詢後通過；credential-free dry run 不作執行證據。
+- eval correctness P1「generic RESEARCH_FAILED 遮蔽配額原因，無法停止」已用 sanitized nested failure chain 停止（3 RED→GREEN；暫時容量3040不冒充日額度3036）；P2「通用完成 gate 容許錯誤空結果／違反 hard 比較」新增 case-specific 精確／禁止 version IDs、必要空結果、版本確認與完整 generic 選項（6 RED→GREEN）。兩項 fixed／open0；人工語言、來源品質與確認可用性仍須 rubric，不把此 runner 的 deterministic gates 稱完整 T10 出口。
+- 真精確版本 workflow 暴露 V4 沿用 V3 min2 choices 的缺口：`test_t10_eval_runner.py` 的 hard smoke case 1 RED，任務因單一 reviewed match 的 `Invalid clarification question` 失敗；新增 `whisky_publish_question_v4`／store 入口允許明示確認單一版本，V1–V3 預設仍 min2。真 DB 又捕捉舊 choices constraint，forward migration `0016_single_version_confirmation` 只放寬 version 基數至1–5，preference proposal 保持2–5，wheel head 同步。12項 runner／真 Temporal 測試 GREEN（8.48秒，`/tmp/whisky-t10-eval-single-version-migration-green.log`），含 proposal 等待、預算空結果與精確版本確認後 hard 比較空結果；模型為明示 FunctionModel fixture，未作真模型證據。獨立此修正 design-review 0 findings；尚未部署0013–0016或完成 live model／人工 rubric。
+
+- 此 eval／單一版本 slice 完整 backend **601 passed（288.58秒）**（`/tmp/whisky-t10-eval-full-backend.log`）；追加真 quota error 回歸後 runner 定向 **13 passed（17.47秒）**，實際 generic RESEARCH_FAILED 仍可辨識 DAILY_BUDGET_UNCONFIGURED，provider attempts=0。wheel **4 passed（12.08秒）**、scripts unittest11、ruff check／format、mypy88 source files與Python boundaries通過。原 corpus `git diff -- backend/evals/t10_cases.v1.json` 無差異。此輪未改Web，沿最新193／12browser證據；live模型／人工rubric／ARM與部署未驗，不把fixture結果當模型品質。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

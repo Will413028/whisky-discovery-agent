@@ -1,0 +1,340 @@
+{
+  "version": 1,
+  "corpus_version": 1,
+  "frozen_before_model_run": true,
+  "scope": "Explicit fixture controls corresponding to the unchanged raw corpus; proposal selections are not automatically committed to plan conditions.",
+  "cases": {
+    "beginner_daily_food_clues": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": []
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+        "intent": {
+          "mode": "style_options",
+          "origin_query": null,
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": null,
+      "proposal_action": "capture_then_use_intent",
+      "stop_at": "proposal_question"
+    },
+    "beginner_unknown": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "我完全不知道口味，想先看看有來源的選擇",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": []
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "我完全不知道口味，想先看看有來源的選擇",
+        "intent": {
+          "mode": "style_options",
+          "origin_query": null,
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": null,
+      "proposal_action": "capture_then_use_intent"
+    },
+    "expert_generic_name": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "我喜歡格蘭菲迪，想找下一款",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": []
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "similar",
+          "origin_query": "格蘭菲迪",
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+      "proposal_action": null
+    },
+    "expert_explicit_origin": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "保留果香，想試試來源描述有太妃糖的下一款",
+        "budget_twd": "1000",
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ]
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "small_step",
+          "origin_query": "格蘭菲迪 12 年",
+          "smoke_comparison": false,
+          "explore_feature": "太妃糖"
+        }
+      },
+      "version_choice": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+      "proposal_action": null
+    },
+    "similar_only": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "這次只想接近熟悉的果香，不要替我安排不同風格",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ]
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "similar",
+          "origin_query": "格蘭菲迪 12 年",
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+      "proposal_action": null
+    },
+    "less_smoke_no_scale": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "保留果香，少一點煙燻",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ]
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "similar",
+          "origin_query": "格蘭菲迪 12 年",
+          "smoke_comparison": true
+        }
+      },
+      "version_choice": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+      "proposal_action": null
+    },
+    "hard_smoke_comparison": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "只接受有依據證明比起點更少煙燻的酒",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "少煙燻",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "hard"
+          }
+        ]
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "style_options",
+          "origin_query": "格蘭菲迪 12 年",
+          "smoke_comparison": true
+        }
+      },
+      "version_choice": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+      "proposal_action": null
+    },
+    "strict_budget_empty": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "想找帶果香、每瓶 800 元以下的酒",
+        "budget_twd": "800",
+        "starting_bottle": null,
+        "preferences": []
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "style_options",
+          "origin_query": null,
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": null,
+      "proposal_action": null
+    },
+    "conditional_price_not_qualification": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "格蘭菲迪 15 年 Solera 可以在 1500 元內嗎？",
+        "budget_twd": "1500",
+        "starting_bottle": null,
+        "preferences": []
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "style_options",
+          "origin_query": null,
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": null,
+      "proposal_action": null
+    },
+    "patch_budget_only": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "預算改成 900 元，其他條件不變",
+        "budget_twd": "1000",
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ]
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "預算改成 900 元，其他條件不變",
+        "intent": {
+          "mode": "style_options",
+          "origin_query": null,
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": null,
+      "proposal_action": "capture_then_use_intent",
+      "stop_at": "proposal_question"
+    },
+    "patch_one_preference": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "保留果香，只把想探索的方向改成太妃糖",
+        "budget_twd": "1000",
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ]
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "保留果香，只把想探索的方向改成太妃糖",
+        "intent": {
+          "mode": "style_options",
+          "origin_query": null,
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": null,
+      "proposal_action": "capture_then_use_intent",
+      "stop_at": "proposal_question"
+    },
+    "source_failure_fallback": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "查格蘭利威 12 年雙橡木桶常規版的版本與台灣參考價",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": []
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "style_options",
+          "origin_query": null,
+          "smoke_comparison": false
+        }
+      },
+      "version_choice": null,
+      "proposal_action": null
+    },
+    "unlisted_origin": {
+      "conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "喜歡 Ardbeg Ten，想找少一點煙燻的下一款",
+        "budget_twd": null,
+        "starting_bottle": null,
+        "preferences": []
+      },
+      "input": {
+        "schemaVersion": 4,
+        "phase": "research",
+        "sourceText": null,
+        "intent": {
+          "mode": "similar",
+          "origin_query": "Ardbeg Ten",
+          "smoke_comparison": true
+        }
+      },
+      "version_choice": null,
+      "proposal_action": null
+    }
+  }
+}

@@ -240,6 +240,22 @@ class ResearchActivities:
         except (ResearchConflict, ValueError) as error:
             raise ApplicationError(str(error), non_retryable=True) from error
 
+    @activity.defn(name="whisky_publish_question_v4")
+    async def publish_question_v4(
+        self, commit: ReviewedVersionQuestionCommit
+    ) -> PublishedQuestion:
+        try:
+            return await asyncio.to_thread(
+                self.clarifications.publish_reviewed_versions_v4,
+                commit.context,
+                commit.waiting_version,
+                commit.version_ids,
+                commit.expires_at,
+                commit.release_id,
+            )
+        except (ResearchConflict, ValueError) as error:
+            raise ApplicationError(str(error), non_retryable=True) from error
+
     @activity.defn(name="whisky_accept_answer_v1")
     async def accept_answer(self, receipt: AnswerReceipt) -> AnswerResult:
         try:

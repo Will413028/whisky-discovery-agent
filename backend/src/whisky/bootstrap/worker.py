@@ -168,6 +168,7 @@ def research_worker(
             db.fail_research,
             db.publish_question,
             db.publish_question_v3,
+            db.publish_question_v4,
             db.accept_answer,
             db.expire_question,
             *(
