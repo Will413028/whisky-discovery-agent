@@ -96,6 +96,7 @@ class ControlStore:
         *,
         expected_revision: int = 0,
         conditions: ResearchConditionsV1 | None = None,
+        base_conditions: ResearchConditionsV1 | None = None,
     ) -> ControlReceipt:
         try:
             key_uuid = UUID(key)
@@ -107,7 +108,11 @@ class ControlStore:
         if kind == "plan.change_conditions":
             if expected_revision < 1 or conditions is None:
                 raise ValueError("Condition changes require a revision and conditions")
-        elif expected_revision != 0 or conditions is not None:
+        elif (
+            expected_revision != 0
+            or conditions is not None
+            or base_conditions is not None
+        ):
             raise ValueError("Only condition changes carry a revision and conditions")
         digest = control_payload_hash(kind, target_id, expected_revision, conditions)
         with self.engine.begin() as connection:
@@ -121,7 +126,13 @@ class ControlStore:
             if existing is not None:
                 return self._replay(existing, generation, digest)
             self._validate_target(
-                connection, owner, generation, kind, target_id, expected_revision
+                connection,
+                owner,
+                generation,
+                kind,
+                target_id,
+                expected_revision,
+                base_conditions,
             )
             identifier = uuid4()
             row = (
@@ -368,6 +379,7 @@ class ControlStore:
         kind: ControlKind,
         target_id: UUID,
         expected_revision: int,
+        base_conditions: ResearchConditionsV1 | None = None,
     ) -> None:
         if kind == "actor.delete":
             if target_id != owner:
@@ -386,6 +398,8 @@ class ControlStore:
             plan.conditions_revision != expected_revision
         ):
             raise ControlConflict("REVISION_CONFLICT")
+        if base_conditions is not None and plan.conditions != base_conditions:
+            raise ControlConflict("BASE_CONDITIONS_CONFLICT")
 
     @staticmethod
     def _by_key(

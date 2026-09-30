@@ -192,6 +192,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans/{plan_id}/conditions/patch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Patch Plan Conditions */
+        post: operations["patch_plan_conditions_api_v1_plans__plan_id__conditions_patch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/{plan_id}/delete": {
         parameters: {
             query?: never;
@@ -587,6 +604,26 @@ export interface components {
             /** Reviewedinrelease */
             reviewedInRelease: boolean;
         };
+        /** ConditionPatch */
+        ConditionPatch: {
+            /** Budget Twd */
+            budget_twd?: number | string | null;
+            /** Entry */
+            entry?: ("beginner" | "existing_bottle") | null;
+            /** Goal */
+            goal?: string | null;
+            /**
+             * Remove Preferences
+             * @default []
+             */
+            remove_preferences: string[];
+            starting_bottle?: components["schemas"]["CatalogReference"] | null;
+            /**
+             * Upsert Preferences
+             * @default []
+             */
+            upsert_preferences: components["schemas"]["Preference"][];
+        };
         /**
          * Context
          * @description Additional context for the agent.
@@ -775,6 +812,18 @@ export interface components {
              * Format: uuid
              */
             taskId: string;
+        };
+        /** PatchConditionsRequest */
+        PatchConditionsRequest: {
+            baseConditions: components["schemas"]["ResearchConditions-Input"];
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Key
+             * Format: uuid
+             */
+            key: string;
+            patch: components["schemas"]["ConditionPatch"];
         };
         /** PlanListView */
         PlanListView: {
@@ -2321,6 +2370,95 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ChangeConditionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    patch_plan_conditions_api_v1_plans__plan_id__conditions_patch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchConditionsRequest"];
             };
         };
         responses: {

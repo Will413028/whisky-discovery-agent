@@ -44,20 +44,22 @@ export function ResearchStart() {
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState<{planKey:string; startKey:string; threadId:string; runId:string; plan?:{id:string;conditionsRevision:number}}>();
   const [openTasks, setOpenTasks] = useState<TaskView[]>([]);
+  const [tasksError, setTasksError] = useState(false);
+  const [tasksRefresh, setTasksRefresh] = useState(0);
   const {isAuthenticated, getAccessTokenSilently} = auth;
   useEffect(() => {
-    if (!isAuthenticated) {setOpenTasks([]); return;}
+    if (!isAuthenticated) {setOpenTasks([]); setTasksError(false); return;}
     let live = true;
     const controller = new AbortController();
     void (async () => {
       try {
         const token = requiredToken(await getAccessTokenSilently());
         const tasks = await listOpenTasks(token, controller.signal);
-        if (live) setOpenTasks(tasks);
-      } catch {if (live) setOpenTasks([]);}
+        if (live) {setOpenTasks(tasks); setTasksError(false);}
+      } catch {if (live) setTasksError(true);}
     })();
     return () => {live = false; controller.abort();};
-  }, [isAuthenticated, getAccessTokenSilently]);
+  }, [isAuthenticated, getAccessTokenSilently, tasksRefresh]);
   if (auth.isLoading) return <p>載入帳號中…</p>;
   if (!auth.isAuthenticated) return <><button onClick={login}>登入並開始探索</button>{loginError && <p role="alert">暫時無法登入，請重試。</p>}</>;
 
@@ -87,7 +89,9 @@ export function ResearchStart() {
     <label>預算上限（新台幣，可留空）<input type="number" min="1" step="0.01" value={budget} onChange={event => {setBudget(event.target.value); setAttempt(undefined);}} /></label>
     <button type="submit" disabled={busy}>{busy ? "建立委託中…" : "開始探索"}</button>
     {error && <p role="alert">委託暫時無法確認；重試會使用同一筆指令。</p>}
-  </form>{openTasks.length > 0 && <section><h2>未完成的探索</h2>
+  </form>{tasksError && <p role="alert">暫時無法讀取未完成的探索。
+    <button type="button" onClick={() => setTasksRefresh(value => value + 1)}>重新讀取探索</button>
+  </p>}{openTasks.length > 0 && <section><h2>未完成的探索</h2>
     {openTasks.map(task => <p key={task.taskId}><a href={`/research/${task.taskId}`}>繼續上次探索</a> — {task.stage}</p>)}
   </section>}</>;
 }

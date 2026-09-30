@@ -5,6 +5,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from whisky.modules.discovery.condition_patch import ConditionPatch as ConditionPatch
+from whisky.modules.discovery.condition_patch import (
+    apply_condition_patch as apply_condition_patch,
+)
 from whisky.modules.discovery.conditions import CatalogReference as CatalogReference
 from whisky.modules.discovery.conditions import ResearchConditions as ResearchConditions
 from whisky.modules.discovery.conditions_v1 import (

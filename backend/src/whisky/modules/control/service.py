@@ -39,6 +39,7 @@ class ControlController:
         *,
         expected_revision: int = 0,
         conditions: ResearchConditions | None = None,
+        base_conditions: ResearchConditions | None = None,
     ) -> ControlReceipt:
         receipt = await asyncio.to_thread(
             self.store.reserve,
@@ -49,6 +50,7 @@ class ControlController:
             key,
             expected_revision=expected_revision,
             conditions=conditions,
+            base_conditions=base_conditions,
         )
         if receipt.status not in {"completed", "rejected"}:
             try:

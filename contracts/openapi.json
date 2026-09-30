@@ -719,6 +719,82 @@
         "title": "ClarifiedBottleView",
         "type": "object"
       },
+      "ConditionPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "budget_twd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Twd"
+          },
+          "entry": {
+            "anyOf": [
+              {
+                "enum": [
+                  "beginner",
+                  "existing_bottle"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry"
+          },
+          "goal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goal"
+          },
+          "remove_preferences": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Remove Preferences",
+            "type": "array"
+          },
+          "starting_bottle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "upsert_preferences": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Preference"
+            },
+            "maxItems": 64,
+            "title": "Upsert Preferences",
+            "type": "array"
+          }
+        },
+        "title": "ConditionPatch",
+        "type": "object"
+      },
       "Context": {
         "additionalProperties": true,
         "description": "Additional context for the agent.",
@@ -1126,6 +1202,35 @@
           "conditionsRevision"
         ],
         "title": "ObserveInput",
+        "type": "object"
+      },
+      "PatchConditionsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "baseConditions": {
+            "$ref": "#/components/schemas/ResearchConditions-Input"
+          },
+          "expectedRevision": {
+            "minimum": 1.0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "key": {
+            "format": "uuid",
+            "title": "Key",
+            "type": "string"
+          },
+          "patch": {
+            "$ref": "#/components/schemas/ConditionPatch"
+          }
+        },
+        "required": [
+          "key",
+          "expectedRevision",
+          "baseConditions",
+          "patch"
+        ],
+        "title": "PatchConditionsRequest",
         "type": "object"
       },
       "PlanListView": {
@@ -3939,6 +4044,121 @@
           }
         ],
         "summary": "Change Plan Conditions"
+      }
+    },
+    "/api/v1/plans/{plan_id}/conditions/patch": {
+      "post": {
+        "operationId": "patch_plan_conditions_api_v1_plans__plan_id__conditions_patch_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchConditionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Plan Conditions"
       }
     },
     "/api/v1/plans/{plan_id}/delete": {

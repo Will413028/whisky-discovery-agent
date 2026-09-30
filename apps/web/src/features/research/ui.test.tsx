@@ -63,6 +63,23 @@ test("start page offers owned unfinished task links after a new browser login", 
   expect(requests[0].headers.get("authorization")).toBe("Bearer fixture-token");
 });
 
+test("unfinished task read failures remain visible and retry without creating a plan", async () => {
+  let reads = 0;
+  const fetch = vi.fn(async (input: RequestInfo | URL) => {
+    const url = new URL(String(input), window.location.origin);
+    expect(url.pathname).toBe("/api/v1/tasks");
+    reads++;
+    return reads === 1 ? new Response(null, {status:503}) : Response.json([waiting]);
+  });
+  vi.stubGlobal("fetch", fetch);
+  render(<ResearchStart />);
+  expect((await screen.findByRole("alert")).textContent).toContain("暫時無法讀取未完成的探索");
+  fireEvent.click(screen.getByRole("button", {name:"重新讀取探索"}));
+  expect(await screen.findByRole("link", {name:"繼續上次探索"})).toBeTruthy();
+  expect(screen.queryByRole("alert")).toBeNull();
+  expect(reads).toBe(2);
+});
+
 test("task page reconnects the active AG-UI turn from its persisted run ID", async () => {
   const runId = "00000000-0000-4000-8000-000000000007";
   const queued: TaskView = {...waiting, status:"queued",stage:"等待研究開始",question:null,viewVersion:1,activeRunId:runId};

@@ -193,7 +193,8 @@ async def test_agent_resume_binds_new_run_to_original_task(agent_context):
         observation_router=observation_router(
             identity,
             None,
-            ObservationPolicy(lifetime_seconds=0.05, poll_seconds=10),
+            # This verifies resume binding, rather than DB latency under a 50ms cap.
+            ObservationPolicy(lifetime_seconds=2, poll_seconds=10),
             store=store,
             answers=AnswerResearch(clarifications, Answerer()),
         )
