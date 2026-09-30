@@ -158,6 +158,8 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - design-review：新鮮唯讀 reviewer 對 base `c209f8d` 核對 ID／sealed release、transaction、價格、匿名 transport、cache、schema generator、client lifecycle，0 findings（改／記／提／駁回均0）；AGENTS.md 路徑與現行規則對帳0處修正。review未檢查尚未實作的私人T10草稿，也不拿設計結論代替正確性測試。
 - `b2f1c54` 的 push run `36667581648`／PR run `36667672605`：backend jobs各success（3m34／4m14）、web各success（1m22／1m35）、GitGuardian pass；draft PR #9 尚未合併。T09 main push run `36665005129` 的 public-readiness job success，但 event=push，不取代 first schedule。已啟动有界背景觀察，只有實際 schedule run 的 job結論才作出口。
 - `backend/evals/t10_cases.v1.json` 在首次T10真模型呼叫前保存13條語料與定性rubric；JSON解析及case ID唯一性通過（`python3`讀JSON並印`len(cases)`／`runs_per_case`，13／2）。來源為產品契約與T08／T09已知負例，沒有從T10模型輸出改題；尚無runner／執行结果／人工評分。對照T08原始corpus與兩份result各12筆，T08是六題×兩次×兩模型的24次研究流程對照，不能稱為24次模型呼叫。
+- 條件 patch 的獨立 domain 契約：先用最小介面取得10個行為RED，再以 `model_fields_set` 區分省略／明確null、偏好exact-description upsert／explicit remove，最後交回既有V1條件驗證，10 GREEN。重複修改與舊資料同description多intent的歧義再取得2個RED；現明示 `DUPLICATE_PREFERENCE_EDIT`／`AMBIGUOUS_PREFERENCE`，明確移除該description後才可替換，不默默選第一／最後一筆。V1 codec、外部hash與舊history未改；此helper尚未接command或UI，不冒充條件修正旅程完成。
+- `pytest backend/tests/test_condition_patch.py backend/tests/test_research_conditions.py -q` →29 passed；完整 `pytest backend/tests -q` →471 passed（265.96秒），wheel4、mypy74 files、ruff與Python邊界通過。以記憶體載入mutant將未指定偏好全部移除，原baseline偏好保留assertion確實不再成立；未更動實際source／DB／API。只有這輪獨立規則已GREEN，owner／receipt／revision的整合仍須接既有可靠command後驗證。
 
 ## T11 — 比較、探索結論、回訪與資料管理
 
