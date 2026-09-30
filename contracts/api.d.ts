@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Catalog */
+        get: operations["read_catalog_api_v1_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/commands/{command_id}": {
         parameters: {
             query?: never;
@@ -416,6 +433,88 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** CatalogClaimView */
+        CatalogClaimView: {
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "fact" | "tag";
+            /** Sources */
+            sources: components["schemas"]["CatalogSourceView"][];
+            /** Value */
+            value: string;
+        };
+        /** CatalogFlavorView */
+        CatalogFlavorView: {
+            /** Evidenceids */
+            evidenceIds: string[];
+            /** Label */
+            label: string;
+            /** Method */
+            method: string | null;
+            /** Methodversion */
+            methodVersion: string | null;
+        };
+        /** CatalogItemView */
+        CatalogItemView: {
+            /** Abv */
+            abv: string | null;
+            /**
+             * Bottleversionid
+             * Format: uuid
+             */
+            bottleVersionId: string;
+            /** Claims */
+            claims: components["schemas"]["CatalogClaimView"][];
+            /** Flavortags */
+            flavorTags: components["schemas"]["CatalogFlavorView"][];
+            /**
+             * Itemid
+             * Format: uuid
+             */
+            itemId: string;
+            /** Name */
+            name: string;
+            /**
+             * Pricequalification
+             * @enum {string}
+             */
+            priceQualification: "qualified" | "unqualified";
+            /** Priceupperboundtwd */
+            priceUpperBoundTwd: string | null;
+            /** Prices */
+            prices: components["schemas"]["CatalogPriceView"][];
+            /** Versionlabel */
+            versionLabel: string;
+            /** Volumeml */
+            volumeMl: number | null;
+        };
+        /** CatalogPriceView */
+        CatalogPriceView: {
+            /** Amount */
+            amount: string | null;
+            /** Checkedon */
+            checkedOn: string | null;
+            /** Currency */
+            currency: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Market */
+            market: string;
+            /** Qualified */
+            qualified: boolean;
+            source: components["schemas"]["CatalogSourceView"];
+            /** Unconditional */
+            unconditional: boolean;
+            /** Volumeml */
+            volumeMl: number | null;
+        };
         /** CatalogReference */
         CatalogReference: {
             /**
@@ -428,6 +527,37 @@ export interface components {
              * Format: uuid
              */
             release_id: string;
+        };
+        /** CatalogSourceView */
+        CatalogSourceView: {
+            /**
+             * Checkedon
+             * Format: date
+             */
+            checkedOn: string;
+            /**
+             * Evidenceid
+             * Format: uuid
+             */
+            evidenceId: string;
+            /** Publisher */
+            publisher: string | null;
+            /** Url */
+            url: string;
+        };
+        /** CatalogView */
+        CatalogView: {
+            /**
+             * Evaluatedon
+             * Format: date
+             */
+            evaluatedOn: string;
+            /** Items */
+            items: components["schemas"]["CatalogItemView"][];
+            /** Pricepolicyversion */
+            pricePolicyVersion: string;
+            /** Releaseid */
+            releaseId: string | null;
         };
         /** ChangeConditionsRequest */
         ChangeConditionsRequest: {
@@ -1431,6 +1561,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActorView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_catalog_api_v1_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogView"];
                 };
             };
             /** @description Unauthorized */

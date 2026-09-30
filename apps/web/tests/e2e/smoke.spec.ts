@@ -35,3 +35,16 @@ test("unconfigured identity stays closed in Node", async ({ page, request }) => 
   expect((await response.json()).code).toBe("PROXY_UNAVAILABLE");
   expect(errors).toEqual([]);
 });
+
+test("visitor reaches catalog with the keyboard and sees an honest unavailable state", async ({page}) => {
+  const errors:string[]=[];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto("/");
+  await page.getByRole("link", {name:"瀏覽已覆核酒款"}).focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", {name:"已覆核酒款",level:1})).toBeVisible();
+  await expect(page.getByRole("alert").filter({hasText:"暫時無法讀取已覆核酒款"})).toBeVisible();
+  await expect(page.getByRole("button", {name:"重新讀取酒款"})).toBeVisible();
+  await expect(page.getByText("目前沒有已覆核酒款。")).toHaveCount(0);
+  expect(errors).toEqual([]);
+});

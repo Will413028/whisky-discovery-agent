@@ -1,0 +1,347 @@
+{
+  "$defs": {
+    "CatalogClaimView": {
+      "properties": {
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "fact",
+            "tag"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "sources": {
+          "items": {
+            "$ref": "#/$defs/CatalogSourceView"
+          },
+          "title": "Sources",
+          "type": "array"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "kind",
+        "key",
+        "value",
+        "sources"
+      ],
+      "title": "CatalogClaimView",
+      "type": "object"
+    },
+    "CatalogFlavorView": {
+      "properties": {
+        "evidenceIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Evidenceids",
+          "type": "array"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Method"
+        },
+        "methodVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Methodversion"
+        }
+      },
+      "required": [
+        "label",
+        "evidenceIds",
+        "method",
+        "methodVersion"
+      ],
+      "title": "CatalogFlavorView",
+      "type": "object"
+    },
+    "CatalogItemView": {
+      "properties": {
+        "abv": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Abv"
+        },
+        "bottleVersionId": {
+          "format": "uuid",
+          "title": "Bottleversionid",
+          "type": "string"
+        },
+        "claims": {
+          "items": {
+            "$ref": "#/$defs/CatalogClaimView"
+          },
+          "title": "Claims",
+          "type": "array"
+        },
+        "flavorTags": {
+          "items": {
+            "$ref": "#/$defs/CatalogFlavorView"
+          },
+          "title": "Flavortags",
+          "type": "array"
+        },
+        "itemId": {
+          "format": "uuid",
+          "title": "Itemid",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "priceQualification": {
+          "enum": [
+            "qualified",
+            "unqualified"
+          ],
+          "title": "Pricequalification",
+          "type": "string"
+        },
+        "priceUpperBoundTwd": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Priceupperboundtwd"
+        },
+        "prices": {
+          "items": {
+            "$ref": "#/$defs/CatalogPriceView"
+          },
+          "title": "Prices",
+          "type": "array"
+        },
+        "versionLabel": {
+          "title": "Versionlabel",
+          "type": "string"
+        },
+        "volumeMl": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volumeml"
+        }
+      },
+      "required": [
+        "itemId",
+        "bottleVersionId",
+        "name",
+        "versionLabel",
+        "abv",
+        "volumeMl",
+        "claims",
+        "flavorTags",
+        "prices",
+        "priceUpperBoundTwd",
+        "priceQualification"
+      ],
+      "title": "CatalogItemView",
+      "type": "object"
+    },
+    "CatalogPriceView": {
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Amount"
+        },
+        "checkedOn": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Checkedon"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "market": {
+          "title": "Market",
+          "type": "string"
+        },
+        "qualified": {
+          "title": "Qualified",
+          "type": "boolean"
+        },
+        "source": {
+          "$ref": "#/$defs/CatalogSourceView"
+        },
+        "unconditional": {
+          "title": "Unconditional",
+          "type": "boolean"
+        },
+        "volumeMl": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volumeml"
+        }
+      },
+      "required": [
+        "id",
+        "amount",
+        "currency",
+        "market",
+        "volumeMl",
+        "checkedOn",
+        "unconditional",
+        "qualified",
+        "source"
+      ],
+      "title": "CatalogPriceView",
+      "type": "object"
+    },
+    "CatalogSourceView": {
+      "properties": {
+        "checkedOn": {
+          "format": "date",
+          "title": "Checkedon",
+          "type": "string"
+        },
+        "evidenceId": {
+          "format": "uuid",
+          "title": "Evidenceid",
+          "type": "string"
+        },
+        "publisher": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Publisher"
+        },
+        "url": {
+          "pattern": "^https?://",
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidenceId",
+        "url",
+        "publisher",
+        "checkedOn"
+      ],
+      "title": "CatalogSourceView",
+      "type": "object"
+    }
+  },
+  "properties": {
+    "evaluatedOn": {
+      "format": "date",
+      "title": "Evaluatedon",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/CatalogItemView"
+      },
+      "title": "Items",
+      "type": "array"
+    },
+    "pricePolicyVersion": {
+      "title": "Pricepolicyversion",
+      "type": "string"
+    },
+    "releaseId": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Releaseid"
+    }
+  },
+  "required": [
+    "releaseId",
+    "evaluatedOn",
+    "pricePolicyVersion",
+    "items"
+  ],
+  "title": "CatalogView",
+  "type": "object"
+}

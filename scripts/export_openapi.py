@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from whisky.bootstrap.api import create_app
+from whisky.modules.catalog.http import CatalogView
 from whisky.modules.research.public import TaskView
 
 target = Path(__file__).resolve().parents[1] / "contracts/openapi.json"
@@ -18,6 +19,12 @@ target.write_text(
 target.with_name("task-view.schema.json").write_text(
     json.dumps(
         TaskView.model_json_schema(), ensure_ascii=False, indent=2, sort_keys=True
+    )
+    + "\n"
+)
+target.with_name("catalog-view.schema.json").write_text(
+    json.dumps(
+        CatalogView.model_json_schema(), ensure_ascii=False, indent=2, sort_keys=True
     )
     + "\n"
 )

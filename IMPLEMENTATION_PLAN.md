@@ -10,7 +10,7 @@
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
 | 持久研究骨架與樣本 | T03–T09 | T03–T08 已驗收；T09 未完成 |
-| 雙入口與探索計畫 | T10 | 未開始 |
+| 雙入口與探索計畫 | T10 | 獨立公開 catalog adapter 已 GREEN；私人雙入口待 T09 出口，不提前驗收 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
 
@@ -142,6 +142,20 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - RED→GREEN：最多三支候選且不足不湊滿；保留／差異都能指出證據；「少煙燻」不能由缺少標籤推導；無符合結果可說明且不自行放寬條件。
 - RED→GREEN：自然語言與點選使用相同 command；修正只改指定條件；舊回合結果保持歷史、不能存為新 revision 結論。
 - 出口：新手／熟手各一條真瀏覽器旅程，重送與交錯 SSE 不覆寫新結果；規則用 unit tests、畫面行為用元件／E2E，模型說明另以 rubric 驗證。
+
+### T10 執行契約與前提核對（2026-09-30）
+
+- T09 PR #8 已合併至 `c209f8d`；`availability.yml` 的 workflow state 為 active，首次 default-branch schedule 尚未出現。此期間先做獨立契約／RED 與不依賴私人資料放行的公開 catalog adapter，不提前標 T09 或 T10 驗收。
+- 從目前限制重新設計：UUID 只作穩定實體識別，owner／generation／revision 才是授權與寫入門檻；immutable release／item 保持精確版本與历史引用；Temporal 保持唯一持久 executor。既有三項機制與本案需求一致，保留。
+- V1 `ResearchConditions` 已能表達 entry、精確 starting bottle、喜好／保留／改變／排斥、certainty／strength 與本次 budget。T10 不改其 frozen codec／digest；typed patch 只改指定欄位，最後由既有 `plan.change_conditions` receipt／外部紀錄套用整份正規化條件。自然語言草稿與點選都產生同一 patch，確認才提交，預算仍只在本次 plan。
+- 模型偏好草稿分開保存於 discovery，保留原描述、推測與目前 revision。日常食物描述不能自動升為 user_stated；硬限制要由使用者明確啟用。新行為以新 workflow／activity schema 執行，保留 V1–V3 executor／prompt／payload，重跑舊 history replay。
+- 公開 `GET /api/v1/catalog` 只回目前 sealed reviewed release、精確版本、sourced facts、編輯標籤方法與引用、政策合格價格；匿名可讀，private plan／task／report 仍驗身份。資格不明的價格要明示，不能從參考報價推論嚴格預算資格。
+- 新手描述先展示待確認偏好卡；熟手搜尋名稱先確認明確版本，庫外名稱明示未收錄。候選最多三款，保留／差異連到已覆核 evidence；「少煙燻」缺一致比較尺度時提供未知與可改條件的出口，不用缺標籤當作較少。
+- plan 畫面保留上一輪 report 與 revision 標示，修正後明確由使用者另建 research task；重送同 receipt，舊 SSE 不能改新 task／revision，未完成結果不能存成新條件結論。讀取失败不得被呈現為空清單或已保存。
+- 2026-09-30 RED：`uv run --project backend pytest backend/tests/integration/test_public_catalog_http.py -q` 在真隔離 PostgreSQL／migrations／三款 reviewed release 上 2 failed；匿名 catalog 期望200實際404，缺設定期望503實際404。這是入口缺失的行為 RED，venv／依賴準備不算 RED。
+- 公開 adapter GREEN：同一真 DB 測試 3 passed；新增過期資格投影補證沿用已受測 domain 規則，舊參考價格仍有查核日但 qualified=false／upper bound=null。Web route 最初匿名200與POST405期望各收到404（2 RED），加入無 credentials 的固定 upstream 後2 GREEN。UI 最小介面先無卡片／錯誤（3 RED），完成讀取與錯誤出口後3 GREEN；非HTTP來源仍顯示卡片的反例先RED，再從 Pydantic pattern→JSON Schema→AJV validator 生成後 GREEN。Vitest 檔名未被收集、錯誤 envelope 名稱誤用與 Next route-announcer selector 歧義只算測試準備修正，不算產品 RED。
+- 已驗 backend `pytest backend/tests -q` →459 passed（303.34秒）、wheel4、ruff check／format、mypy73 files、Python boundaries（root=backend/src）。Web 完整Vitest111，新增URL反例後catalog相關6 passed；typecheck／boundaries／Next build通過。原 TaskView schema／validator 生成物 `git diff --numstat -- contracts/task-view.*` 無差異。Node/workerd 原7條E2E通過，新增鍵盤catalog案例修正selector後單獨重跑1 passed；完整T10新手／熟手／修正旅程仍未完成，catalog尚未部署。
+- design-review：新鮮唯讀 reviewer 對 base `c209f8d` 核對 ID／sealed release、transaction、價格、匿名 transport、cache、schema generator、client lifecycle，0 findings（改／記／提／駁回均0）；AGENTS.md 路徑與現行規則對帳0處修正。review未檢查尚未實作的私人T10草稿，也不拿設計結論代替正確性測試。
 
 ## T11 — 比較、探索結論、回訪與資料管理
 
