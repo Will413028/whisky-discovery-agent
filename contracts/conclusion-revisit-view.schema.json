@@ -1,0 +1,209 @@
+{
+  "$defs": {
+    "RevisitPriceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "title": "Amount",
+          "type": "string"
+        },
+        "checkedOn": {
+          "format": "date",
+          "title": "Checkedon",
+          "type": "string"
+        },
+        "currency": {
+          "const": "TWD",
+          "default": "TWD",
+          "title": "Currency",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "market": {
+          "const": "TW",
+          "default": "TW",
+          "title": "Market",
+          "type": "string"
+        },
+        "sourceUrl": {
+          "pattern": "^https?://",
+          "title": "Sourceurl",
+          "type": "string"
+        },
+        "volumeMl": {
+          "exclusiveMinimum": 0,
+          "title": "Volumeml",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "amount",
+        "volumeMl",
+        "checkedOn",
+        "sourceUrl"
+      ],
+      "title": "RevisitPriceV1",
+      "type": "object"
+    },
+    "RevisitedVersionV1": {
+      "additionalProperties": false,
+      "properties": {
+        "availability": {
+          "enum": [
+            "resolved",
+            "unresolved"
+          ],
+          "title": "Availability",
+          "type": "string"
+        },
+        "bottleVersionId": {
+          "format": "uuid",
+          "title": "Bottleversionid",
+          "type": "string"
+        },
+        "budgetQualification": {
+          "enum": [
+            "within_budget",
+            "over_budget",
+            "unknown",
+            "not_filtered"
+          ],
+          "title": "Budgetqualification",
+          "type": "string"
+        },
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Name"
+        },
+        "priceQualification": {
+          "enum": [
+            "qualified",
+            "unqualified"
+          ],
+          "title": "Pricequalification",
+          "type": "string"
+        },
+        "priceUpperBoundTwd": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Priceupperboundtwd"
+        },
+        "prices": {
+          "items": {
+            "$ref": "#/$defs/RevisitPriceV1"
+          },
+          "title": "Prices",
+          "type": "array"
+        }
+      },
+      "required": [
+        "bottleVersionId",
+        "availability",
+        "name",
+        "priceUpperBoundTwd",
+        "priceQualification",
+        "budgetQualification",
+        "prices"
+      ],
+      "title": "RevisitedVersionV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "budgetTwd": {
+      "anyOf": [
+        {
+          "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Budgettwd"
+    },
+    "catalogReleaseId": {
+      "anyOf": [
+        {
+          "format": "uuid",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Catalogreleaseid"
+    },
+    "conclusionId": {
+      "format": "uuid",
+      "title": "Conclusionid",
+      "type": "string"
+    },
+    "conditionsRevision": {
+      "minimum": 1,
+      "title": "Conditionsrevision",
+      "type": "integer"
+    },
+    "evaluatedOn": {
+      "format": "date",
+      "title": "Evaluatedon",
+      "type": "string"
+    },
+    "items": {
+      "items": {
+        "$ref": "#/$defs/RevisitedVersionV1"
+      },
+      "maxItems": 3,
+      "title": "Items",
+      "type": "array"
+    },
+    "planId": {
+      "format": "uuid",
+      "title": "Planid",
+      "type": "string"
+    },
+    "pricePolicyVersion": {
+      "title": "Pricepolicyversion",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "conclusionId",
+    "planId",
+    "conditionsRevision",
+    "evaluatedOn",
+    "catalogReleaseId",
+    "pricePolicyVersion",
+    "budgetTwd",
+    "items"
+  ],
+  "title": "ConclusionRevisitViewV1",
+  "type": "object"
+}

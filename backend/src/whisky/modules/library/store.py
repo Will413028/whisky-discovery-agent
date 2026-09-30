@@ -2,17 +2,21 @@
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from hashlib import sha256
 from uuid import UUID, uuid4
 
 from sqlalchemy import Connection, Engine, RowMapping, text
 
+from whisky.modules.catalog import public as catalog
 from whisky.modules.discovery.public import locked_plan, owned_plan
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.library.contracts import (
     ConclusionContextViewV1,
+    ConclusionRevisitViewV1,
     ConclusionViewV1,
+    RevisitedVersionV1,
+    RevisitPriceV1,
     SaveConclusionV1,
 )
 from whisky.modules.library.domain import exploration_choice
@@ -38,6 +42,89 @@ class ConclusionPage:
 class LibraryStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def revisit_conclusion(
+        self, owner: UUID, identifier: UUID, as_of: date
+    ) -> ConclusionRevisitViewV1 | None:
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            if generation is None:
+                return None
+            row = self._visible_row(connection, owner, generation, identifier)
+            if row is None:
+                return None
+            saved = self._view(row)
+            release_id = catalog.current_release_id(connection)
+            versions = (
+                *((saved.selected_version_id,) if saved.selected_version_id else ()),
+                *saved.alternative_version_ids,
+            )
+            candidates = {
+                candidate.item.bottle.version_id: candidate
+                for candidate in catalog.reviewed_candidates_for_versions(
+                    connection, release_id, versions, as_of
+                )
+            }
+            items = []
+            for version in versions:
+                candidate = candidates.get(version)
+                upper = candidate.price_upper_bound if candidate else None
+                budget = saved.conditions.budget_twd
+                prices = []
+                if candidate is not None:
+                    for price in candidate.prices:
+                        detail = catalog.published_price_detail(
+                            connection=connection,
+                            release_id=candidate.release_id,
+                            item_id=candidate.item.id,
+                            bottle_version_id=version,
+                            price_id=price.id,
+                        )
+                        if (
+                            detail is None
+                            or detail.amount is None
+                            or detail.checked_on is None
+                            or detail.volume_ml is None
+                        ):
+                            raise LibraryConflict("CATALOG_UNAVAILABLE")
+                        prices.append(
+                            RevisitPriceV1(
+                                id=detail.id,
+                                amount=detail.amount,
+                                volume_ml=detail.volume_ml,
+                                checked_on=detail.checked_on,
+                                source_url=detail.source.url,
+                            )
+                        )
+                items.append(
+                    RevisitedVersionV1(
+                        bottle_version_id=version,
+                        availability="resolved" if candidate else "unresolved",
+                        name=candidate.item.name if candidate else None,
+                        price_upper_bound_twd=upper,
+                        price_qualification="qualified"
+                        if upper is not None
+                        else "unqualified",
+                        budget_qualification="not_filtered"
+                        if budget is None
+                        else "unknown"
+                        if upper is None
+                        else "within_budget"
+                        if catalog.fits_budget(upper, budget)
+                        else "over_budget",
+                        prices=tuple(prices),
+                    )
+                )
+            return ConclusionRevisitViewV1(
+                conclusion_id=saved.id,
+                plan_id=saved.plan_id,
+                conditions_revision=saved.conditions_revision,
+                evaluated_on=as_of,
+                catalog_release_id=release_id,
+                price_policy_version=catalog.price_policy_version(),
+                budget_twd=saved.conditions.budget_twd,
+                items=tuple(items),
+            )
 
     def conclusion_context(
         self, owner: UUID, report_id: UUID

@@ -21,7 +21,7 @@ jobs:
       - run: uv run --project backend ruff format --check backend scripts
       - run: uv run --project backend mypy backend/src
       - run: uv run --project backend python scripts/export_openapi.py
-      - run: git diff --exit-code -- contracts/openapi.json contracts/task-view.schema.json contracts/catalog-view.schema.json contracts/plan-view.schema.json contracts/plan-list-view.schema.json contracts/control-view.schema.json contracts/task-history-view.schema.json contracts/comparison-report-view.schema.json contracts/preference-proposal-view.schema.json contracts/restart-context-view.schema.json contracts/conclusion-view.schema.json contracts/conclusion-list-view.schema.json contracts/conclusion-context-view.schema.json
+      - run: git diff --exit-code -- contracts/openapi.json contracts/task-view.schema.json contracts/catalog-view.schema.json contracts/plan-view.schema.json contracts/plan-list-view.schema.json contracts/control-view.schema.json contracts/task-history-view.schema.json contracts/comparison-report-view.schema.json contracts/preference-proposal-view.schema.json contracts/restart-context-view.schema.json contracts/conclusion-view.schema.json contracts/conclusion-list-view.schema.json contracts/conclusion-context-view.schema.json contracts/conclusion-revisit-view.schema.json
       - run: python3 -m unittest discover -s scripts/tests -t scripts
       - run: python3 scripts/check_python_boundaries.py backend/src
       - run: python3 scripts/check_deploy_gate.py

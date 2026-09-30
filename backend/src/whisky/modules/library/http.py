@@ -2,6 +2,7 @@
 
 import base64
 import binascii
+from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -9,10 +10,12 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import AwareDatetime, Field
 
+from whisky.modules.catalog.public import taiwan_date
 from whisky.modules.identity.public import AccessSession, IdentityAccess
 from whisky.modules.library.contracts import (
     ConclusionContextViewV1,
     ConclusionListViewV1,
+    ConclusionRevisitViewV1,
     ConclusionViewV1,
     LibraryModel,
     SaveConclusionV1,
@@ -126,5 +129,23 @@ def library_router(identity: IdentityAccess, store: LibraryStore | None) -> APIR
         if saved is None:
             raise PublicAPIError(404, "NOT_FOUND")
         return saved
+
+    @routes.get(
+        "/conclusions/{conclusion_id}/revisit", response_model=ConclusionRevisitViewV1
+    )
+    def revisit_conclusion(
+        conclusion_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> ConclusionRevisitViewV1:
+        if store is None:
+            raise PublicAPIError(503, "LIBRARY_UNAVAILABLE")
+        try:
+            current = store.revisit_conclusion(
+                session.actor_id, conclusion_id, taiwan_date(datetime.now(UTC))
+            )
+        except LibraryConflict:
+            raise PublicAPIError(503, "CATALOG_UNAVAILABLE") from None
+        if current is None:
+            raise PublicAPIError(404, "NOT_FOUND")
+        return current
 
     return routes

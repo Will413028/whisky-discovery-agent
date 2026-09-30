@@ -12,6 +12,31 @@ from whisky.modules.library.store import LibraryStore
 pytestmark = pytest.mark.integration
 
 
+async def test_revisit_returns_current_price_basis_without_exposing_foreign_history(
+    library_api,
+):
+    client, sign, command, _ = library_api
+    headers = {"Authorization": f"Bearer {sign()}"}
+    saved = await client.post(
+        "/api/v1/library/conclusions",
+        headers=headers,
+        json=command.model_dump(mode="json", by_alias=True),
+    )
+    path = f"/api/v1/library/conclusions/{saved.json()['id']}/revisit"
+    response = await client.get(path, headers=headers)
+    assert response.status_code == 200, (
+        "private conclusion reopening needs a current qualification endpoint"
+    )
+    assert response.json()["conclusionId"] == saved.json()["id"]
+    assert response.headers["cache-control"] == "no-store"
+    assert (await client.get(path)).status_code == 401
+    assert (
+        await client.get(
+            path, headers={"Authorization": f"Bearer {sign(sub='auth0|other')}"}
+        )
+    ).status_code == 404
+
+
 async def test_owned_completed_report_supplies_conclusion_parent_context(library_api):
     client, sign, command, report = library_api
     path = f"/api/v1/library/reports/{report.id}/conclusion-context"

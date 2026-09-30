@@ -38,6 +38,8 @@ test("a new login finds unfinished work and answers its saved question", async (
   await savedPage.getByRole("button",{name:"登入查看保存結論"}).click();
   await expect(savedPage.getByText("合成測試：目前沒有適合的候選")).toBeVisible();
   await expect(savedPage.getByText("未重新查詢前，不代表仍符合目前預算或價格。")).toBeVisible();
+  await expect(savedPage.getByRole("heading",{name:"目前酒款與價格"})).toBeVisible();
+  await expect(savedPage.getByRole("link",{name:"重新選擇探索方向"})).toBeVisible();
   expect(errors).toEqual([]);
   await context.close();
 });

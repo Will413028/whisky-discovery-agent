@@ -10,6 +10,7 @@ from whisky.modules.discovery.http import PlanListView, PlanView
 from whisky.modules.library.contracts import (
     ConclusionContextViewV1,
     ConclusionListViewV1,
+    ConclusionRevisitViewV1,
     ConclusionViewV1,
 )
 from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
@@ -58,6 +59,7 @@ for name, model in (
     ("conclusion-view", ConclusionViewV1),
     ("conclusion-list-view", ConclusionListViewV1),
     ("conclusion-context-view", ConclusionContextViewV1),
+    ("conclusion-revisit-view", ConclusionRevisitViewV1),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

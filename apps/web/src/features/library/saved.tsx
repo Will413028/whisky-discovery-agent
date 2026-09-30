@@ -1,8 +1,9 @@
 "use client";
 import {useAuth0} from "@auth0/auth0-react";
-import {useEffect,useRef,useState} from "react";
+import {useCallback,useEffect,useRef,useState} from "react";
 import {listConclusions,type Conclusion} from "./client";
 import {safeReturnTo} from "../identity";
+import {CurrentQualification} from "./revisit";
 
 export function SavedConclusionsEntry({planId}:{planId:string}) {
   if(!process.env.NEXT_PUBLIC_AUTH0_DOMAIN || !process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID || !process.env.NEXT_PUBLIC_AUTH0_AUDIENCE) return <p>帳號功能準備中。</p>;
@@ -24,6 +25,11 @@ function SavedSession({planId}:{planId:string}) {
   const [error,setError]=useState(false);
   const life=useRef(0);
   const {isAuthenticated,getAccessTokenSilently}=auth;
+  const token=useCallback(async()=>{
+    const access=await getAccessTokenSilently();
+    if(!access)throw new Error("AUTH_REQUIRED");
+    return access;
+  },[getAccessTokenSilently]);
   async function load(next:string|null,generation:number,signal?:AbortSignal) {
     setBusy(true);setError(false);
     try {
@@ -51,6 +57,7 @@ function SavedSession({planId}:{planId:string}) {
       {item.selectedBottleName && <p>當時選擇：{item.selectedBottleName}</p>}
       <time dateTime={item.createdAt}>{item.createdAt}</time><p>{item.reason}</p>{item.tradeoff && <p>取捨：{item.tradeoff}</p>}
       <p>當時條件：{item.conditions.goal}</p><a href={`/research/${item.taskId}`}>查看當時報告與來源</a>
+      <CurrentQualification saved={item} token={token}/>
     </article>)}
     {cursor && !error && <button disabled={busy} onClick={()=>void load(cursor,life.current)}>讀取更多結論</button>}
   </section>;

@@ -1076,6 +1076,85 @@
         "title": "ConclusionListViewV1",
         "type": "object"
       },
+      "ConclusionRevisitViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "budgetTwd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budgettwd"
+          },
+          "catalogReleaseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalogreleaseid"
+          },
+          "conclusionId": {
+            "format": "uuid",
+            "title": "Conclusionid",
+            "type": "string"
+          },
+          "conditionsRevision": {
+            "minimum": 1.0,
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "evaluatedOn": {
+            "format": "date",
+            "title": "Evaluatedon",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RevisitedVersionV1"
+            },
+            "maxItems": 3,
+            "title": "Items",
+            "type": "array"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "pricePolicyVersion": {
+            "title": "Pricepolicyversion",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "conclusionId",
+          "planId",
+          "conditionsRevision",
+          "evaluatedOn",
+          "catalogReleaseId",
+          "pricePolicyVersion",
+          "budgetTwd",
+          "items"
+        ],
+        "title": "ConclusionRevisitViewV1",
+        "type": "object"
+      },
       "ConclusionViewV1": {
         "additionalProperties": false,
         "allOf": [
@@ -3167,6 +3246,134 @@
         "title": "ReviewedFlavorMapping",
         "type": "object"
       },
+      "RevisitPriceV1": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "checkedOn": {
+            "format": "date",
+            "title": "Checkedon",
+            "type": "string"
+          },
+          "currency": {
+            "const": "TWD",
+            "default": "TWD",
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "const": "TW",
+            "default": "TW",
+            "title": "Market",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "pattern": "^https?://",
+            "title": "Sourceurl",
+            "type": "string"
+          },
+          "volumeMl": {
+            "exclusiveMinimum": 0.0,
+            "title": "Volumeml",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "volumeMl",
+          "checkedOn",
+          "sourceUrl"
+        ],
+        "title": "RevisitPriceV1",
+        "type": "object"
+      },
+      "RevisitedVersionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "enum": [
+              "resolved",
+              "unresolved"
+            ],
+            "title": "Availability",
+            "type": "string"
+          },
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "budgetQualification": {
+            "enum": [
+              "within_budget",
+              "over_budget",
+              "unknown",
+              "not_filtered"
+            ],
+            "title": "Budgetqualification",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "priceQualification": {
+            "enum": [
+              "qualified",
+              "unqualified"
+            ],
+            "title": "Pricequalification",
+            "type": "string"
+          },
+          "priceUpperBoundTwd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priceupperboundtwd"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/RevisitPriceV1"
+            },
+            "title": "Prices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "bottleVersionId",
+          "availability",
+          "name",
+          "priceUpperBoundTwd",
+          "priceQualification",
+          "budgetQualification",
+          "prices"
+        ],
+        "title": "RevisitedVersionV1",
+        "type": "object"
+      },
       "RunAgentInput": {
         "additionalProperties": true,
         "description": "Input for running an agent.",
@@ -5009,6 +5216,111 @@
           }
         ],
         "summary": "Read Conclusion"
+      }
+    },
+    "/api/v1/library/conclusions/{conclusion_id}/revisit": {
+      "get": {
+        "operationId": "revisit_conclusion_api_v1_library_conclusions__conclusion_id__revisit_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conclusion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conclusion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusionRevisitViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Revisit Conclusion"
       }
     },
     "/api/v1/library/reports/{report_id}/conclusion-context": {

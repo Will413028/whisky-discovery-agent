@@ -21,7 +21,11 @@ from fastapi.responses import (
     StreamingResponse,
 )
 
-from whisky.modules.library.contracts import ConclusionViewV1, SaveConclusionV1
+from whisky.modules.library.contracts import (
+    ConclusionRevisitViewV1,
+    ConclusionViewV1,
+    SaveConclusionV1,
+)
 from whisky.modules.research.public import TaskView, waiting_event
 
 app = FastAPI()
@@ -280,6 +284,31 @@ def list_synthetic_conclusions(request: Request):
             items=saved_conclusions,
             nextCursor=None,
         ),
+        headers={"Cache-Control": "no-store"},
+    )
+
+
+@app.get("/api/v1/library/conclusions/{conclusion_id}/revisit")
+def revisit_synthetic_conclusion(conclusion_id: UUID, request: Request):
+    fixture_auth(request)
+    saved = next(
+        (item for item in saved_conclusions if item["id"] == str(conclusion_id)), None
+    )
+    if saved is None:
+        raise HTTPException(404)
+    # The browser fixture only saves an explicit empty, no-suitable conclusion.
+    view = ConclusionRevisitViewV1(
+        conclusion_id=conclusion_id,
+        plan_id=UUID(RESEARCH_PLAN),
+        conditions_revision=1,
+        evaluated_on=datetime.now(UTC).date(),
+        catalog_release_id=None,
+        price_policy_version="price-30d-v1",
+        budget_twd=None,
+        items=(),
+    )
+    return JSONResponse(
+        view.model_dump(mode="json", by_alias=True),
         headers={"Cache-Control": "no-store"},
     )
 

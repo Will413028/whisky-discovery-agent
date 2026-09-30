@@ -2,9 +2,19 @@ import type {components} from "../../../../../contracts/api";
 import validConclusion from "../../../../../contracts/conclusion-view.validator.js";
 import validConclusions from "../../../../../contracts/conclusion-list-view.validator.js";
 import validContext from "../../../../../contracts/conclusion-context-view.validator.js";
+import validRevisit from "../../../../../contracts/conclusion-revisit-view.validator.js";
 
 export type Conclusion=components["schemas"]["ConclusionViewV1"];
 export type SaveConclusion=components["schemas"]["SaveConclusionV1"];
+export type ConclusionRevisit=components["schemas"]["ConclusionRevisitViewV1"];
+export async function revisitConclusion(saved:Conclusion,token:string,signal?:AbortSignal):Promise<ConclusionRevisit> {
+  const response=await fetch(`/api/v1/library/conclusions/${saved.id}/revisit`,{cache:"no-store",headers:{Authorization:`Bearer ${token}`},signal});
+  if(!response.ok) throw new Error(response.status===401 ? "AUTH_REQUIRED" : "REQUEST_FAILED");
+  const value:unknown=await response.json();
+  const versions=[...(saved.selectedVersionId ? [saved.selectedVersionId] : []),...saved.alternativeVersionIds];
+  if(!validRevisit(value) || value.conclusionId!==saved.id || value.planId!==saved.planId || value.conditionsRevision!==saved.conditionsRevision || value.budgetTwd!==(saved.conditions.budget_twd ?? null) || value.items.length!==versions.length || new Set(value.items.map(item=>item.bottleVersionId)).size!==versions.length || value.items.some(item=>!versions.includes(item.bottleVersionId))) throw new Error("INVALID_RESPONSE");
+  return value;
+}
 export class ConclusionRejected extends Error {
   constructor(public code:string,public status:number) {super(code);}
 }

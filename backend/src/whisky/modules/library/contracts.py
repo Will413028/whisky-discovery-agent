@@ -1,6 +1,7 @@
 """Versioned library commands and private views."""
 
 from datetime import date
+from decimal import Decimal
 from typing import Any, Literal, Self
 from uuid import UUID
 
@@ -110,3 +111,37 @@ class ConclusionListViewV1(LibraryModel):
     plan_id: UUID
     items: tuple[ConclusionViewV1, ...]
     next_cursor: str | None
+
+
+class RevisitPriceV1(LibraryModel):
+    id: UUID
+    amount: Decimal
+    market: Literal["TW"] = "TW"
+    currency: Literal["TWD"] = "TWD"
+    volume_ml: int = Field(gt=0)
+    checked_on: date
+    source_url: str = Field(pattern=r"^https?://")
+
+
+class RevisitedVersionV1(LibraryModel):
+    bottle_version_id: UUID
+    availability: Literal["resolved", "unresolved"]
+    name: str | None
+    price_upper_bound_twd: Decimal | None
+    price_qualification: Literal["qualified", "unqualified"]
+    budget_qualification: Literal[
+        "within_budget", "over_budget", "unknown", "not_filtered"
+    ]
+    prices: tuple[RevisitPriceV1, ...]
+
+
+class ConclusionRevisitViewV1(LibraryModel):
+    schema_version: Literal[1] = 1
+    conclusion_id: UUID
+    plan_id: UUID
+    conditions_revision: int = Field(ge=1)
+    evaluated_on: date
+    catalog_release_id: UUID | None
+    price_policy_version: str
+    budget_twd: Decimal | None
+    items: tuple[RevisitedVersionV1, ...] = Field(max_length=3)

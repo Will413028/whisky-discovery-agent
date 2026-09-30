@@ -1,11 +1,21 @@
 import {afterEach,expect,test,vi} from "vitest";
-import {saveConclusion,listConclusions,readConclusionContext,ConclusionRejected} from "./client";
+import {saveConclusion,listConclusions,readConclusionContext,ConclusionRejected,revisitConclusion,type Conclusion} from "./client";
 
 const id="00000000-0000-4000-8000-000000000001";
 const other="00000000-0000-4000-8000-000000000002";
 const command={schemaVersion:1 as const,key:"stable",planId:id,reportId:id,expectedConditionsRevision:1,selectedVersionId:null,reason:"這次沒有適合的",tradeoff:""};
 const value={schemaVersion:1,id,planId:id,taskId:id,reportId:id,conditionsRevision:1,conditions:{schema_version:1,entry:"beginner",goal:"探索",budget_twd:null,preferences:[]},catalogReleaseId:null,evaluatedOn:"2026-10-01",revision:1,outcome:"no_suitable",selectedVersionId:null,selectedBottleName:null,alternativeVersionIds:[],reason:command.reason,tradeoff:"",createdAt:"2026-10-01T00:00:00Z",updatedAt:"2026-10-01T00:00:00Z"};
 afterEach(()=>vi.unstubAllGlobals());
+const revisit={schemaVersion:1,conclusionId:id,planId:id,conditionsRevision:1,evaluatedOn:"2026-10-01",catalogReleaseId:id,pricePolicyVersion:"price-30d-v1",budgetTwd:null,items:[]};
+test("reopening resolves the current catalog with an authenticated no-store request",async()=>{
+  const fetch=vi.fn(async()=>Response.json(revisit));vi.stubGlobal("fetch",fetch);
+  expect(await revisitConclusion(value as Conclusion,"fixture")).toEqual(revisit);
+  expect(fetch).toHaveBeenCalledWith(`/api/v1/library/conclusions/${id}/revisit`,expect.objectContaining({cache:"no-store",headers:{Authorization:"Bearer fixture"}}));
+});
+test.each([{...revisit,conclusionId:other},{...revisit,planId:other},{...revisit,conditionsRevision:2},{...revisit,budgetTwd:"1000"},{...revisit,items:[{bottleVersionId:other,availability:"unresolved",name:null,priceUpperBoundTwd:null,priceQualification:"unqualified",budgetQualification:"not_filtered",prices:[]}]}])("foreign or incomplete revisit results cannot become current qualification",async result=>{
+  vi.stubGlobal("fetch",vi.fn(async()=>Response.json(result)));
+  await expect(revisitConclusion(value as Conclusion,"fixture")).rejects.toThrow("INVALID_RESPONSE");
+});
 test("save preserves the immutable command and private transport",async()=>{
   const fetch=vi.fn(async()=>Response.json(value));vi.stubGlobal("fetch",fetch);
   expect(await saveConclusion(command,"fixture")).toEqual(value);

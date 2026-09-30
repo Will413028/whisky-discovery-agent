@@ -279,7 +279,15 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 最後核對發現選中歷史結論缺酒名：真 DB／UI 各 1 RED→由 research 經 catalog public 解析原 sealed release／item／version，將選中名稱保存於結論與 receipt 快照。client 不可提交名稱；歷史頁明示「當時選擇」，不宣稱符合目前價格。
 - fresh backend／Web design-review 各發現 1 項：plan-scoped 索引缺 `plan_id`、已知拒絕被混成結果不明。兩項皆改；累積 ledger fixed 2／open 0，追加 context 與歷史名稱複查均 `NO DESIGN FINDINGS`。拒絕分類與恢復出口另取得 3 RED→library 23 GREEN；補酒名後 library 24 GREEN。fresh correctness／security review 無 findings，既有 owner／generation／revision／rollback／subject 負例屬 already protected。指令檔現行路徑與規則對帳 0 處修改。
 - 最終本機：backend **649 passed／345.61 秒**（`/tmp/whisky-t11-backend-release.log`）；installed wheel **4 passed／12.07 秒**、head0018（`/tmp/whisky-t11-wheel-release.log`）；ruff check／format、mypy95 source files、Python／Web boundaries、scripts unittest11、private startup gate 通過。Web **225 passed**（`/tmp/whisky-t11-web-release.log`）、typecheck、原生 Next build 通過；Node／workerd Playwright **13 passed／10.3 秒**（`/tmp/whisky-t11-browser-release.log`），包括明示合成的保存／關頁／再登入回訪。契約重生 hash 無 drift，frozen TaskView／V1 conditions／control codec 無 diff，whitespace 檢查通過。獨立空測試 DB 的 `EXPLAIN` 使用新增索引，Index Cond 含 owner／generation／plan（`/tmp/whisky-t11-query-plan.log`）；這不是實際負載效能驗收。
-- 尚未完成：目前 catalog／價格重新解析及移除酒款出口、收藏／喝過／偏好修改、完整私人匯出、DB／Temporal history／trace／備份清除與防復活；T11 完整旅程及正式跨瀏覽器 gate 未驗收。
+- 尚未完成：收藏／喝過／偏好修改、完整私人匯出、DB／Temporal history／trace／備份清除與防復活；T11 完整旅程及正式跨瀏覽器 gate 未驗收。下面的回訪價格增量尚未部署。
+
+### T11 目前 catalog／價格回訪增量（2026-10-01，未驗收）
+
+- 真 DB 回訪先取得 2 RED，獨立 current view 解析保存的選中／替代版本，依保存當時的 budget 與目前 sealed release／30 日政策重算價格資格；不覆寫歷史理由或條件，也不稱為新的完整推薦。新 release 移除版本、owner／刪除隔離與過期價格負例是回歸保障。測試合成 budget seed 的 900 上限不足以讓所有酒款超價、移除 release 未同步剔除價格引用，兩項 fixture 設定錯誤已修，不計 RED。
+- signed JWT HTTP 的新回訪 GET 先 1 RED→GREEN，匿名 401／跨帳號 404／no-store 通過；日期由 server Asia/Taipei 計算，不接受 client 指定。client／固定 Node proxy 7 RED→GREEN；UI 超價／無法解析／暫時失敗重查 3 RED→GREEN，保存清單接線 1 RED→GREEN（另一測試因前例失敗留下 mock queue 的串連失敗不另計）。browser 合成旅程因缺回訪 fixture endpoint 得到 1 RED，再加入明示空候選 current view→13 GREEN。
+- design-review 發現沿用研究 snapshot 載入全库與不用的來源（A1）。指定版本 public query 取得 1 RED，改為最多三個版本的公開解析，共用 CatalogStore 單酒款價格資格核心；回訪與研究不複製政策、不加 include_sources 旗標。39 項 library／catalog／研究 snapshot 回歸通過，複查 fixed 1／open 0、無新增設計 findings。
+- Web 開啟歷史結論即重新查詢；價格區分未篩選／符合當時預算／超价／資料不足，展示查核日、TW／TWD／容量／來源。未解析版本保留歷史並給重新選方向與目前 catalog 出口；讀取失敗不把未知當符合，subject 切換或卸載 abort 並忽略晚到結果。新增生成 schema／TypeScript／AJV，原 TaskView／V1 codec 不變。
+- 完整本機：backend **657 passed／349.04 秒**（`/tmp/whisky-t11-revisit-backend-release.log`）、installed wheel **4／12.99 秒**（`/tmp/whisky-t11-revisit-wheel-release.log`）；ruff／format、mypy95、Python／Web boundaries、scripts11、private startup gate 通過。Web **235**（`/tmp/whisky-t11-revisit-web-release.log`）、typecheck、原生 build、Node／workerd browser **13／10.0 秒**（`/tmp/whisky-t11-revisit-browser-green.log`）通過。重生前後 contracts SHA256 相同、無 drift；原 TaskView／V1 codec 無 diff，最終 diff／whitespace 已檢查。最初 scripts 檢查用了錯誤檔名／缺 root 或 unittest top-level，屬命令錯誤，改依 README／CI 正式命令通過，不計 RED。這是本機增量，尚未用正式 Auth0／Oracle 驗收，不關閉 T11。
 
 ## T12 — 真實資料覆蓋與展示驗收
 

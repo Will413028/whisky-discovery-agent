@@ -13,8 +13,10 @@ from whisky.modules.catalog.domain import (
     PriceObservation,
     PricePolicy,
     PublishedPrice,
-    fits_budget,
     qualified_prices,
+)
+from whisky.modules.catalog.domain import (
+    fits_budget as fits_budget,
 )
 from whisky.modules.catalog.domain import (
     taiwan_date as taiwan_date,
@@ -33,6 +35,30 @@ def search_reviewed_candidates(
 def price_policy_version() -> str:
     """Name the active qualification window in the same place as its rule."""
     return f"price-{PricePolicy().maximum_age_days}d-v1"
+
+
+def reviewed_candidates_for_versions(
+    connection: Connection,
+    release_id: UUID | None,
+    versions: tuple[UUID, ...],
+    as_of: date,
+) -> tuple[CatalogCandidate, ...]:
+    """Resolve explicit versions with current price policy, without research sources."""
+    from whisky.modules.catalog.store import CatalogStore
+
+    if release_id is None:
+        return ()
+    candidates = []
+    for version in dict.fromkeys(versions):
+        resolved = reviewed_version_in_release(connection, release_id, version)
+        if resolved is None:
+            continue
+        candidate = CatalogStore.candidate_in_release(
+            connection, release_id, resolved.item_id, as_of
+        )
+        if candidate is not None:
+            candidates.append(candidate)
+    return tuple(candidates)
 
 
 @dataclass(frozen=True)

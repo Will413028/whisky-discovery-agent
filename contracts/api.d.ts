@@ -141,6 +141,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/library/conclusions/{conclusion_id}/revisit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Revisit Conclusion */
+        get: operations["revisit_conclusion_api_v1_library_conclusions__conclusion_id__revisit_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/library/reports/{report_id}/conclusion-context": {
         parameters: {
             query?: never;
@@ -851,6 +868,40 @@ export interface components {
              * Format: uuid
              */
             planId: string;
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
+        };
+        /** ConclusionRevisitViewV1 */
+        ConclusionRevisitViewV1: {
+            /** Budgettwd */
+            budgetTwd: string | null;
+            /** Catalogreleaseid */
+            catalogReleaseId: string | null;
+            /**
+             * Conclusionid
+             * Format: uuid
+             */
+            conclusionId: string;
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Evaluatedon
+             * Format: date
+             */
+            evaluatedOn: string;
+            /** Items */
+            items: components["schemas"]["RevisitedVersionV1"][];
+            /**
+             * Planid
+             * Format: uuid
+             */
+            planId: string;
+            /** Pricepolicyversion */
+            pricePolicyVersion: string;
             /**
              * Schemaversion
              * @default 1
@@ -1738,6 +1789,66 @@ export interface components {
             /** Feature Key */
             feature_key: string;
             reference: components["schemas"]["CatalogReference"];
+        };
+        /** RevisitPriceV1 */
+        RevisitPriceV1: {
+            /** Amount */
+            amount: string;
+            /**
+             * Checkedon
+             * Format: date
+             */
+            checkedOn: string;
+            /**
+             * Currency
+             * @default TWD
+             * @constant
+             */
+            currency: "TWD";
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Market
+             * @default TW
+             * @constant
+             */
+            market: "TW";
+            /** Sourceurl */
+            sourceUrl: string;
+            /** Volumeml */
+            volumeMl: number;
+        };
+        /** RevisitedVersionV1 */
+        RevisitedVersionV1: {
+            /**
+             * Availability
+             * @enum {string}
+             */
+            availability: "resolved" | "unresolved";
+            /**
+             * Bottleversionid
+             * Format: uuid
+             */
+            bottleVersionId: string;
+            /**
+             * Budgetqualification
+             * @enum {string}
+             */
+            budgetQualification: "within_budget" | "over_budget" | "unknown" | "not_filtered";
+            /** Name */
+            name: string | null;
+            /**
+             * Pricequalification
+             * @enum {string}
+             */
+            priceQualification: "qualified" | "unqualified";
+            /** Priceupperboundtwd */
+            priceUpperBoundTwd: string | null;
+            /** Prices */
+            prices: components["schemas"]["RevisitPriceV1"][];
         };
         /**
          * RunAgentInput
@@ -2754,6 +2865,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConclusionViewV1"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    revisit_conclusion_api_v1_library_conclusions__conclusion_id__revisit_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conclusion_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConclusionRevisitViewV1"];
                 };
             };
             /** @description Unauthorized */

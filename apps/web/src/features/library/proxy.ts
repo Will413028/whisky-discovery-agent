@@ -5,7 +5,8 @@ export async function libraryProxy(request:Request,upstream?:PrivateAPI):Promise
   const collection=url.pathname==="/api/v1/library/conclusions";
   const resource=/^\/api\/v1\/library\/conclusions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(url.pathname);
   const context=/^\/api\/v1\/library\/reports\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/conclusion-context$/.test(url.pathname);
-  if(!collection && !resource && !context) return privateFailure(404,"NOT_FOUND");
+  const revisit=/^\/api\/v1\/library\/conclusions\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/revisit$/.test(url.pathname);
+  if(!collection && !resource && !context && !revisit) return privateFailure(404,"NOT_FOUND");
   if(request.method!=="GET" && !(collection && request.method==="POST")) return privateFailure(405,"METHOD_NOT_ALLOWED");
   if(url.search && !(collection && request.method==="GET")) return privateFailure(404,"NOT_FOUND");
   for(const key of url.searchParams.keys()) {
