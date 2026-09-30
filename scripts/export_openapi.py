@@ -5,6 +5,8 @@ from pathlib import Path
 
 from whisky.bootstrap.api import create_app
 from whisky.modules.catalog.http import CatalogView
+from whisky.modules.control.http import ControlView
+from whisky.modules.discovery.http import PlanListView, PlanView
 from whisky.modules.research.public import TaskView
 
 target = Path(__file__).resolve().parents[1] / "contracts/openapi.json"
@@ -28,3 +30,17 @@ target.with_name("catalog-view.schema.json").write_text(
     )
     + "\n"
 )
+for name, model in (
+    ("plan-view", PlanView),
+    ("plan-list-view", PlanListView),
+    ("control-view", ControlView),
+):
+    target.with_name(f"{name}.schema.json").write_text(
+        json.dumps(
+            model.model_json_schema(mode="serialization"),
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )

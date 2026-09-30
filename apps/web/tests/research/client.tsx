@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import { ResearchStart, ResearchTask } from "../../src/features/research/ui";
+import {PlanDetail, Plans} from "../../src/features/discovery/ui";
 
 function App() {
   const [path, setPath] = useState(location.pathname);
@@ -11,7 +12,8 @@ function App() {
     return () => removeEventListener("popstate", changed);
   }, []);
   const taskId = /^\/research\/([0-9a-f-]{36})$/.exec(path)?.[1];
-  return <main><h1>合成研究流程驗收</h1>{taskId ? <ResearchTask taskId={taskId} /> : <ResearchStart />}</main>;
+  const planId = /^\/plans\/([0-9a-f-]{36})$/.exec(path)?.[1];
+  return <main><h1>合成研究流程驗收</h1>{planId ? <PlanDetail planId={planId} /> : path === "/plans" ? <Plans /> : taskId ? <ResearchTask taskId={taskId} /> : <ResearchStart />}</main>;
 }
 
 createRoot(document.getElementById("fixture")!).render(<App />);

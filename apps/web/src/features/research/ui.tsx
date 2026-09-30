@@ -84,7 +84,7 @@ export function ResearchStart() {
       }
     })();
   };
-  return <><form onSubmit={submit}>
+  return <><p><a href="/plans">查看我的探索計畫</a></p><form onSubmit={submit}>
     <label>想探索什麼風味？<input required maxLength={2000} value={goal} onChange={event => {setGoal(event.target.value); setAttempt(undefined);}} placeholder="例如：帶果香、適合第一次嘗試" /></label>
     <label>預算上限（新台幣，可留空）<input type="number" min="1" step="0.01" value={budget} onChange={event => {setBudget(event.target.value); setAttempt(undefined);}} /></label>
     <button type="submit" disabled={busy}>{busy ? "建立委託中…" : "開始探索"}</button>

@@ -1,0 +1,156 @@
+{
+  "$defs": {
+    "CatalogReference": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "item_id"
+      ],
+      "title": "CatalogReference",
+      "type": "object"
+    },
+    "Preference": {
+      "additionalProperties": false,
+      "properties": {
+        "certainty": {
+          "enum": [
+            "user_stated",
+            "inferred",
+            "unknown"
+          ],
+          "title": "Certainty",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "prefer",
+            "keep",
+            "change",
+            "avoid"
+          ],
+          "title": "Intent",
+          "type": "string"
+        },
+        "strength": {
+          "enum": [
+            "soft",
+            "hard"
+          ],
+          "title": "Strength",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "intent",
+        "certainty",
+        "strength"
+      ],
+      "title": "Preference",
+      "type": "object"
+    },
+    "ResearchConditions": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_twd": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Budget Twd"
+        },
+        "entry": {
+          "enum": [
+            "beginner",
+            "existing_bottle"
+          ],
+          "title": "Entry",
+          "type": "string"
+        },
+        "goal": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "preferences": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Preference"
+          },
+          "maxItems": 64,
+          "title": "Preferences",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "starting_bottle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CatalogReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "entry",
+        "goal"
+      ],
+      "title": "ResearchConditions",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "conditions": {
+      "$ref": "#/$defs/ResearchConditions"
+    },
+    "conditionsRevision": {
+      "title": "Conditionsrevision",
+      "type": "integer"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "conditionsRevision",
+    "conditions"
+  ],
+  "title": "PlanView",
+  "type": "object"
+}
