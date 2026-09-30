@@ -24,7 +24,7 @@ test("expert entry preserves the searched name and explicit direction for durabl
   fireEvent.change(screen.getByLabelText("探索方向"),{target:{value:"similar"}});
   fireEvent.click(screen.getByRole("button",{name:"開始探索"}));
   await waitFor(()=>expect(push).toHaveBeenCalledWith(`/research/${id}`));
-  expect(await requests.find(r=>r.url.endsWith("/api/v1/plans"))?.json()).toMatchObject({conditions:{entry:"expert",starting_bottle:null}});
+  expect(await requests.find(r=>r.url.endsWith("/api/v1/plans"))?.json()).toMatchObject({conditions:{entry:"beginner",starting_bottle:null}});
   expect(await requests.find(r=>r.url.endsWith("/agent"))?.json()).toMatchObject({forwardedProps:{type:"start_v4",input:{phase:"research",sourceText:null,intent:{origin_query:"格蘭菲迪",mode:"similar"}}}});
 });
 

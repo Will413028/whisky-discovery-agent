@@ -18,10 +18,11 @@ async function jsonResponse(response: Response): Promise<unknown> {
   return response.json();
 }
 
-export async function createPlan(token: string, key: string, goal: string, budgetTwd: string | null, entry:"beginner" | "expert" = "beginner",preferences:components["schemas"]["Preference"][]=[]): Promise<{id:string; conditionsRevision:number}> {
+export async function createPlan(token: string, key: string, goal: string, budgetTwd: string | null, preferences:components["schemas"]["Preference"][]=[]): Promise<{id:string; conditionsRevision:number}> {
+  const body:components["schemas"]["CreatePlanInput"]={key,conditions:{schema_version:1,entry:"beginner",goal,budget_twd:budgetTwd,starting_bottle:null,preferences}};
   const value = await jsonResponse(await fetch("/api/v1/plans", {
     method:"POST", cache:"no-store", headers:{Authorization:`Bearer ${token}`, "Content-Type":"application/json"},
-    body:JSON.stringify({key, conditions:{schema_version:1, entry, goal, budget_twd:budgetTwd,starting_bottle:null,preferences}}),
+    body:JSON.stringify(body),
   }));
   if (!value || typeof value !== "object" || !("id" in value) || typeof value.id !== "string" ||
       !("conditionsRevision" in value) || typeof value.conditionsRevision !== "number") throw new Error("INVALID_RESPONSE");

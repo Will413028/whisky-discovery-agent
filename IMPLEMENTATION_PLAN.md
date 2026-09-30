@@ -237,6 +237,8 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - Web草稿確認的初始整合測試因syntax及BudgetSuggestion fixture錯誤未取得有效RED；這些僅列準備錯誤，不宣稱整合TDD。純editor／card先前取得有效RED。後續review回歸先取得預算還原1 RED與跨分頁草稿關閉1 RED（`/tmp/whisky-t10-budget-authority-red.log`、`/tmp/whisky-t10-closed-proposal-red.log`），再改為單一parent預算draft／source，editor只發選取事件，並追蹤active question／deadline、清除草稿來源修改、保留手動預算、提交前重新核對identity。定向15 GREEN（`/tmp/whisky-t10-proposal-validity-green.log`），最新全Web **183 passed（6.84秒）**（`/tmp/whisky-t10-proposal-ui-reviewed-full.log`）。
 - 本輪fresh design-review B「預算雙重權威」改1／open0，correctness P2「改回原金額仍提交草稿」及「關閉草稿仍可保存」改2／open0；複核均無新增發現。原生Next build、typecheck與Web boundaries通過；Node／workerd Playwright **11 passed（8.9秒）**（`/tmp/whisky-t10-proposal-ui-reviewed-e2e.log`），新增草稿重開→選取偏好→intent_confirmed等待→completed新revision→明確start_v4旅程。首次synthetic harness未轉送proposalTaskId而未出現editor，修正測試入口query傳遞後通過；正式Next route已傳遞，不列產品RED。不以synthetic browser替代T10真登入旅程或真模型人工rubric。
 
+- 熟手入口追加契約核對：先前synthetic fixture接受不存在的V1 `entry="expert"`，實際後端會422。新回歸1 RED後，以generated `CreatePlanInput` 型別固定尚未消歧的合法中間conditions（beginner／starting_bottle=null），熟手名稱與方向仍保存於immutable V4 input，由既有workflow的origin_query→版本問題→精確答覆執行；不修改frozen V1 enum。18項入口／研究UI GREEN；獨立correctness核對V1 validator、generated type、V4 workflow／selection，0新增發現。最新完整Web183 passed（9.13秒）、typecheck、Web boundary、Next build通過，Node／workerd browser 11 passed（10.0秒，`/tmp/whisky-t10-entry-contract-e2e.log`）。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

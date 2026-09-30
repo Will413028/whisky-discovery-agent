@@ -98,7 +98,7 @@ function ResearchStartSession() {
       try {
         const token = requiredToken(await auth.getAccessTokenSilently());
         if(generation!==life.current) return;
-        const plan = current.plan ?? await createPlan(token, current.planKey, entry === "beginner" ? goal.trim() : `從「${origin.trim()}」探索`, budget ? budget : null, entry,entry==="expert" && keepFeature.trim() ? [{description:keepFeature.trim(),intent:"keep",certainty:"user_stated",strength:"soft"}] : []);
+        const plan = current.plan ?? await createPlan(token, current.planKey, entry === "beginner" ? goal.trim() : `從「${origin.trim()}」探索`, budget ? budget : null, entry==="expert" && keepFeature.trim() ? [{description:keepFeature.trim(),intent:"keep",certainty:"user_stated",strength:"soft"}] : []);
         if(generation!==life.current) return;
         current.plan = plan;
         const input:ResearchInputV4={schemaVersion:4,phase:entry === "beginner" ? "proposal" : "research",sourceText:entry === "beginner" ? goal : null,intent:{mode:entry === "beginner" ? "style_options" : mode,origin_query:entry === "expert" ? origin.trim() : null,smoke_comparison:false,explore_feature:entry==="expert" && mode==="small_step" ? exploreFeature.trim() : null,contrast:entry==="expert" && mode==="contrast" ? {axis:"flavor_description",origin_feature:originFeature.trim(),candidate_feature:candidateFeature.trim()} : null}};
