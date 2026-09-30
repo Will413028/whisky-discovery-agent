@@ -239,6 +239,11 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 - 熟手入口追加契約核對：先前synthetic fixture接受不存在的V1 `entry="expert"`，實際後端會422。新回歸1 RED後，以generated `CreatePlanInput` 型別固定尚未消歧的合法中間conditions（beginner／starting_bottle=null），熟手名稱與方向仍保存於immutable V4 input，由既有workflow的origin_query→版本問題→精確答覆執行；不修改frozen V1 enum。18項入口／研究UI GREEN；獨立correctness核對V1 validator、generated type、V4 workflow／selection，0新增發現。最新完整Web183 passed（9.13秒）、typecheck、Web boundary、Next build通過，Node／workerd browser 11 passed（10.0秒，`/tmp/whisky-t10-entry-contract-e2e.log`）。
 
+- Web確認 commit `9e31d3a` 的 PR run `36767560944` backend／web jobs各success；熟手契約修正 `cc69dfe` 的 PR run `36768383959` backend／web各success。未部署或將T10標為驗收。
+- 計畫偏好卡新增用途、硬限制、新增／移除；parent單一preferenceDraft保留saved／manual／proposal來源與明確移除marker，patch只產生指定upsert/remove，草稿失效保留手動修改。UI「只改一項、保留預算與其他偏好」先1 RED→GREEN；legacy部分移除、失效保留同名兄弟、proposal不能覆蓋未消歧組分別取得行為RED。最初pure helper測試副檔名未收集時已試寫初版，因此不把其事後stub RED當整體TDD證據；只採後續實際先失敗的回歸。定向26 GREEN，最新完整Web **193 passed（7.07秒）**（`/tmp/whisky-t10-preference-final-full.log`），typecheck／boundaries／原生Next build通過。
+- correctness新增P2「只改一筆同名偏好卻刪其他」含手動及proposal兩條路徑已修正：未消歧組禁止用途／hard修改與同名proposal套用，必須明確移除到唯一項目；純沿用舊資料不強迫遷移。新domain＋UI2 RED、proposal繞路另1 RED後GREEN，既有backend ambiguous upsert仍已保護。累積correctness四項fixed／open0，design唯一budget B fixed／open0，最後複核均無新增發現；不把design review當correctness證據。
+- Node／workerd Playwright **12 passed（9.6秒）**（`/tmp/whisky-t10-preference-final-e2e.log`）：新增瀏覽器刪除一項／明確hard確認／同receipt保存／預算保持／新revision重開，草稿確認與串流舊回歸通過。這是synthetic UI旅程，不取代真登入、T10 live model人工rubric或部署。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

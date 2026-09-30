@@ -142,3 +142,37 @@ test("synthetic proposal reopens, confirms only selected preferences, and starts
   expect(started).toMatchObject({type:"start_v4",conditionsRevision:2,input:{schemaVersion:4,phase:"research",sourceText:null}});
   expect(errors).toEqual([]);
 });
+
+test("synthetic preference editing preserves the budget and applies only explicit changes",async({page})=>{
+  const id="00000000-0000-4000-8000-000000000051";
+  const commandId="00000000-0000-4000-8000-000000000052";
+  const fruit={description:"果香",intent:"keep",certainty:"user_stated",strength:"soft"};
+  const honey={description:"蜂蜜",intent:"prefer",certainty:"inferred",strength:"soft"};
+  const original={schema_version:1,entry:"beginner",goal:"探索果香",budget_twd:"1000",starting_bottle:null,preferences:[fruit,honey]};
+  let revision=1;
+  let submitted:Record<string,unknown>|null=null;
+  const errors:string[]=[];page.on("pageerror",error=>errors.push(error.message));
+  await page.route("**/api/v1/**",async route=>{
+    expect(route.request().headers().authorization).toBe("Bearer synthetic-research-token");
+    const path=new URL(route.request().url()).pathname;
+    if(path===`/api/v1/plans/${id}`) return route.fulfill({json:{id,conditionsRevision:revision,conditions:revision===1 ? original : {...original,preferences:[{...honey,certainty:"user_stated",strength:"hard"}]}}});
+    if(path===`/api/v1/plans/${id}/tasks`) return route.fulfill({json:{items:[],nextCursor:null}});
+    if(path.endsWith("/conditions/patch")) {
+      submitted=route.request().postDataJSON();revision=2;
+      return route.fulfill({json:{id:commandId,targetId:id,kind:"plan.change_conditions",status:"completed",result:{conditionsRevision:"2"}}});
+    }
+    return route.fulfill({status:404,json:{code:"NOT_FOUND"}});
+  });
+  await page.goto(`http://127.0.0.1:8419/plans/${id}`);
+  await page.getByRole("button",{name:"登入查看探索計畫"}).click();
+  await page.getByRole("button",{name:"移除偏好：果香"}).click();
+  await page.getByLabel("蜂蜜設為硬限制").check();
+  await page.getByRole("button",{name:"保存指定修改"}).click();
+  await expect(page.getByText("條件版本：2")).toBeVisible();
+  expect(submitted).toMatchObject({expectedRevision:1,baseConditions:original,patch:{upsert_preferences:[{...honey,certainty:"user_stated",strength:"hard"}],remove_preferences:["果香"]}});
+  expect((submitted as Record<string,unknown>|null)?.patch).not.toHaveProperty("budget_twd");
+  await expect(page.getByLabel("本次預算上限（新台幣，可留空）")).toHaveValue("1000");
+  await expect(page.getByRole("button",{name:"移除偏好：果香"})).toHaveCount(0);
+  await expect(page.getByLabel("蜂蜜設為硬限制")).toBeChecked();
+  expect(errors).toEqual([]);
+});

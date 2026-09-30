@@ -15,12 +15,12 @@ export async function readActivePlanProposal(taskId:string,planId:string,revisio
 export function proposalIdentity(view:PreferenceProposalView) {
   return JSON.stringify([view.taskId,view.questionId,view.waitingVersion,view.conditionsRevision]);
 }
-type Props={taskId:string;planId:string;revision:number;disabled:boolean;onChange:(patch:ProposalPatch | null)=>void;onBudgetChange:(value:string|null|undefined)=>void;budgetSelected:boolean;onIdentity:(identity:string|null)=>void};
+type Props={taskId:string;planId:string;revision:number;disabled:boolean;onChange:(patch:ProposalPatch | null)=>void;onBudgetChange:(value:string|null|undefined)=>void;budgetSelected:boolean;blockedFeatures:string[];onIdentity:(identity:string|null)=>void};
 export function ProposalPlanEditor(props:Props) {
   const auth=useAuth0();
   return <ProposalPlanEditorSession key={JSON.stringify([auth.isAuthenticated,auth.user?.sub,props.taskId,props.planId,props.revision])} {...props}/>;
 }
-function ProposalPlanEditorSession({taskId,planId,revision,disabled,onChange,onBudgetChange,budgetSelected,onIdentity}:Props) {
+function ProposalPlanEditorSession({taskId,planId,revision,disabled,onChange,onBudgetChange,budgetSelected,blockedFeatures,onIdentity}:Props) {
   const auth=useAuth0();
   const [view,setView]=useState<PreferenceProposalView | null>(null);
   const [error,setError]=useState(false);
@@ -62,5 +62,5 @@ function ProposalPlanEditorSession({taskId,planId,revision,disabled,onChange,onB
   if(error) return <p role="alert">偏好草稿暫時無法讀取。<button type="button" onClick={()=>setRefresh(value=>value+1)}>重新讀取草稿</button></p>;
   if(closed) return <p>此草稿已關閉或條件版本已變更，請使用目前已保存的條件。</p>;
   if(!view) return <p>讀取偏好草稿中…</p>;
-  return <PreferenceProposalEditor key={proposalIdentity(view)} view={view} disabled={disabled} onChange={onChange} onBudgetChange={onBudgetChange} budgetSelected={budgetSelected}/>;
+  return <PreferenceProposalEditor key={proposalIdentity(view)} view={view} disabled={disabled} onChange={onChange} onBudgetChange={onBudgetChange} budgetSelected={budgetSelected} blockedFeatures={blockedFeatures}/>;
 }

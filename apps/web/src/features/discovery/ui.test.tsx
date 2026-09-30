@@ -97,6 +97,46 @@ test("submit revalidates a proposal before the next polling tick",async()=>{
   expect((screen.getByLabelText("本次預算上限（新台幣，可留空）") as HTMLInputElement).value).toBe("1000");
 });
 
+test("editing one saved preference preserves the budget and all unrelated preferences",async()=>{
+  const fruit={description:"果香",intent:"keep",certainty:"user_stated",strength:"soft"};
+  const honey={description:"蜂蜜",intent:"prefer",certainty:"user_stated",strength:"soft"};
+  api.readPlan.mockResolvedValue({...base,conditions:{...base.conditions,preferences:[fruit,honey]}});
+  api.patchPlan.mockResolvedValue(receipt);
+  render(<PlanDetail planId={id}/>);
+  fireEvent.change(await screen.findByLabelText("果香的偏好用途"),{target:{value:"avoid"}});
+  fireEvent.click(screen.getByRole("button",{name:"保存指定修改"}));
+  await waitFor(()=>expect(api.patchPlan).toHaveBeenCalledOnce());
+  expect(api.patchPlan.mock.calls[0][2].patch).toEqual({upsert_preferences:[{...fruit,intent:"avoid"}],remove_preferences:[]});
+  expect(api.patchPlan.mock.calls[0][2].baseConditions.preferences).toEqual([fruit,honey]);
+});
+
+test("removing a saved preference and explicitly enabling a hard limit preserves unrelated values",async()=>{
+  const fruit={description:"果香",intent:"keep",certainty:"user_stated",strength:"soft"};
+  const honey={description:"蜂蜜",intent:"prefer",certainty:"inferred",strength:"soft"};
+  api.readPlan.mockResolvedValue({...base,conditions:{...base.conditions,preferences:[fruit,honey]}});
+  api.patchPlan.mockResolvedValue(receipt);
+  render(<PlanDetail planId={id}/>);
+  fireEvent.click(await screen.findByRole("button",{name:"移除偏好：果香"}));
+  fireEvent.click(screen.getByLabelText("蜂蜜設為硬限制"));
+  fireEvent.change(screen.getByLabelText("新增風味特徵"),{target:{value:"泥煤"}});
+  fireEvent.change(screen.getByLabelText("新特徵用途"),{target:{value:"avoid"}});
+  fireEvent.click(screen.getByRole("button",{name:"加入本次偏好"}));
+  fireEvent.click(screen.getByRole("button",{name:"保存指定修改"}));
+  await waitFor(()=>expect(api.patchPlan).toHaveBeenCalledOnce());
+  expect(api.patchPlan.mock.calls[0][2].patch).toEqual({upsert_preferences:[{...honey,certainty:"user_stated",strength:"hard"},{description:"泥煤",intent:"avoid",certainty:"user_stated",strength:"soft"}],remove_preferences:["果香"]});
+});
+
+test("legacy duplicate descriptions require removal to one value before editing",async()=>{
+  const fruit={description:"果香",intent:"keep",certainty:"user_stated",strength:"soft"};
+  api.readPlan.mockResolvedValue({...base,conditions:{...base.conditions,preferences:[fruit,{...fruit,intent:"prefer"}]}});
+  render(<PlanDetail planId={id}/>);
+  const choices=await screen.findAllByLabelText("果香的偏好用途");
+  expect((choices[0] as HTMLSelectElement).disabled).toBe(true);
+  await screen.findByText("果香有多個同名偏好，請先移除到只剩一項再修改。");
+  fireEvent.click(screen.getAllByRole("button",{name:"移除偏好：果香"})[1]);
+  expect((screen.getByLabelText("果香的偏好用途") as HTMLSelectElement).disabled).toBe(false);
+});
+
 test("plan pagination preserves earlier plans on failure and retries the same cursor", async () => {
   const other = {...base,id:commandId,conditions:{...base.conditions,goal:"探索甜香"}};
   api.listPlans.mockResolvedValueOnce({items:[base],nextCursor:"cursor-one"})

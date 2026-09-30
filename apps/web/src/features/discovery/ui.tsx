@@ -5,6 +5,8 @@ import {useRouter} from "next/navigation";
 import {useEffect, useRef, useState, type FormEvent} from "react";
 import {safeReturnTo} from "../identity";
 import {startResearchV4,ProposalPlanEditor,readActivePlanProposal,proposalIdentity,type ProposalPatch} from "../research";
+import {PreferenceEditor} from "./preference-editor";
+import {preferencePatch,savedPreferences,selectProposal,hasAmbiguousPreferenceEdits,duplicatePreferenceDescriptions,type PreferenceDraft} from "./preference-draft";
 import {PlanHistory} from "./history";
 import {listPlans, patchPlan, readControl, readPlan, RequestRejected, type ControlView, type PatchRequest, type PlanView} from "./client";
 
@@ -76,7 +78,12 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
   const [budgetDraft, setBudgetDraft] = useState<{value:string;source:"saved"|"manual"|"proposal"}>({value:"",source:"saved"});
   const budget=budgetDraft.value;
   const proposalIdentityRef=useRef<string|null>(null);
-  const [proposalPatch,setProposalPatch]=useState<ProposalPatch | null>(null);
+  const [preferenceDraft,setPreferenceDraft]=useState<PreferenceDraft[]>([]);
+  const ambiguousPreferences=hasAmbiguousPreferenceEdits(preferenceDraft);
+  const editedPreferences=preferencePatch(plan?.conditions.preferences ?? [],preferenceDraft);
+  const proposalPatch=editedPreferences.upsert_preferences.length || editedPreferences.remove_preferences.length ? editedPreferences : null;
+  const hasProposal=preferenceDraft.some(row=>row.source==="proposal" && !row.removed);
+  const acceptProposalPatch=(patch:ProposalPatch|null)=>setPreferenceDraft(previous=>selectProposal(previous,plan?.conditions.preferences ?? [],patch?.upsert_preferences ?? []));
   const [loadError, setLoadError] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(0);
@@ -89,7 +96,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
   const subject = auth.user?.sub;
 
   const acceptPlan = (value:PlanView) => {
-    setProposalPatch(null);
+    setPreferenceDraft(savedPreferences(value.conditions.preferences ?? []));
     setPlan(value); setGoal(value.conditions.goal); setBudgetDraft({value:value.conditions.budget_twd ?? "",source:"saved"});
   };
 
@@ -150,8 +157,8 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
 
   const submit = async (event:FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!plan || busy || attempt || startAttempt) return;
-    if(proposalTaskId && (proposalPatch || budgetDraft.source==="proposal")) {
+    if (!plan || busy || attempt || startAttempt || ambiguousPreferences) return;
+    if(proposalTaskId && (hasProposal || budgetDraft.source==="proposal")) {
       const generation=life.current;
       setBusy(true);
       try {
@@ -161,7 +168,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
         const draft=await readActivePlanProposal(proposalTaskId,planId,plan.conditionsRevision,token);
         if(generation!==life.current) return;
         if(!draft || proposalIdentity(draft.view)!==proposalIdentityRef.current) {
-          setProposalPatch(null);acceptProposalBudget(undefined);setError("此草稿已關閉，請重新確認目前條件。");return;
+          acceptProposalPatch(null);acceptProposalBudget(undefined);setError("此草稿已關閉，請重新確認目前條件。");return;
         }
       } catch {if(generation===life.current) setError("無法確認草稿是否有效，請重試。");return;}
       finally {if(generation===life.current) setBusy(false);}
@@ -201,11 +208,12 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
     {visible && <>
       <p>條件版本：{visible.conditionsRevision}</p>
       <form onSubmit={submit}>
-        {proposalTaskId && <ProposalPlanEditor taskId={proposalTaskId} planId={visible.id} revision={visible.conditionsRevision} disabled={busy || Boolean(attempt) || Boolean(startAttempt)} onChange={setProposalPatch} onBudgetChange={acceptProposalBudget} budgetSelected={budgetDraft.source==="proposal"} onIdentity={identity=>{proposalIdentityRef.current=identity;}}/>}
+        {proposalTaskId && <ProposalPlanEditor taskId={proposalTaskId} planId={visible.id} revision={visible.conditionsRevision} disabled={busy || Boolean(attempt) || Boolean(startAttempt)} onChange={acceptProposalPatch} onBudgetChange={acceptProposalBudget} budgetSelected={budgetDraft.source==="proposal"} blockedFeatures={duplicatePreferenceDescriptions(preferenceDraft)} onIdentity={identity=>{proposalIdentityRef.current=identity;}}/>}
+        <PreferenceEditor draft={preferenceDraft} onChange={setPreferenceDraft} disabled={busy || Boolean(attempt) || Boolean(startAttempt)}/>
         <fieldset disabled={busy || Boolean(attempt) || Boolean(startAttempt)}>
           <label>本次探索目標<input required maxLength={2000} value={goal} onChange={event => setGoal(event.target.value)} /></label>
           <label>本次預算上限（新台幣，可留空）<input type="number" min="0.01" step="0.01" value={budget} onChange={event => setBudgetDraft({value:event.target.value,source:"manual"})} /></label>
-          <button type="submit" disabled={!dirty}>保存指定修改</button>
+          <button type="submit" disabled={!dirty || ambiguousPreferences}>保存指定修改</button>
         </fieldset>
       </form>
       <p>已保存的偏好：{visible.conditions.preferences?.length ? visible.conditions.preferences.map(value => value.description).join("、") : "尚未指定"}</p>
@@ -215,7 +223,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
           ? <button disabled={busy} onClick={() => setRefresh(value => value + 1)}>重新讀取計畫</button>
           : <button disabled={busy} onClick={() => confirm(attempt)}>{attempt.receipt ? "重新確認變更" : "重試同一變更"}</button>}
       </>}
-      <button disabled={busy || Boolean(attempt) || dirty} onClick={start}>使用已保存條件開始研究</button>
+      <button disabled={busy || Boolean(attempt) || dirty || ambiguousPreferences} onClick={start}>使用已保存條件開始研究</button>
       <PlanHistory planId={visible.id} revision={visible.conditionsRevision} />
     </>}
   </section>;
