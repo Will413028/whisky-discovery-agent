@@ -50,7 +50,7 @@ def main() -> None:
             "scripts = Path(migration.__file__).parents[1] / 'migrations'; "
             "assert (scripts / 'env.py').is_file(); "
             "assert ScriptDirectory(str(scripts)).get_current_head() "
-            "== '0012_recovery_gate'",
+            "== '0014_preference_proposals'",
         )
         shutil.copy(BACKEND / "tests/test_installed.py", root / "test_installed.py")
         shutil.copy(

@@ -14,12 +14,32 @@ from whisky.modules.discovery.conditions import ResearchConditions as ResearchCo
 from whisky.modules.discovery.conditions_v1 import (
     ResearchConditionsV1 as ResearchConditionsV1,
 )
+from whisky.modules.discovery.intent import ExplorationIntent as ExplorationIntent
+from whisky.modules.discovery.intent import ExplorationMode as ExplorationMode
+from whisky.modules.discovery.intent import FlavorContrast as FlavorContrast
+from whisky.modules.discovery.proposal import PreferenceProposal as PreferenceProposal
 from whisky.platform.domain_errors import DomainRejection
 
 if TYPE_CHECKING:
     from sqlalchemy import Connection
 
     from whisky.modules.discovery.store import Plan
+
+
+def persist_preference_proposal(
+    connection: Connection,
+    task_id: UUID,
+    plan: Plan,
+    source: str,
+    proposal: PreferenceProposal,
+    prompt_version: str,
+) -> None:
+    """Publish a draft in the caller's fenced product transaction."""
+    from whisky.modules.discovery.proposal_store import persist_preference_proposal
+
+    persist_preference_proposal(
+        connection, task_id, plan, source, proposal, prompt_version
+    )
 
 
 def locked_plan(connection: Connection, plan_id: UUID, owner: UUID) -> Plan | None:

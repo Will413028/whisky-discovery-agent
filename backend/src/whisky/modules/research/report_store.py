@@ -312,6 +312,7 @@ class ReportStore:
                     text("""
                     SELECT id,answer,choices FROM clarifications
                     WHERE task_id=:task AND owner_id=:owner AND status='answered'
+                      AND kind='version'
                     ORDER BY waiting_version DESC LIMIT 1
                     """),
                     dict(task=task_id, owner=owner),

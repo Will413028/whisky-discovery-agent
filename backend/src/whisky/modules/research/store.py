@@ -13,6 +13,7 @@ from whisky.modules.discovery.public import locked_plan, owned_plan
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.commands import StartTurn
 from whisky.modules.research.domain import workflow_id_for
+from whisky.modules.research.inputs_v4 import StartTurnV4
 from whisky.modules.research.views import ResearchCommandView, TaskHistoryItem, TaskView
 
 
@@ -44,8 +45,18 @@ class ResearchStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
 
+    def reserve_turn_v4(
+        self, owner: UUID, generation: int, turn: StartTurnV4
+    ) -> StartReceipt:
+        return self._reserve_turn(owner, generation, turn)
+
     def reserve_turn(
         self, owner: UUID, generation: int, turn: StartTurn
+    ) -> StartReceipt:
+        return self._reserve_turn(owner, generation, turn)
+
+    def _reserve_turn(
+        self, owner: UUID, generation: int, turn: StartTurn | StartTurnV4
     ) -> StartReceipt:
         with self.engine.begin() as connection:
             self._identity(connection, owner, generation)
@@ -82,7 +93,36 @@ class ResearchStore:
                 command.conditions_revision,
                 command.key,
                 turn.thread_id,
+                sha256(
+                    json.dumps(
+                        dict(
+                            schema_version=4,
+                            plan_id=str(command.plan_id),
+                            revision=command.conditions_revision,
+                            input=turn.command.input.model_dump(
+                                mode="json", by_alias=True
+                            ),
+                        ),
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode()
+                ).hexdigest()
+                if isinstance(turn, StartTurnV4)
+                else None,
             )
+            if isinstance(turn, StartTurnV4):
+                connection.execute(
+                    text("""
+                    INSERT INTO research_v4_inputs (task_id,owner_id,input)
+                    VALUES (:task,:owner,CAST(:input AS jsonb))
+                    ON CONFLICT (task_id) DO NOTHING
+                """),
+                    dict(
+                        task=receipt.task_id,
+                        owner=owner,
+                        input=turn.command.input.model_dump_json(by_alias=True),
+                    ),
+                )
             actual_thread: UUID = connection.execute(
                 text(
                     "SELECT thread_id FROM research_tasks "
@@ -123,14 +163,18 @@ class ResearchStore:
         revision: int,
         key: str,
         thread_id: UUID | None = None,
+        payload_digest: str | None = None,
     ) -> StartReceipt:
         if not key.strip() or len(key) > 128 or revision < 1:
             raise ValueError("Invalid research command key or revision")
-        digest = sha256(
-            json.dumps(
-                dict(plan_id=str(plan_id), revision=revision), sort_keys=True
-            ).encode()
-        ).hexdigest()
+        digest = (
+            payload_digest
+            or sha256(
+                json.dumps(
+                    dict(plan_id=str(plan_id), revision=revision), sort_keys=True
+                ).encode()
+            ).hexdigest()
+        )
         existing = self._receipt(connection, owner, key=key)
         if existing is not None:
             if existing["payload_hash"] != digest:
