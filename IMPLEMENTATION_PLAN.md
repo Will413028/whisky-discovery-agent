@@ -1,6 +1,6 @@
 # TDD 實作計畫
 
-更新：2026-09-30。狀態：T00–T08 已驗收，T09 進行中。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；T03 catalog／人工覆核、T04 可靠受理、T05 durable Agent、T06 等待補充／跨程序恢復、T07 控制命令與 T08 真來源／模型／配額已通過各自出口。T03–T08 的 schema／研究 worker 與三款 reviewed catalog 已部署 VM；正式私人紀錄仍須 T09 完整總驗收。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
+更新：2026-09-30。狀態：T00–T09 已驗收，T10 進行中。Oracle 原生 Next.js／Node、薄 Worker→VPC→Web→API 已通過真 Google callback／跨帳號隔離、SSE／重連／取消／token 到期／未讀 consumer 期限與入口回退；T03 catalog／人工覆核、T04 可靠受理、T05 durable Agent、T06 等待補充／跨程序恢復、T07 控制命令與 T08 真來源／模型／配額已通過各自出口。T09 空庫／WAL 還原、正式登入／跨帳號／控制／重啟恢復、告警收件與首次 default-branch schedule 均已通過，正式 control 開關已放行。T10 的新 input／proposal schema、V4 executor 與 Web slice 尚未部署或整體驗收。依 [產品規格](PRODUCT_SPEC.md)、[架構](ARCHITECTURE.md) 與 [垂直流程設計](VERTICAL_SLICE.md) 實作，保留 AG-UI／PydanticAI／Temporal、業務模組及 `backend/src/whisky/`。本文件保存細項證據，不另立 roadmap。
 
 ## 開工前對帳與狀態規則
 
@@ -9,8 +9,8 @@
 | 主待辦對應 | 細項 | 進度 |
 |---|---|---|
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
-| 持久研究骨架與樣本 | T03–T09 | T03–T08 已驗收；T09 未完成 |
-| 雙入口與探索計畫 | T10 | 獨立公開 catalog adapter 已 GREEN；私人雙入口待 T09 出口，不提前驗收 |
+| 持久研究骨架與樣本 | T03–T09 | 已驗收；首次實際 schedule 與正式 control 放行證據見 T09 文末 |
+| 雙入口與探索計畫 | T10 | 進行中；公開 catalog／可靠 patch／plan與history UI／proposal slice 已本機 GREEN；完整雙入口與模型／部署出口仍待完成 |
 | 比較、回訪與資料管理 | T11 | 未開始 |
 | 展示資料與完整驗收 | T12 | 未開始 |
 
@@ -642,3 +642,5 @@ Transport 決定：`@ag-ui/client@0.0.59` 實測無法在 EOF 前解析 CRLF fra
 - 暫時 T09 真 API 驗收頁沿用 `/account` callback，不新增 Auth0 callback／scope，memory-only token 不輸出；只有 Web public mount，正常 API／worker 未換成合成來源。等待任務取消首次202/pending，同key重送200/completed且command ID相同，task cancelled／問題關閉／report null。另一等待任務改條件首次202/pending，同key重送200/completed，plan revision1→2、舊task superseded／report null。獨立 recovery IAM 以 `read_complete_control_log(primary,witness)` **只讀**全庫驗5 commands，兩筆 live cancel／change各completed，雙庫全分頁與body比對通過；沒有對live DB跑還原job。原owner的plan／task／report讀取各200/no-store，第二身份隔離待驗。
 - 告警收件已通過：真Chrome核對 Will413028 的 Actions通知現值為 Email／Failed workflows only，沒有修改設定；只搜尋本專案的 GitHub通知信，9/30 05:40收件、commit4f07caa，信中 `public-readiness Failed in 7 seconds`，安全解析的run連結為 `36634780232`，對應已驗HTTP503的停機attempt1。不是先前403/1010的run；通知連結中的email token不保存至repo。Web驗收工具變更後Vitest106、typecheck、boundaries、nativeNextbuild與Node/workerdPlaywright7均通過；不以工具編譯取代真API證據。
 - 第二真 Google 身份核對 actor 與原owner不同；原owner已驗plan／task／report各200/no-store，同一組UUID在第二身份下各404/no-store。驗收後只重建本專案正常Web／API、取消暫時public mount，control flag恢復0，DB／Temporal／worker及其他專案未改；固定health probe通過，`curl --user-agent WhiskyDiscoveryAcceptance/1.0 .../__recovery_probe.html` 真404。`01d0f88` CI runs `36663207789`／`36663209945` 的backend jobs各success（4m22／4m19），web各success（1m30／1m32）、GitGuardian pass；first default-branch schedule仍須在合併後核對，不以push/PR取代。
+- T09 最後出口已通過：Actions [`36699573571`](https://github.com/Will413028/whisky-discovery-agent/actions/runs/36699573571) 的 event=`schedule`、headBranch=`main`、headSha=`c209f8d3b9fe44f86789dddb7efcee1402c5cd0c`；`public-readiness` job 與真正 `check_public_health.py` step 各success（UTC 2026-09-30 09:59:08–09:59:14）。以 `gh run view ... --json event,headBranch,headSha,jobs` 直接核對，不以push／dispatch代替。未修改cron或重新啟用workflow，不能從這次成功推論先前延遲的根因。
+- 最後 gate 後，先查真 API image仍為`aa3a5aa`、runtime control flag=0、Compose files僅本專案正常base＋research overlay；只將 ignored `/opt/whisky-discovery/deploy/.env` 的 `WHISKY_CONTROL_ENABLED` 改1，config --quiet通過，再先stop／後no-deps force-recreate本專案api。真runtime確認control_enabled=1、recovery_required=1；公開完整路徑 `/health/ready` 回200／ok，匿名POST cancel回401／UNAUTHENTICATED。未重建DB／Temporal／worker或其他專案；T10新程式沒有部署。T09據此標已驗收，空VM完整重建RTO仍不在本項承諾。
