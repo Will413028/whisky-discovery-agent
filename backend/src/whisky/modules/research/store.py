@@ -112,6 +112,23 @@ class ResearchStore:
                 ):
                     raise ResearchConflict("TURN_CONFLICT")
             command = turn.command
+            source_task_id = (
+                turn.command.source_task_id if isinstance(turn, StartTurnV4) else None
+            )
+            if source_task_id is not None and existing is None:
+                source = connection.execute(
+                    text("""SELECT id FROM research_tasks
+                        WHERE id=:source AND owner_id=:owner AND generation=:generation
+                            AND plan_id=:plan AND status='completed'"""),
+                    dict(
+                        source=source_task_id,
+                        owner=owner,
+                        generation=generation,
+                        plan=command.plan_id,
+                    ),
+                ).first()
+                if source is None:
+                    raise ResearchConflict("NOT_FOUND")
             receipt = self._reserve(
                 connection,
                 owner,
@@ -129,6 +146,11 @@ class ResearchStore:
                             input=turn.command.input.model_dump(
                                 mode="json", by_alias=True
                             ),
+                            **(
+                                {"source_task_id": str(source_task_id)}
+                                if source_task_id is not None
+                                else {}
+                            ),
                         ),
                         sort_keys=True,
                         separators=(",", ":"),
@@ -140,13 +162,15 @@ class ResearchStore:
             if isinstance(turn, StartTurnV4):
                 connection.execute(
                     text("""
-                    INSERT INTO research_v4_inputs (task_id,owner_id,input)
-                    VALUES (:task,:owner,CAST(:input AS jsonb))
+                    INSERT INTO research_v4_inputs
+                        (task_id,owner_id,input,source_task_id)
+                    VALUES (:task,:owner,CAST(:input AS jsonb),:source)
                     ON CONFLICT (task_id) DO NOTHING
                 """),
                     dict(
                         task=receipt.task_id,
                         owner=owner,
+                        source=source_task_id,
                         input=turn.command.input.model_dump_json(by_alias=True),
                     ),
                 )

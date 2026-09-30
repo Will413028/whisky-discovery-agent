@@ -4,14 +4,16 @@ import {useAuth0} from "@auth0/auth0-react";
 import {useRouter} from "next/navigation";
 import {useEffect, useRef, useState, type FormEvent} from "react";
 import {safeReturnTo} from "../identity";
-import {startResearchV4,ProposalPlanEditor,readActivePlanProposal,proposalIdentity,type ProposalPatch} from "../research";
+import {startResearchV4,ProposalPlanEditor,readActivePlanProposal,proposalIdentity,type ProposalPatch,type ResearchInputV4} from "../research";
+import {RestartDirection,canReuseDirection} from "./restart-direction";
+import type {RestartContext} from "./restart-client";
 import {PreferenceEditor} from "./preference-editor";
 import {preferencePatch,savedPreferences,selectProposal,hasAmbiguousPreferenceEdits,duplicatePreferenceDescriptions,type PreferenceDraft} from "./preference-draft";
 import {PlanHistory} from "./history";
 import {listPlans, patchPlan, readControl, readPlan, RequestRejected, type ControlView, type PatchRequest, type PlanView} from "./client";
 
 type Attempt = {body:PatchRequest; receipt:ControlView | null};
-type StartAttempt = {key:string; threadId:string; runId:string; plan:PlanView};
+type StartAttempt = {key:string; threadId:string; runId:string; plan:PlanView;input:ResearchInputV4;sourceTaskId?:string};
 
 export function Plans() {
   const auth = useAuth0();
@@ -65,12 +67,12 @@ export function PlansEntry() {
   return configured() ? <Plans /> : <p>帳號功能準備中。</p>;
 }
 
-export function PlanDetailEntry({planId,proposalTaskId}: {planId:string;proposalTaskId?:string}) {
+export function PlanDetailEntry({planId,proposalTaskId,restartTaskId}: {planId:string;proposalTaskId?:string;restartTaskId?:string}) {
   if (!configured()) return <p>帳號功能準備中。</p>;
-  return <PlanDetail planId={planId} proposalTaskId={proposalTaskId} />;
+  return <PlanDetail planId={planId} proposalTaskId={proposalTaskId} restartTaskId={restartTaskId} />;
 }
 
-export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskId?:string}) {
+export function PlanDetail({planId,proposalTaskId,restartTaskId}: {planId:string;proposalTaskId?:string;restartTaskId?:string}) {
   const auth = useAuth0();
   const router = useRouter();
   const [plan, setPlan] = useState<PlanView | null>(null);
@@ -91,6 +93,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
   const [attempt, setAttempt] = useState<Attempt | null>(null);
   const [rejected, setRejected] = useState(false);
   const [startAttempt, setStartAttempt] = useState<StartAttempt | null>(null);
+  const [restartSelection,setRestartSelection]=useState<RestartContext|null|undefined>(undefined);
   const life = useRef(0);
   const {isAuthenticated, getAccessTokenSilently} = auth;
   const subject = auth.user?.sub;
@@ -109,6 +112,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
   useEffect(() => {
     const generation = ++life.current;
     setPlan(null); setAttempt(null); setRejected(false); setStartAttempt(null); setError(null); setBusy(false); setLoadError(false);
+    setRestartSelection(undefined);
     if (!isAuthenticated) return;
     const controller = new AbortController();
     void (async () => {
@@ -121,7 +125,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
       } catch {if (generation === life.current) setLoadError(true);}
     })();
     return () => {life.current++; controller.abort();};
-  }, [planId, proposalTaskId,isAuthenticated, getAccessTokenSilently, subject, refresh]);
+  }, [planId, proposalTaskId,restartTaskId,isAuthenticated, getAccessTokenSilently, subject, refresh]);
 
   const confirm = (current:Attempt) => {
     const generation = life.current;
@@ -181,16 +185,17 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
   };
 
   const start = () => {
-    if (!plan || busy || attempt) return;
+    if (!plan || busy || attempt || (restartTaskId && (restartSelection===undefined || (restartSelection && !canReuseDirection(plan,restartSelection))))) return;
     const generation = life.current;
-    const current = startAttempt ?? {key:crypto.randomUUID(),threadId:crypto.randomUUID(),runId:crypto.randomUUID(),plan};
+    const input:ResearchInputV4=restartSelection ? restartSelection.input : {schemaVersion:4,phase:"research",sourceText:null,intent:{mode:"style_options",origin_query:null,explore_feature:null,contrast:null,smoke_comparison:false}};
+    const current = startAttempt ?? {key:crypto.randomUUID(),threadId:crypto.randomUUID(),runId:crypto.randomUUID(),plan,input,sourceTaskId:restartSelection?.taskId};
     setStartAttempt(current); setBusy(true); setError(null);
     void (async () => {
       try {
         const token = await getAccessTokenSilently();
         if (generation !== life.current) return;
         if (!token) throw new Error("AUTH_REQUIRED");
-        const task = await startResearchV4(token,current.plan,current.key,current.threadId,current.runId,{schemaVersion:4,phase:"research",sourceText:null,intent:{mode:"style_options",origin_query:null,explore_feature:null,contrast:null,smoke_comparison:false}});
+        const task = await startResearchV4(token,current.plan,current.key,current.threadId,current.runId,current.input,current.sourceTaskId);
         if (generation === life.current) router.push(`/research/${task.taskId}`);
       } catch {if (generation === life.current) setError("委託暫時無法確認；重試會使用同一筆指令。");}
       finally {if (generation === life.current) setBusy(false);}
@@ -207,6 +212,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
     {!visible && !loadError && <p>讀取計畫中…</p>}
     {visible && <>
       <p>條件版本：{visible.conditionsRevision}</p>
+      {restartTaskId && <RestartDirection key={JSON.stringify([visible.id,restartTaskId,subject])} plan={visible} taskId={restartTaskId} selected={restartSelection} disabled={busy || Boolean(attempt) || Boolean(startAttempt)} onChange={setRestartSelection}/>}
       <form onSubmit={submit}>
         {proposalTaskId && <ProposalPlanEditor taskId={proposalTaskId} planId={visible.id} revision={visible.conditionsRevision} disabled={busy || Boolean(attempt) || Boolean(startAttempt)} onChange={acceptProposalPatch} onBudgetChange={acceptProposalBudget} budgetSelected={budgetDraft.source==="proposal"} blockedFeatures={duplicatePreferenceDescriptions(preferenceDraft)} onIdentity={identity=>{proposalIdentityRef.current=identity;}}/>}
         <PreferenceEditor draft={preferenceDraft} onChange={setPreferenceDraft} disabled={busy || Boolean(attempt) || Boolean(startAttempt)}/>
@@ -223,7 +229,7 @@ export function PlanDetail({planId,proposalTaskId}: {planId:string;proposalTaskI
           ? <button disabled={busy} onClick={() => setRefresh(value => value + 1)}>重新讀取計畫</button>
           : <button disabled={busy} onClick={() => confirm(attempt)}>{attempt.receipt ? "重新確認變更" : "重試同一變更"}</button>}
       </>}
-      <button disabled={busy || Boolean(attempt) || dirty || ambiguousPreferences} onClick={start}>使用已保存條件開始研究</button>
+      <button disabled={busy || Boolean(attempt) || dirty || ambiguousPreferences || Boolean(restartTaskId && (restartSelection===undefined || (restartSelection && !canReuseDirection(visible,restartSelection))))} onClick={start}>使用已保存條件開始研究</button>
       <PlanHistory planId={visible.id} revision={visible.conditionsRevision} />
     </>}
   </section>;

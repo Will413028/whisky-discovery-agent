@@ -11,12 +11,56 @@ const api = vi.hoisted(() => ({readPlan:vi.fn(),patchPlan:vi.fn(),readControl:vi
 const auth = vi.hoisted(() => ({isAuthenticated:true,isLoading:false,getAccessTokenSilently:vi.fn().mockResolvedValue("fixture-token"),loginWithRedirect:vi.fn()}));
 const research = vi.hoisted(() => vi.fn());
 const push = vi.hoisted(() => vi.fn());
+const restart = vi.hoisted(()=>vi.fn());
+vi.mock("./restart-client",()=>({readRestartContext:restart}));
 vi.mock("./client", async () => ({...await vi.importActual<typeof import("./client")>("./client"), ...api}));
 vi.mock("@auth0/auth0-react", () => ({useAuth0:() => auth}));
 vi.mock("next/navigation", () => ({useRouter:() => ({push})}));
 vi.mock("../research", async () => ({...await vi.importActual<typeof import("../research")>("../research"),startResearch:research,startResearchV4:research}));
 vi.mock("./history-client", () => ({listHistory:async () => ({items:[],nextCursor:null})}));
 afterEach(() => {cleanup(); vi.unstubAllGlobals(); vi.resetAllMocks(); auth.isAuthenticated = true; auth.getAccessTokenSilently.mockResolvedValue("fixture-token");});
+
+test("explicit historical direction starts with the current saved revision and stable V4 input",async()=>{
+  const input={schemaVersion:4,phase:"research",sourceText:null,intent:{mode:"small_step",origin_query:"格蘭菲迪 12 年",explore_feature:"太妃糖",contrast:null,smoke_comparison:false}};
+  api.readPlan.mockResolvedValue({...base,conditionsRevision:2,conditions:{...base.conditions,budget_twd:"900"}});
+  restart.mockResolvedValue({schemaVersion:4,planId:id,taskId:commandId,sourceConditionsRevision:1,sourceStartingBottle:{release_id:id,item_id:id},input});
+  research.mockRejectedValueOnce(new Error("TEMPORARY")).mockResolvedValueOnce({taskId:commandId});
+  render(<PlanDetail planId={id} restartTaskId={commandId}/>);
+  fireEvent.click(await screen.findByLabelText("沿用這次探索方向"));
+  expect(screen.getByText("沿用來源條件版本 1；新研究使用目前已保存條件。")).toBeTruthy();
+  fireEvent.click(screen.getByRole("button",{name:"使用已保存條件開始研究"}));
+  await screen.findByText("委託暫時無法確認；重試會使用同一筆指令。");
+  fireEvent.click(screen.getByRole("button",{name:"使用已保存條件開始研究"}));
+  await waitFor(()=>expect(research).toHaveBeenCalledTimes(2));
+  expect(research.mock.calls[0][1]).toMatchObject({conditionsRevision:2,conditions:{budget_twd:"900"}});
+  expect(research.mock.calls[0][5]).toEqual(input);
+  expect(research.mock.calls[0][6]).toEqual(commandId);
+  expect(research.mock.calls[1].slice(1)).toEqual(research.mock.calls[0].slice(1));
+});
+
+test("unavailable history cannot silently start until the user explicitly skips reuse",async()=>{
+  api.readPlan.mockResolvedValue(base);restart.mockRejectedValue(new Error("NOT_FOUND"));
+  research.mockResolvedValue({taskId:commandId});
+  render(<PlanDetail planId={id} restartTaskId={commandId}/>);
+  await screen.findByText(/無法讀取可沿用的研究方向/);
+  const start=screen.getByRole("button",{name:"使用已保存條件開始研究"}) as HTMLButtonElement;
+  expect(start.disabled).toBe(true);expect(research).not.toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button",{name:"不沿用此方向，使用已保存條件"}));
+  expect(start.disabled).toBe(false);fireEvent.click(start);
+  await waitFor(()=>expect(research).toHaveBeenCalledOnce());
+  expect(research.mock.calls[0][5].intent.mode).toBe("style_options");
+  expect(research.mock.calls[0][6]).toBeUndefined();
+});
+
+test("a saved starting bottle mismatch requires an explicit decision instead of reusing history",async()=>{
+  api.readPlan.mockResolvedValue({...base,conditions:{...base.conditions,starting_bottle:{release_id:id,item_id:id}}});
+  restart.mockResolvedValue({schemaVersion:4,planId:id,taskId:commandId,sourceConditionsRevision:1,sourceStartingBottle:null,input:{schemaVersion:4,phase:"research",sourceText:null,intent:{mode:"similar",origin_query:"別的起點",explore_feature:null,contrast:null,smoke_comparison:false}}});
+  render(<PlanDetail planId={id} restartTaskId={commandId}/>);
+  const choice=await screen.findByLabelText("沿用這次探索方向") as HTMLInputElement;
+  expect(choice.disabled).toBe(true);
+  expect((screen.getByRole("button",{name:"使用已保存條件開始研究"}) as HTMLButtonElement).disabled).toBe(true);
+  expect(research).not.toHaveBeenCalled();
+});
 
 test("an explicitly selected draft uses the existing stable patch receipt and never auto-starts research",async()=>{
   api.readPlan.mockResolvedValue(base);

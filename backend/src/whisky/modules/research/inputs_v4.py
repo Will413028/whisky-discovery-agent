@@ -34,6 +34,7 @@ class StartCommandV4(ViewModel):
     plan_id: UUID
     conditions_revision: int = Field(ge=1)
     input: ResearchInputV4
+    source_task_id: UUID | None = None
 
     @model_validator(mode="after")
     def nonblank_key(self) -> Self:

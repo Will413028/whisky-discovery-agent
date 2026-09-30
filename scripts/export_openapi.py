@@ -11,6 +11,7 @@ from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.inputs_v4 import StartCommandV4
 from whisky.modules.research.proposal_view_v4 import PreferenceProposalViewV4
 from whisky.modules.research.public import TaskView
+from whisky.modules.research.restart_context_v4 import RestartContextViewV4
 from whisky.modules.research.views import TaskHistoryView
 
 target = Path(__file__).resolve().parents[1] / "contracts/openapi.json"
@@ -48,6 +49,7 @@ for name, model in (
     ("task-history-view", TaskHistoryView),
     ("comparison-report-view", ComparisonReportViewV4),
     ("preference-proposal-view", PreferenceProposalViewV4),
+    ("restart-context-view", RestartContextViewV4),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

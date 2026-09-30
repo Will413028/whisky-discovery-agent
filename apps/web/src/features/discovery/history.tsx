@@ -46,6 +46,7 @@ export function PlanHistory({planId, revision}: {planId:string; revision:number}
       <p>{item.task.conditionsRevision===revision ? "目前" : "歷史"}條件版本 {item.task.conditionsRevision}</p>
       <time dateTime={item.createdAt}>{item.createdAt}</time>{" "}
       <a href={`/research/${item.task.taskId}`}>查看研究 {item.task.status}</a>
+      {item.task.status==="completed" && <a href={`/plans/${planId}?restartTaskId=${item.task.taskId}`}>查看可沿用的探索方向</a>}
     </li>)}</ul>}
     {cursor && !error && <button disabled={busy} onClick={()=>load(cursor,life.current,false)}>讀取更多研究</button>}
   </section>;

@@ -7,9 +7,9 @@ export type ReportView = components["schemas"]["ReportView"];
 export type ResearchCommandView = components["schemas"]["ResearchCommandView"];
 export type ResearchInputV4 = components["schemas"]["ResearchInputV4Input"];
 
-export async function startResearchV4(token:string,plan:{id:string;conditionsRevision:number},key:string,threadId:string,runId:string,input:ResearchInputV4):Promise<TaskView> {
+export async function startResearchV4(token:string,plan:{id:string;conditionsRevision:number},key:string,threadId:string,runId:string,input:ResearchInputV4,sourceTaskId?:string):Promise<TaskView> {
   return startResearchCommand(token,plan,threadId,runId,{
-    type:"start_v4",key,planId:plan.id,conditionsRevision:plan.conditionsRevision,input,
+    type:"start_v4",key,planId:plan.id,conditionsRevision:plan.conditionsRevision,input,sourceTaskId:sourceTaskId ?? null,
   });
 }
 
@@ -36,7 +36,7 @@ export async function startResearch(token: string, plan: {id:string; conditionsR
 }
 
 type StartCommandV4 = components["schemas"]["StartCommandV4"];
-type StartCommandV1 = Omit<StartCommandV4,"input" | "type"> & {type:"start"};
+type StartCommandV1 = Omit<StartCommandV4,"input" | "type" | "sourceTaskId"> & {type:"start"};
 
 async function startResearchCommand(token:string,plan:{id:string;conditionsRevision:number},threadId:string,runId:string,command:StartCommandV1 | StartCommandV4):Promise<TaskView> {
   const controller = new AbortController();

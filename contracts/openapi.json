@@ -2699,6 +2699,44 @@
         "title": "ResearchConditions",
         "type": "object"
       },
+      "ResearchInputV4": {
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntent"
+          },
+          "phase": {
+            "default": "research",
+            "enum": [
+              "proposal",
+              "research"
+            ],
+            "title": "Phase",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceText": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcetext"
+          }
+        },
+        "title": "ResearchInputV4",
+        "type": "object"
+      },
       "ResearchInputV4Input": {
         "additionalProperties": false,
         "properties": {
@@ -2736,6 +2774,54 @@
           }
         },
         "title": "ResearchInputV4",
+        "type": "object"
+      },
+      "RestartContextViewV4": {
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "$ref": "#/components/schemas/ResearchInputV4"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceConditionsRevision": {
+            "minimum": 1.0,
+            "title": "Sourceconditionsrevision",
+            "type": "integer"
+          },
+          "sourceStartingBottle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId",
+          "taskId",
+          "sourceConditionsRevision",
+          "sourceStartingBottle",
+          "input"
+        ],
+        "title": "RestartContextViewV4",
         "type": "object"
       },
       "ResumeEntry": {
@@ -2944,6 +3030,19 @@
             "format": "uuid",
             "title": "Planid",
             "type": "string"
+          },
+          "sourceTaskId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourcetaskid"
           },
           "type": {
             "const": "start_v4",
@@ -5243,6 +5342,121 @@
           }
         ],
         "summary": "Task History"
+      }
+    },
+    "/api/v1/plans/{plan_id}/tasks/{task_id}/restart-context": {
+      "get": {
+        "operationId": "read_restart_context_api_v1_plans__plan_id__tasks__task_id__restart_context_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestartContextViewV4"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Restart Context"
       }
     },
     "/api/v1/reports/{report_id}": {

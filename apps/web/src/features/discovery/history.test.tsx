@@ -34,6 +34,14 @@ test("initial read failure is not an empty history", async () => {
   expect(screen.queryByText("尚未有研究紀錄。")).toBeNull();
 });
 
+test("completed history offers an explicit restart direction without treating an unfinished task as reusable",async()=>{
+  read.mockResolvedValue({items:[item,{...item,task:{...item.task,taskId:id,status:"needs_input"}}],nextCursor:null});
+  render(<PlanHistory planId={id} revision={2}/>);
+  const link=await screen.findByRole("link",{name:"查看可沿用的探索方向"});
+  expect(link.getAttribute("href")).toBe(`/plans/${id}?restartTaskId=${taskId}`);
+  expect(screen.getAllByRole("link",{name:"查看可沿用的探索方向"})).toHaveLength(1);
+});
+
 test("confirmed revision changes reread superseded task state and fence an older page",async()=>{
   let complete!:(value:unknown)=>void;
   read.mockResolvedValueOnce({items:[{...item,task:{...item.task,status:"needs_input"}}],nextCursor:"old-page"})

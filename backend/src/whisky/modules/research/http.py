@@ -28,6 +28,10 @@ from whisky.modules.research.observation import (
 )
 from whisky.modules.research.proposal_view_v4 import PreferenceProposalViewV4
 from whisky.modules.research.report_store import ReportStore
+from whisky.modules.research.restart_context_v4 import (
+    RestartContextViewV4,
+    read_restart_context_v4,
+)
 from whisky.modules.research.store import (
     ResearchConflict,
     ResearchStore,
@@ -152,6 +156,22 @@ def observation_router(
                 payload.model_dump_json().encode()
             ).decode("ascii")
         return TaskHistoryView(items=page.items, next_cursor=next_cursor)
+
+    @routes.get(
+        "/api/v1/plans/{plan_id}/tasks/{task_id}/restart-context",
+        response_model=RestartContextViewV4,
+    )
+    def read_restart_context(
+        plan_id: UUID,
+        task_id: UUID,
+        session: AccessSession = Depends(authenticate),
+    ) -> RestartContextViewV4:
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = read_restart_context_v4(store.engine, session.actor_id, plan_id, task_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
 
     @routes.get("/api/v1/tasks", response_model=tuple[TaskView, ...])
     def list_open_tasks(

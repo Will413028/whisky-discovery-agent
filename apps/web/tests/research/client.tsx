@@ -14,7 +14,8 @@ function App() {
   const taskId = /^\/research\/([0-9a-f-]{36})$/.exec(path)?.[1];
   const planId = /^\/plans\/([0-9a-f-]{36})$/.exec(path)?.[1];
   const proposalTaskId=new URLSearchParams(window.location.search).get("proposalTaskId") ?? undefined;
-  return <main><h1>合成研究流程驗收</h1>{planId ? <PlanDetail planId={planId} proposalTaskId={proposalTaskId} /> : path === "/plans" ? <Plans /> : taskId ? <ResearchTask taskId={taskId} /> : <ResearchStart />}</main>;
+  const restartTaskId=new URLSearchParams(window.location.search).get("restartTaskId") ?? undefined;
+  return <main><h1>合成研究流程驗收</h1>{planId ? <PlanDetail planId={planId} proposalTaskId={proposalTaskId} restartTaskId={restartTaskId} /> : path === "/plans" ? <Plans /> : taskId ? <ResearchTask taskId={taskId} /> : <ResearchStart />}</main>;
 }
 
 createRoot(document.getElementById("fixture")!).render(<App />);

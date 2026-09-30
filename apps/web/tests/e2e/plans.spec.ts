@@ -1,5 +1,42 @@
 import {expect, test} from "@playwright/test";
 
+test("synthetic historical direction is explicitly selected and linked to a new research at the current revision",async({page})=>{
+  const id="00000000-0000-4000-8000-000000000061";
+  const oldTask="00000000-0000-4000-8000-000000000062";
+  const nextTask="00000000-0000-4000-8000-000000000063";
+  const input={schemaVersion:4,phase:"research",sourceText:null,intent:{mode:"small_step",origin_query:"格蘭菲迪 12 年",explore_feature:"太妃糖",contrast:null,smoke_comparison:false}};
+  const commands:Record<string,unknown>[]=[];
+  const errors:string[]=[];page.on("pageerror",error=>errors.push(error.message));
+  await page.route("**/api/v1/**",async route=>{
+    expect(route.request().headers().authorization).toBe("Bearer synthetic-research-token");
+    const path=new URL(route.request().url()).pathname;
+    if(path===`/api/v1/plans/${id}`) return route.fulfill({json:{id,conditionsRevision:2,conditions:{schema_version:1,entry:"beginner",goal:"目前條件",budget_twd:"900",preferences:[],starting_bottle:null}}});
+    if(path===`/api/v1/plans/${id}/tasks`) return route.fulfill({json:{items:[],nextCursor:null}});
+    if(path===`/api/v1/plans/${id}/tasks/${oldTask}/restart-context`) return route.fulfill({json:{schemaVersion:4,planId:id,taskId:oldTask,sourceConditionsRevision:1,sourceStartingBottle:null,input}});
+    return route.fulfill({status:404,json:{code:"NOT_FOUND"}});
+  });
+  await page.route("**/agent",async route=>{
+    const body=route.request().postDataJSON();commands.push(body);
+    if(commands.length===1) return route.fulfill({status:503,json:{code:"TEMPORARY"}});
+    const snapshot={schemaVersion:1,taskId:nextTask,threadId:body.threadId,conditionsRevision:2,viewVersion:1,status:"queued",stage:"等待研究開始",question:null,reportId:null,error:null,activeRunId:null,observedAt:"2026-10-01T00:00:00Z"};
+    return route.fulfill({contentType:"text/event-stream",body:`data: ${JSON.stringify({type:"STATE_SNAPSHOT",snapshot})}\n\n`});
+  });
+  await page.goto(`http://127.0.0.1:8419/plans/${id}?restartTaskId=${oldTask}`);
+  await page.getByRole("button",{name:"登入查看探索計畫"}).click();
+  await expect(page.getByText("沿用來源條件版本 1；新研究使用目前已保存條件。")).toBeVisible();
+  const start=page.getByRole("button",{name:"使用已保存條件開始研究"});
+  await expect(start).toBeDisabled();expect(commands).toEqual([]);
+  await page.getByLabel("沿用這次探索方向").check();
+  await expect(page.getByLabel("本次預算上限（新台幣，可留空）")).toHaveValue("900");
+  await start.click();
+  await expect(page.getByRole("alert")).toContainText("委託暫時無法確認");
+  await start.click();
+  await expect(page).toHaveURL(new RegExp(`/research/${nextTask}$`));
+  expect(commands).toHaveLength(2);expect(commands[1]).toEqual(commands[0]);
+  expect(commands[0].forwardedProps).toMatchObject({type:"start_v4",planId:id,conditionsRevision:2,input,sourceTaskId:oldTask});
+  expect(errors).toEqual([]);
+});
+
 test("synthetic history reopens revision one after the plan has moved to revision two", async ({page}) => {
   const id="00000000-0000-4000-8000-000000000031";
   const taskId="00000000-0000-4000-8000-000000000032";

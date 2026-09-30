@@ -139,6 +139,34 @@ async def test_eval_runs_real_durable_boundaries_without_external_model_calls(
         assert calls == []
         assert result["status"] == "completed"
         assert result["report"]["candidates"] == []
+        if case_id == "hard_smoke_comparison":
+            from uuid import UUID
+
+            from sqlalchemy import text
+
+            from whisky.modules.research.restart_context_v4 import (
+                read_restart_context_v4,
+            )
+
+            with engine.connect() as connection:
+                row = connection.execute(
+                    text("SELECT owner_id,plan_id FROM research_tasks WHERE id=:task"),
+                    {"task": UUID(result["task_id"])},
+                ).one()
+            restart = read_restart_context_v4(
+                engine, row.owner_id, row.plan_id, UUID(result["task_id"])
+            )
+            assert restart is not None
+            assert restart.input.intent.smoke_comparison
+            assert (
+                restart.input.intent.origin_query
+                == result["report"]["clarifiedBottle"]["name"]
+            )
+            assert restart.source_starting_bottle is not None
+            assert (
+                str(restart.source_starting_bottle.item_id)
+                == "3e3c188d-6d45-4d28-8920-ed9377bde739"
+            )
 
 
 async def test_actual_quota_failure_is_detected_without_calling_provider(

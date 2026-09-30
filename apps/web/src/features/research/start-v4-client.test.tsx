@@ -16,9 +16,10 @@ test.each(inputs)("V4 starts carry the exact immutable input inside the existing
   const fetch=vi.fn(async(_url,init)=>{
     expect(init.headers).toMatchObject({Authorization:"Bearer fixture"});
     expect(JSON.parse(init.body)).toMatchObject({threadId:id,runId,messages:[],state:{},tools:[],context:[],forwardedProps:{type:"start_v4",key:"stable-key",planId:id,conditionsRevision:2,input}});
+    if(input.phase==="research") expect(JSON.parse(init.body).forwardedProps.sourceTaskId).toBe(runId);
     return new Response(`data: ${JSON.stringify({type:"STATE_SNAPSHOT",snapshot})}\n\n`,{headers:{"Content-Type":"text/event-stream"}});
   });
   vi.stubGlobal("fetch",fetch);
-  expect(await startResearchV4("fixture",plan,"stable-key",id,runId,input)).toEqual(snapshot);
+  expect(await startResearchV4("fixture",plan,"stable-key",id,runId,input,...(input.phase==="research" ? [runId] as [string] : []))).toEqual(snapshot);
   expect(fetch.mock.calls[0][0]).toBe("/agent");
 });

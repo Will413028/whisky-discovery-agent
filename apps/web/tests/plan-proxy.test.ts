@@ -1,6 +1,17 @@
 import {describe, expect, it, vi} from "vitest";
 import {planProxy} from "../src/features/discovery/proxy";
 
+it("restart context forwards only the fixed plan/task read without query or write methods",async()=>{
+  const plan="00000000-0000-4000-8000-000000000001";
+  const task="00000000-0000-4000-8000-000000000002";
+  const path=`https://web.example/api/v1/plans/${plan}/tasks/${task}/restart-context`;
+  const fetcher=vi.fn(async()=>Response.json({fixture:true}));
+  expect((await planProxy(new Request(path),{fetch:fetcher})).status).toBe(200);
+  expect((await planProxy(new Request(`${path}?source=other`),{fetch:fetcher})).status).toBe(404);
+  expect((await planProxy(new Request(path,{method:"POST"}),{fetch:fetcher})).status).toBe(405);
+  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+
 const id = "2d9300f8-e5bf-4b02-9325-c94c6b7be9af";
 
 describe("plan API proxy", () => {

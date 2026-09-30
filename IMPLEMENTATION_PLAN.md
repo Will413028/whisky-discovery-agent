@@ -253,6 +253,12 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 
 - eval／單一確認 commit `7133bed` 的 push run `36776707397`／PR run `36776713237` backend與Web jobs各success；PR backend **602 passed（236.98秒）**／wheel4（5.25秒），包含追加真quota負例。來源context檢查再捕捉V4 source prompt未送入本次goal：FunctionModel檢查實際prompt取得1 RED（goal=None），補入goal並更新V4 prompt hash；只供來源選擇，候選／版本／價格資格仍由reviewed規則決定。定向runner14 GREEN（12.90秒），完整backend **603 passed（275.52秒）**（`/tmp/whisky-t10-source-goal-full.log`），ruff／mypy通過；來源／模型fixture明示隔離，不作Qwen真品質證據。T10 live模型仍待帳戶免費配額核對，瀏覽器工具目前沒有可控制的browser，尚未部署。
 
+- source goal 修正 `b506f3c` 的 PR run `36778494885` backend／web jobs均success，installed wheel4也通過；固定語料仍未改題或進行真模型呼叫。
+- 歷史方向明確沿用：completed history 顯示入口，私有 restart-context 只讀已保存 intent／消歧後版本與來源 revision，不重建整份展示投影。使用者明確選取後以目前 plan conditions／revision 建立新 task，重新查核 catalog／價格；起點不一致禁止默默沿用，原 report 不改寫。Web history／client／proxy／UI 分別取得有效行為 RED（缺入口、stub、固定路徑404、缺選取卡），缺 intent response 另1 RED後在generated validator後拒絕；serialization input於client補齊nullable欄位，未改V1／V3 payload。
+- 來源 provenance：新 start_v4 command 可帶 source_task_id，沒有來源時省略hash欄位，保留既有digest；同reservation transaction驗來源owner／generation／plan／completed並保存。未知來源原被忽略的1 RED→GREEN；migration `0017_restart_provenance` 為 research_v4_inputs 增nullable source欄位、owner複合FK與不可自指約束。真DB驗同key固定來源、新task仍用目前revision2／budget900、舊report仍revision1，foreign／other-plan／unfinished／old-generation拒絕且不留receipt；硬煙燻案例的真Temporal确认後，讀取方向保留smoke意圖與精確版本名稱／catalog item。
+- Fresh design-review兩項B（完整展示依賴、缺來源關聯）均改完並複核fixed／open0；獨立correctness P2「退出沿用仍攜無效URL來源」先1 RED／18pass，再改為只有明確選取才帶source，退出使用無來源的新研究，複核fixed1／open0。指令檔現行路徑／規則核對0處修改。負例測試中欄位名稱誤用及違反現有report FK、item ID／version ID混淆僅列fixture修正，不冒充產品RED。
+- 最終本機：完整backend **611 passed（323.74秒）**（`/tmp/whisky-t10-restart-backend-full.log`）、installed wheel **4 passed（12.23秒）**（`/tmp/whisky-t10-restart-wheel.log`）、完整Web **199 passed**（`/tmp/whisky-t10-restart-web-review-final.log`）、typecheck、Next build、ruff check／format、mypy89 source files、Python／Web boundaries與scripts unittest11通過。Node／workerd Playwright **13 passed（18.5秒）**（`/tmp/whisky-t10-restart-browser-final.log`），新synthetic旅程驗明確選取、目前revision／budget、遺失回應重送same key／thread／run／input／source；初次缺Chromium runtime屬環境錯誤，補依賴後重跑。原TaskView生成物無差異。此增量尚未部署，T10 live模型／人工rubric／真雙入口與ARM出口仍待完成。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。
