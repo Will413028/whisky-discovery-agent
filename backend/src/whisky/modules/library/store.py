@@ -567,9 +567,9 @@ class LibraryStore:
             connection.execute(
                 text("""
                 INSERT INTO library_commands
-                    (id,owner_id,generation,scope,key,payload_hash,target_id,response)
+                    (id,owner_id,generation,scope,key,payload_hash,target_id,response,plan_id)
                 VALUES (:id,:owner,:generation,'conclusions.save',:key,:hash,
-                    :target,CAST(:response AS jsonb))
+                    :target,CAST(:response AS jsonb),:plan)
             """),
                 dict(
                     id=uuid4(),
@@ -579,6 +579,7 @@ class LibraryStore:
                     hash=digest,
                     target=identifier,
                     response=saved.model_dump_json(by_alias=True),
+                    plan=saved.plan_id,
                 ),
             )
             return saved

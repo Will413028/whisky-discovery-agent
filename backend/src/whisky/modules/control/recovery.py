@@ -26,8 +26,11 @@ from whisky.modules.discovery.public import (
     plan_control_effect_present,
 )
 from whisky.modules.identity.public import control_actor_state
+from whisky.modules.library.public import purge_actor_library, purge_plan_library
 from whisky.modules.research.public import (
     actor_tasks_closed,
+    close_actor_tasks,
+    close_plan_tasks,
     plan_tasks_closed,
     task_control_effect_present,
 )
@@ -230,6 +233,36 @@ def reconcile_control_log(
     return tuple(restored[command.id] for command in commands)
 
 
+def _purge_beneath_completed_delete(
+    connection: Connection, command: ControlReceipt, actor: tuple[int, bool]
+) -> None:
+    """Reapply child fences and cleanup beneath a surviving parent fence."""
+    if command.status != "completed":
+        return
+    owner, generation, target = (
+        command.owner_id,
+        command.generation,
+        command.target_id,
+    )
+    if command.kind == "actor.delete":
+        if (
+            actor[0] > generation or actor == (generation, False)
+        ) and actor_plans_closed(connection, owner, generation):
+            close_actor_tasks(connection, owner, generation)
+            purge_actor_library(connection, owner, generation)
+    elif command.kind == "plan.delete" and plan_control_effect_present(
+        connection,
+        target,
+        owner,
+        generation,
+        deleted=True,
+        expected_revision=command.expected_revision,
+        new_conditions=None,
+    ):
+        close_plan_tasks(connection, owner, target, status="cancelled")
+        purge_plan_library(connection, owner, generation, target)
+
+
 def _restore_one(
     store: ControlStore, external: ControlReceipt
 ) -> ControlReceipt | None:
@@ -250,6 +283,7 @@ def _restore_one(
                 if row is not None:
                     raise RecoveryError("control receipt has no actor")
                 return None
+            _purge_beneath_completed_delete(connection, external, actor)
             if actor[0] > external.generation:
                 if external.status == "completed" and not _effect_present(
                     connection, external

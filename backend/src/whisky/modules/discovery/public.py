@@ -138,6 +138,26 @@ def delete_actor_plans(connection: Connection, owner: UUID, generation: int) -> 
     )
 
 
+def locked_plan_deletion_fence(
+    connection: Connection, plan_id: UUID, owner: UUID, generation: int
+) -> bool:
+    """Identity is locked first; retain an existing deleted plan's lock."""
+    from sqlalchemy import text
+
+    row = connection.execute(
+        text("""
+            SELECT owner_id,generation,deleted_at FROM plans
+            WHERE id=:plan FOR UPDATE
+        """),
+        dict(plan=plan_id),
+    ).first()
+    if row is None:
+        return True
+    if row.owner_id != owner or row.generation != generation:
+        raise ValueError("purge target belongs to another scope")
+    return row.deleted_at is not None
+
+
 def actor_plans_closed(connection: Connection, owner: UUID, generation: int) -> bool:
     """Recovery fence for all plans in a removed identity generation."""
     from sqlalchemy import text

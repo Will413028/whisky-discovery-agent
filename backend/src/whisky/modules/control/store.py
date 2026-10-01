@@ -20,6 +20,7 @@ from whisky.modules.identity.public import (
     control_actor_state,
     disable_actor,
 )
+from whisky.modules.library.public import purge_actor_library, purge_plan_library
 from whisky.modules.research.public import (
     cancel_task,
     close_actor_tasks,
@@ -337,6 +338,7 @@ class ControlStore:
                 # This follows child writes, so a failed final step must roll
                 # the whole transaction back instead of recording a rejection.
                 raise RuntimeError("identity changed during actor deletion") from error
+            purge_actor_library(connection, owner, generation)
             return
         if kind == "task.cancel":
             plan_id = task_plan(connection, target, owner)
@@ -368,6 +370,7 @@ class ControlStore:
         if kind == "plan.delete":
             close_plan_tasks(connection, owner, target, status="cancelled")
             delete_plan(connection, target, owner)
+            purge_plan_library(connection, owner, generation, target)
             return
         raise RuntimeError("Unknown persisted control kind")
 

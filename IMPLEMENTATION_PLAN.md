@@ -324,6 +324,14 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - Web 先核對 `/me` actor，再驗完整匯出契約與 owner；身份切換／unmount 中止請求，晚到 token 不觸發舊帳號匯出。固定檔名下載，不使用上游任意 filename。8 MiB 資源界線超過時明示失敗，不產生截斷檔案；更大帳戶的完整匯出出口仍需在 T11 驗收前處理。
 - targeted backend **28／43.59 秒**（`/tmp/whisky-t11-export-history-green.log`）、Web **277**（`/tmp/whisky-t11-export-web-full.log`）、mypy105、ruff／format、typecheck、原生 build、Python／Web boundaries、scripts11、installed wheel **4／21.39 秒** 通過。Node／workerd Playwright **16／33.7 秒**（`/tmp/whisky-t11-export-browser.log`）含合成帳號實際 JSON 下載；不代替正式 Auth0。完整 backend **705／567.20 秒**（`/tmp/whisky-t11-export-backend-release.log`）通過；未部署；T11 實際清除、防復活及真實帳號旅程仍未驗收。
 
+### T11 library 原文清除與還原防復活增量（2026-10-01，未驗收）
+
+- plan／actor delete 在原控制交易內先建立 parent fence，再透過 library public 契約刪除結論與 receipts；actor 同時清除自己的回饋／偏好。plan 刪除保留獨立回饋／偏好，新 generation 與其他帳號不受影響。完成研究也關閉 write_allowed，但保留原 completed 狀態與報告。
+- 實體原文清除 2 RED、完成研究 write fence 2 RED、還原原文防復活 2 RED、舊 completed write flag 還原 2 RED 均取得 GREEN。交易失敗回滾、跨帳號、新 generation、未刪 parent 禁止直接清除與外部 effect 不一致仍拒絕對帳是回歸保障。fixture 缺失、SQL bind 型別衝突與錯誤函式參數不計 RED。
+- 獨立 design review B1 指出 receipt 清除依賴 response.planId；以改變 wire JSON／移除結論的真 DB 反例取得 RED，改為 `0021_library_receipt_scope` typed plan_id、owner composite FK、scope CHECK 與 purge index。0020 舊 receipts 升級測試 1／8.10 秒通過，response 保持原值；複核無新增 design findings，另一次有界 correctness review 無確認缺陷。
+- 最終 purge／migration 定向 **16／23.04 秒**，較大 control 子集 **42／40.59 秒**；ruff／format、mypy106、Python boundaries、installed wheel **4／19.52 秒**（head0021）通過。完整 backend **720 passed、1 Temporal dev server 啟動逾時／766.92 秒**（`/tmp/whisky-t11-library-purge-backend-release.log`）；未改測試或產品後原樣重跑該項 **1 passed／10.63 秒**（`/tmp/whisky-t11-library-purge-temporal-startup-rerun.log`），不冒充同次 721 全綠。
+- 唯讀盤點正式 VM 仍是 schema0012，尚無 library_commands；未部署此增量。這只清除 library 原文並驗真 DB 邏輯還原，研究 DB 原文、Temporal history、traces、備份／控制紀錄保存政策與正式 PITR 仍待完整 T11 驗收。上一匯出提交 `78fba7c` 的 PR run36805217086／push run36805213561 各 backend／web jobs 均 success。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。
