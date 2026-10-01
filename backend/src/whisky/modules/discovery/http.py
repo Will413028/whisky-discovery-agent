@@ -120,6 +120,7 @@ def plan_router(identity: IdentityAccess, store: PlanStore | None) -> APIRouter:
                 "IDEMPOTENCY_CONFLICT": 409,
                 "IDENTITY_CHANGED": 403,
                 "CATALOG_REFERENCE_NOT_FOUND": 404,
+                "NOT_FOUND": 404,
             }.get(code)
             if status is None:
                 raise

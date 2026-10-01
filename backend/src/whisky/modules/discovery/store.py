@@ -138,6 +138,8 @@ class PlanStore:
                 """),
                     dict(owner=owner, key=key),
                 ).one()
+                if self._read(connection, receipt.target_id, owner) is None:
+                    raise PlanConflict("NOT_FOUND")
                 if receipt.payload_hash != digest:
                     raise PlanConflict("IDEMPOTENCY_CONFLICT")
                 saved = receipt.result
