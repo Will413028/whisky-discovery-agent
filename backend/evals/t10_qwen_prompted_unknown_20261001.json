@@ -1,0 +1,1032 @@
+{
+  "corpus_version": 1,
+  "controls_version": 1,
+  "corpus_sha256": "9f7dd1e012b3caa415fcc6dae8df126290975f82e1ef5ca4f29a74a066759e34",
+  "controls_sha256": "6bb4bb40b0e37abdd3db9353539a546e0495bbe6813a31138e33e04d10843179",
+  "catalog_manifest_sha256": "c19bc703381b6571905fdc1077698536000fbc80be7dfd1b01d42b2fdb9a3b25",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "scope": "real V4 workflow samples; provider attempts counted separately",
+  "daily_neuron_allowance": 1246,
+  "daily_reserved_neurons": 281,
+  "provider_attempts": 3,
+  "source_failure_mode": "real network only",
+  "human_rubric_status": "pending",
+  "results": [
+    {
+      "case_id": "beginner_unknown",
+      "status": "completed",
+      "elapsed_ms": 14946,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "我完全不知道口味，想先看看有來源的選擇",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "我完全不知道口味，想先看看有來源的選擇",
+        "starting_bottle": null,
+        "preferences": [],
+        "budget_twd": null
+      },
+      "task_id": "17e4cc98-2624-46cf-b765-8369b08df437",
+      "questions": [
+        {
+          "id": "408c4c0d-4348-4283-90cf-b667500e3976",
+          "prompt": "用戶表示對威士忌口味尚無概念，希望先參考有資料支持的選擇。現有資料顯示若干風味標籤具備來源依據，但用戶未明確表達偏好，亦未提及預算或具體探索方向。。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:30:36.437144Z",
+          "choices": [
+            {
+              "id": "5079f6d6-6c38-5179-91f4-d1f3b3db7121",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "2fb16ff1-7267-5913-aede-ec0671376d2d",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "17e4cc98-2624-46cf-b765-8369b08df437",
+          "planId": "e01cc8ba-aee5-44bd-a6fd-ce973297ed1f",
+          "questionId": "408c4c0d-4348-4283-90cf-b667500e3976",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "我完全不知道口味，想先看看有來源的選擇",
+          "proposal": {
+            "summary": "用戶表示對威士忌口味尚無概念，希望先參考有資料支持的選擇。現有資料顯示若干風味標籤具備來源依據，但用戶未明確表達偏好，亦未提及預算或具體探索方向。",
+            "intent": {
+              "origin_query": null,
+              "mode": "style_options",
+              "explore_feature": null,
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [],
+            "budget": null
+          }
+        }
+      ],
+      "report": {
+        "schemaVersion": 1,
+        "id": "ab8fd0a4-2a58-4781-893f-8acbe8290045",
+        "taskId": "17e4cc98-2624-46cf-b765-8369b08df437",
+        "conditionsRevision": 1,
+        "catalogReleaseId": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+        "evaluatedOn": "2026-10-01",
+        "policyVersion": "price-30d-v1",
+        "promptVersion": "research-v4-b39d19620076",
+        "modelVersion": "@cf/qwen/qwen3-30b-a3b-fp8",
+        "summary": "依目前已覆核資料找到 3 款候選：「格蘭菲迪 12 年」、「格蘭菲迪 15 年 Solera」、「格蘭利威 12 年」。",
+        "unresolved": [],
+        "clarifiedBottle": null,
+        "candidates": [
+          {
+            "releaseId": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+            "itemId": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+            "bottleVersionId": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+            "name": "格蘭菲迪 12 年",
+            "reason": "品牌描述：品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主。；編輯整理標籤：奶油糖、果香",
+            "claims": [
+              {
+                "kind": "fact",
+                "key": "abv",
+                "value": "40",
+                "sources": [
+                  {
+                    "evidenceId": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1753",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "age_years",
+                "value": "12",
+                "sources": [
+                  {
+                    "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "brand",
+                "value": "Glenfiddich",
+                "sources": [
+                  {
+                    "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "market",
+                "value": "TW",
+                "sources": [
+                  {
+                    "evidenceId": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1753",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "name",
+                "value": "格蘭菲迪 12 年",
+                "sources": [
+                  {
+                    "evidenceId": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1753",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "official_name",
+                "value": "Glenfiddich 12 Year Old",
+                "sources": [
+                  {
+                    "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "producer_tasting_notes",
+                "value": "品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主。",
+                "sources": [
+                  {
+                    "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "version_label",
+                "value": "12 Year Old 常規版 40%",
+                "sources": [
+                  {
+                    "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "volume_ml",
+                "value": "700",
+                "sources": [
+                  {
+                    "evidenceId": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1753",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "奶油糖",
+                "value": "奶油糖",
+                "sources": [
+                  {
+                    "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "果香",
+                "value": "果香",
+                "sources": [
+                  {
+                    "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              }
+            ],
+            "prices": [
+              {
+                "id": "229ebe3b-3db0-44be-aeca-8bb09f5e6735",
+                "amount": "978",
+                "currency": "TWD",
+                "market": "TW",
+                "volumeMl": 700,
+                "checkedOn": "2026-09-28",
+                "source": {
+                  "evidenceId": "8fb77f20-5168-48b3-9a26-3aba5cec512f",
+                  "url": "https://www.drinks.com.tw/product.aspx?Id=1753",
+                  "publisher": "橡木桶洋酒",
+                  "checkedOn": "2026-09-28"
+                }
+              }
+            ]
+          },
+          {
+            "releaseId": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+            "itemId": "47ca1d78-50b4-400e-b571-7285cc624e97",
+            "bottleVersionId": "4e5c9aca-69d3-45fe-acc0-eb313c60b961",
+            "name": "格蘭菲迪 15 年 Solera",
+            "reason": "品牌描述：品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑。；編輯整理標籤：果香、辛香、香草甜香",
+            "claims": [
+              {
+                "kind": "fact",
+                "key": "abv",
+                "value": "40",
+                "sources": [
+                  {
+                    "evidenceId": "2e92d2cd-64cd-440c-8de0-589a9da35b12",
+                    "url": "https://www.my9.com.tw/products/格蘭菲迪15年-glenfiddich-15y",
+                    "publisher": "MY9 買酒網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "age_years",
+                "value": "15",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "brand",
+                "value": "Glenfiddich",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "market",
+                "value": "TW",
+                "sources": [
+                  {
+                    "evidenceId": "2e92d2cd-64cd-440c-8de0-589a9da35b12",
+                    "url": "https://www.my9.com.tw/products/格蘭菲迪15年-glenfiddich-15y",
+                    "publisher": "MY9 買酒網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "name",
+                "value": "格蘭菲迪 15 年 Solera",
+                "sources": [
+                  {
+                    "evidenceId": "2e92d2cd-64cd-440c-8de0-589a9da35b12",
+                    "url": "https://www.my9.com.tw/products/格蘭菲迪15年-glenfiddich-15y",
+                    "publisher": "MY9 買酒網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "official_name",
+                "value": "Glenfiddich 15 Year Old",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "producer_tasting_notes",
+                "value": "品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑。",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "version_label",
+                "value": "15 Year Old Solera 常規版 40%",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "volume_ml",
+                "value": "700",
+                "sources": [
+                  {
+                    "evidenceId": "2e92d2cd-64cd-440c-8de0-589a9da35b12",
+                    "url": "https://www.my9.com.tw/products/格蘭菲迪15年-glenfiddich-15y",
+                    "publisher": "MY9 買酒網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "果香",
+                "value": "果香",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "辛香",
+                "value": "辛香",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "香草甜香",
+                "value": "香草甜香",
+                "sources": [
+                  {
+                    "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                    "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                    "publisher": "Glenfiddich 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              }
+            ],
+            "prices": []
+          },
+          {
+            "releaseId": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+            "itemId": "be37452e-960a-488d-ab88-6f5679fe8e21",
+            "bottleVersionId": "f83aa51e-89e3-49fa-80d2-5f44d84cee3a",
+            "name": "格蘭利威 12 年",
+            "reason": "品牌描述：品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。；編輯整理標籤：太妃糖、果香、香草甜香",
+            "claims": [
+              {
+                "kind": "fact",
+                "key": "abv",
+                "value": "40",
+                "sources": [
+                  {
+                    "evidenceId": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "age_years",
+                "value": "12",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "brand",
+                "value": "The Glenlivet",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "market",
+                "value": "TW",
+                "sources": [
+                  {
+                    "evidenceId": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "name",
+                "value": "格蘭利威 12 年",
+                "sources": [
+                  {
+                    "evidenceId": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "official_name",
+                "value": "The Glenlivet 12 Year Old",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "producer_tasting_notes",
+                "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "version_label",
+                "value": "12 Year Old Double Oak 常規版 40%",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "fact",
+                "key": "volume_ml",
+                "value": "700",
+                "sources": [
+                  {
+                    "evidenceId": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+                    "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+                    "publisher": "橡木桶洋酒",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "太妃糖",
+                "value": "太妃糖",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "果香",
+                "value": "果香",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              },
+              {
+                "kind": "tag",
+                "key": "香草甜香",
+                "value": "香草甜香",
+                "sources": [
+                  {
+                    "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                    "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                    "publisher": "The Glenlivet 品牌官網",
+                    "checkedOn": "2026-09-28"
+                  }
+                ]
+              }
+            ],
+            "prices": [
+              {
+                "id": "29a6804f-b1e9-431a-9bc6-e9a83ba5bfcb",
+                "amount": "816",
+                "currency": "TWD",
+                "market": "TW",
+                "volumeMl": 700,
+                "checkedOn": "2026-09-28",
+                "source": {
+                  "evidenceId": "53f1c620-4bed-4153-97b1-d02c31d84d16",
+                  "url": "https://www.drinks.com.tw/product.aspx?Id=1764",
+                  "publisher": "橡木桶洋酒",
+                  "checkedOn": "2026-09-28"
+                }
+              }
+            ]
+          }
+        ],
+        "sourceObservations": [
+          {
+            "id": "89a0c213-d738-4943-a676-424dd62abd77",
+            "status": "ok",
+            "reviewStatus": "unreviewed",
+            "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+            "requestedUrl": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+            "publisher": "Glenfiddich 品牌官網",
+            "sourceCheckedOn": "2026-09-28",
+            "observedAt": "2026-10-01T00:30:41.723099Z",
+            "excerpt": "Glenfiddich | Glenfiddich 12 Year Old HOME BUY ONLINE STORE LOCATOR OUR COLLECTION OUR STORY CONTACT US Glenfiddich 12 Year Old For pricing and availability, enter delivery address Description Glenfiddich 12 Year Old is the expression that ",
+            "errorCode": null
+          }
+        ]
+      },
+      "comparison": {
+        "schemaVersion": 4,
+        "reportId": "ab8fd0a4-2a58-4781-893f-8acbe8290045",
+        "taskId": "17e4cc98-2624-46cf-b765-8369b08df437",
+        "conditionsRevision": 1,
+        "catalogReleaseId": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+        "evaluatedOn": "2026-10-01",
+        "comparison": {
+          "intent": {
+            "origin_query": null,
+            "mode": "style_options",
+            "explore_feature": null,
+            "smoke_comparison": false,
+            "contrast": null
+          },
+          "candidates": [
+            {
+              "candidate": {
+                "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+              },
+              "mode": "style_options",
+              "origin": null,
+              "commonTags": [],
+              "originClaims": [],
+              "candidateClaims": [
+                {
+                  "kind": "tag",
+                  "key": "奶油糖",
+                  "value": "奶油糖",
+                  "evidenceIds": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                },
+                {
+                  "kind": "tag",
+                  "key": "果香",
+                  "value": "果香",
+                  "evidenceIds": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                }
+              ],
+              "originDescription": null,
+              "candidateDescription": {
+                "kind": "fact",
+                "key": "producer_tasting_notes",
+                "value": "品牌描述以梨子果香、奶油糖、麥芽與輕微橡木為主。",
+                "evidenceIds": [
+                  "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                ]
+              },
+              "difference": null,
+              "exploreClaims": []
+            },
+            {
+              "candidate": {
+                "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                "item_id": "47ca1d78-50b4-400e-b571-7285cc624e97"
+              },
+              "mode": "style_options",
+              "origin": null,
+              "commonTags": [],
+              "originClaims": [],
+              "candidateClaims": [
+                {
+                  "kind": "tag",
+                  "key": "果香",
+                  "value": "果香",
+                  "evidenceIds": [
+                    "90802104-a519-49dc-b76e-cde795e94c1f"
+                  ]
+                },
+                {
+                  "kind": "tag",
+                  "key": "辛香",
+                  "value": "辛香",
+                  "evidenceIds": [
+                    "90802104-a519-49dc-b76e-cde795e94c1f"
+                  ]
+                },
+                {
+                  "kind": "tag",
+                  "key": "香草甜香",
+                  "value": "香草甜香",
+                  "evidenceIds": [
+                    "90802104-a519-49dc-b76e-cde795e94c1f"
+                  ]
+                }
+              ],
+              "originDescription": null,
+              "candidateDescription": {
+                "kind": "fact",
+                "key": "producer_tasting_notes",
+                "value": "品牌描述有蜂蜜、香草糖與深色水果，口感涉及雪莉橡木、杏仁糖、肉桂及薑。",
+                "evidenceIds": [
+                  "90802104-a519-49dc-b76e-cde795e94c1f"
+                ]
+              },
+              "difference": null,
+              "exploreClaims": []
+            },
+            {
+              "candidate": {
+                "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                "item_id": "be37452e-960a-488d-ab88-6f5679fe8e21"
+              },
+              "mode": "style_options",
+              "origin": null,
+              "commonTags": [],
+              "originClaims": [],
+              "candidateClaims": [
+                {
+                  "kind": "tag",
+                  "key": "太妃糖",
+                  "value": "太妃糖",
+                  "evidenceIds": [
+                    "6e6549a4-f143-463c-99e6-962ec90234d8"
+                  ]
+                },
+                {
+                  "kind": "tag",
+                  "key": "果香",
+                  "value": "果香",
+                  "evidenceIds": [
+                    "6e6549a4-f143-463c-99e6-962ec90234d8"
+                  ]
+                },
+                {
+                  "kind": "tag",
+                  "key": "香草甜香",
+                  "value": "香草甜香",
+                  "evidenceIds": [
+                    "6e6549a4-f143-463c-99e6-962ec90234d8"
+                  ]
+                }
+              ],
+              "originDescription": null,
+              "candidateDescription": {
+                "kind": "fact",
+                "key": "producer_tasting_notes",
+                "value": "品牌描述包含香蕉、鳳梨、蜜桃、梨子，並伴隨香草及太妃糖。",
+                "evidenceIds": [
+                  "6e6549a4-f143-463c-99e6-962ec90234d8"
+                ]
+              },
+              "difference": null,
+              "exploreClaims": []
+            }
+          ],
+          "unresolved": [],
+          "unlistedName": null,
+          "schemaVersion": 4
+        },
+        "items": [
+          {
+            "reference": {
+              "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+              "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+            },
+            "name": "格蘭菲迪 12 年",
+            "sources": [
+              {
+                "evidenceId": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+                "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+                "publisher": "Glenfiddich 品牌官網",
+                "checkedOn": "2026-09-28"
+              }
+            ]
+          },
+          {
+            "reference": {
+              "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+              "item_id": "47ca1d78-50b4-400e-b571-7285cc624e97"
+            },
+            "name": "格蘭菲迪 15 年 Solera",
+            "sources": [
+              {
+                "evidenceId": "90802104-a519-49dc-b76e-cde795e94c1f",
+                "url": "https://shop.us.glenfiddich.com/products/glenfiddich-15-year-old",
+                "publisher": "Glenfiddich 品牌官網",
+                "checkedOn": "2026-09-28"
+              }
+            ]
+          },
+          {
+            "reference": {
+              "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+              "item_id": "be37452e-960a-488d-ab88-6f5679fe8e21"
+            },
+            "name": "格蘭利威 12 年",
+            "sources": [
+              {
+                "evidenceId": "6e6549a4-f143-463c-99e6-962ec90234d8",
+                "url": "https://www.theglenlivet.com/zh-tw/whisky/格蘭利威-12-年/",
+                "publisher": "The Glenlivet 品牌官網",
+                "checkedOn": "2026-09-28"
+              }
+            ]
+          }
+        ]
+      },
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "case_candidate_expectation": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 2,
+          "reserved_neurons": 180,
+          "reserved_input_upper_bound": 12254,
+          "reserved_output_tokens": 4000,
+          "input_tokens": 2672,
+          "output_tokens": 933,
+          "latency_ms": 11168
+        },
+        {
+          "kind": "reader",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 0,
+          "reserved_input_upper_bound": 0,
+          "reserved_output_tokens": 0,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 1018
+        }
+      ],
+      "provider_attempts": 2,
+      "source_reads": [
+        {
+          "url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+          "status": "ok",
+          "final_url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+          "fault_injection": false
+        }
+      ],
+      "source_observations": [
+        {
+          "id": "89a0c213-d738-4943-a676-424dd62abd77",
+          "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+          "bottle_version_id": "dd506fdd-c680-41bc-bbd3-ec9490474a49",
+          "evidence_id": "445346ab-9eef-45a1-801d-2ba0b480acd8",
+          "status": "ok",
+          "review_status": "unreviewed",
+          "error_code": null,
+          "content_sha256": "f25c2e10f6c8d7f72b5b8d8a0eed3f4d82c7244675a214ed11b968d4d245d80d",
+          "text_length": 1235,
+          "effective_url": "https://shop.us.glenfiddich.com/products/glenfiddich-12-year-old",
+          "source_checked_on": "2026-09-28",
+          "observed_at": "2026-10-01 00:30:41.723099+00:00"
+        }
+      ],
+      "error_code": null,
+      "failure_chain": null,
+      "repetition": 1
+    },
+    {
+      "case_id": "beginner_unknown",
+      "status": "completed",
+      "elapsed_ms": 8378,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "我完全不知道口味，想先看看有來源的選擇",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "我完全不知道口味，想先看看有來源的選擇",
+        "starting_bottle": null,
+        "preferences": [],
+        "budget_twd": null
+      },
+      "task_id": "8d364391-6709-4381-bd56-5e3993d8296e",
+      "questions": [
+        {
+          "id": "53b9ac4a-f8ed-48e4-b2dc-13faebb93976",
+          "prompt": "使用者對威士忌口味缺乏認識，希望先了解有可靠來源的選擇方向。未明確表達具體風味偏好，也未提及預算限制。。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:30:49.785524Z",
+          "choices": [
+            {
+              "id": "67730372-385b-5ebc-acb2-9b01ec324f2e",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "429bc3b4-9674-59aa-b4a7-32c7652a02cc",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "8d364391-6709-4381-bd56-5e3993d8296e",
+          "planId": "0e6217aa-b8cb-4bb8-9b0a-ffb4b606b619",
+          "questionId": "53b9ac4a-f8ed-48e4-b2dc-13faebb93976",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "我完全不知道口味，想先看看有來源的選擇",
+          "proposal": {
+            "summary": "使用者對威士忌口味缺乏認識，希望先了解有可靠來源的選擇方向。未明確表達具體風味偏好，也未提及預算限制。",
+            "intent": {
+              "origin_query": "我完全不知道口味，想先看看有來源的選擇",
+              "mode": "style_options",
+              "explore_feature": null,
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [],
+            "budget": null
+          }
+        }
+      ],
+      "report": {
+        "schemaVersion": 1,
+        "id": "e2ba29db-1952-40e8-a00b-77f5dbc56873",
+        "taskId": "8d364391-6709-4381-bd56-5e3993d8296e",
+        "conditionsRevision": 1,
+        "catalogReleaseId": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+        "evaluatedOn": "2026-10-01",
+        "policyVersion": "price-30d-v1",
+        "promptVersion": "research-v4-b39d19620076",
+        "modelVersion": "catalog-coverage-rule-v4",
+        "summary": "「我完全不知道口味，想先看看有來源的選擇」不在本版已覆核酒款中，無法提供有來源的版本或比較。",
+        "unresolved": [
+          "可改從已收錄酒款或具體風味條件繼續探索。"
+        ],
+        "clarifiedBottle": null,
+        "candidates": [],
+        "sourceObservations": []
+      },
+      "comparison": {
+        "schemaVersion": 4,
+        "reportId": "e2ba29db-1952-40e8-a00b-77f5dbc56873",
+        "taskId": "8d364391-6709-4381-bd56-5e3993d8296e",
+        "conditionsRevision": 1,
+        "catalogReleaseId": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+        "evaluatedOn": "2026-10-01",
+        "comparison": {
+          "intent": {
+            "origin_query": "我完全不知道口味，想先看看有來源的選擇",
+            "mode": "style_options",
+            "explore_feature": null,
+            "smoke_comparison": false,
+            "contrast": null
+          },
+          "candidates": [],
+          "unresolved": [],
+          "unlistedName": "我完全不知道口味，想先看看有來源的選擇",
+          "schemaVersion": 4
+        },
+        "items": []
+      },
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "case_candidate_expectation": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 101,
+          "reserved_input_upper_bound": 8448,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 2002,
+          "output_tokens": 590,
+          "latency_ms": 4407
+        }
+      ],
+      "provider_attempts": 1,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": null,
+      "failure_chain": null,
+      "repetition": 2
+    }
+  ]
+}

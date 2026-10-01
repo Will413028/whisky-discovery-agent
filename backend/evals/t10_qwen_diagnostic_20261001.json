@@ -1,0 +1,146 @@
+{
+  "corpus_version": 1,
+  "controls_version": 1,
+  "corpus_sha256": "9f7dd1e012b3caa415fcc6dae8df126290975f82e1ef5ca4f29a74a066759e34",
+  "controls_sha256": "6bb4bb40b0e37abdd3db9353539a546e0495bbe6813a31138e33e04d10843179",
+  "catalog_manifest_sha256": "c19bc703381b6571905fdc1077698536000fbc80be7dfd1b01d42b2fdb9a3b25",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "scope": "real V4 workflow samples; provider attempts counted separately",
+  "daily_neuron_allowance": 1948,
+  "daily_reserved_neurons": 702,
+  "provider_attempts": 6,
+  "source_failure_mode": "real network only",
+  "human_rubric_status": "pending",
+  "results": [
+    {
+      "case_id": "beginner_unknown",
+      "status": "failed",
+      "elapsed_ms": 5727,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "我完全不知道口味，想先看看有來源的選擇",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "我完全不知道口味，想先看看有來源的選擇",
+        "starting_bottle": null,
+        "preferences": [],
+        "budget_twd": null
+      },
+      "task_id": "3a8e0588-bdb4-449c-9690-687dcd8a8788",
+      "questions": [],
+      "proposals": [],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": false,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": false,
+        "qualified_catalog_candidates": false,
+        "comparison_atomically_available": false,
+        "case_candidate_expectation": false,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": false,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "unknown",
+          "attempts": 3,
+          "reserved_neurons": 351,
+          "reserved_input_upper_bound": 36042,
+          "reserved_output_tokens": 6000,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 1707
+        }
+      ],
+      "provider_attempts": 3,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": "RESEARCH_FAILED",
+      "failure_chain": [
+        "WorkflowFailureError: Workflow execution failed",
+        "ApplicationError: RESEARCH_FAILED",
+        "ActivityError",
+        "ApplicationError: MODEL_UPSTREAM_ERROR"
+      ],
+      "repetition": 1
+    },
+    {
+      "case_id": "beginner_unknown",
+      "status": "failed",
+      "elapsed_ms": 5300,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "我完全不知道口味，想先看看有來源的選擇",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "我完全不知道口味，想先看看有來源的選擇",
+        "starting_bottle": null,
+        "preferences": [],
+        "budget_twd": null
+      },
+      "task_id": "8955eed0-2983-4fc0-b9db-2f9622f776d9",
+      "questions": [],
+      "proposals": [],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": false,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": false,
+        "qualified_catalog_candidates": false,
+        "comparison_atomically_available": false,
+        "case_candidate_expectation": false,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": false,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "unknown",
+          "attempts": 3,
+          "reserved_neurons": 351,
+          "reserved_input_upper_bound": 36042,
+          "reserved_output_tokens": 6000,
+          "input_tokens": 0,
+          "output_tokens": 0,
+          "latency_ms": 1186
+        }
+      ],
+      "provider_attempts": 3,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": "RESEARCH_FAILED",
+      "failure_chain": [
+        "WorkflowFailureError: Workflow execution failed",
+        "ApplicationError: RESEARCH_FAILED",
+        "ActivityError",
+        "ApplicationError: MODEL_UPSTREAM_ERROR"
+      ],
+      "repetition": 2
+    }
+  ]
+}
