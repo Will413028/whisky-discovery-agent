@@ -353,6 +353,14 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 已結束 attempts 被實體清除後，同帳號第二次 reservation 繞過 daily cap 的真 DB 反例先 RED。新增 `0022_owner_daily_usage` owner／UTC day／reserved neurons 彙總，回填全部 model attempts（包含 unknown 與 overage），不保存 task／原文／provider response；不與 task cascade 綁定。reserve 與 provider overage 在原交易內同時更新 global／owner counters，重送／finish 冪等維持。
 - quota **12／15.47 秒** GREEN；真0021→0022 migration 與 quota **13／83.42 秒**通過（`/tmp/whisky-t11-purge-quota-migration.log`）。補驗 model saved-rate overage 後 quota **12／31.49 秒**通過。ruff／format、mypy107、Python boundary、wheel **4／32.11 秒**通過。獨立 correctness/security review NO CONFIRMED DEFECTS；不宣稱已完成研究原文清除或彙總到期政策。
 
+### T11 研究 DB 原文清除增量（2026-10-01，未驗收）
+
+- plan／actor delete 與還原對帳在同一交易中，先鎖定 parent fence、清除 library，再透過 research public 契約清除報告與子列、來源觀察、Agent turns、補答、命令、偏好草稿與 V4 inputs；task 保留 opaque fence／workflow ID，條件、問題、錯誤與報告指標清空，狀態 cancelled。conditions-change 不清除歷史報告。
+- 已結束 usage attempts 清除；active attempts 保留到 provider finish，以免實際 overage 漏記。每日 owner／global 彙總保持，不能藉刪除重新取得當日額度。
+- 真 DB 原文與還原反例先取得 **4 RED／10.55 秒**，最小實作 **4 GREEN／9.38 秒**。控制／library／還原定向 **47／44.92 秒**；跨帳號、新 generation、未刪 parent、交易回滾與 active usage 回歸 **10／17.68 秒**，後加回歸不冒充初始 RED。
+- 完整 backend **742 passed／1081.28 秒**（`/tmp/whisky-t11-research-purge-full.log`）；ruff／format、mypy108、Python boundary、installed wheel **4／15.47 秒**通過。獨立 design 與 correctness review 無確認缺陷。上一每日用量提交 `f912360` 的 PR run36832309444／push run36832302807，各 backend／web jobs 均 success。
+- 未部署。此增量只清除研究 DB 原文；plan／control 原文、Temporal history、traces、備份與控制紀錄到期及正式 PITR／帳號旅程仍待驗收，不宣稱完整資料刪除。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。

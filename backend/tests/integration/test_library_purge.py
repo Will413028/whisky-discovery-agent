@@ -60,17 +60,48 @@ def count(connection, table, owner):
 
 def snapshot_library(engine, owner):
     with engine.connect() as connection:
-        return {
-            table: list(
+        originals = {
+            "research_reports": list(
                 connection.execute(
                     text(
-                        f"SELECT to_jsonb(row) FROM {table} row WHERE owner_id=:owner"
+                        "SELECT to_jsonb(row) FROM research_reports row "
+                        "WHERE owner_id=:owner"
                     ),
                     dict(owner=owner),
                 ).scalars()
             )
-            for table in TABLES
         }
+        for table in (
+            "research_report_candidates",
+            "research_report_claims",
+            "research_report_citations",
+            "research_report_prices",
+            "research_report_comparisons",
+        ):
+            originals[table] = list(
+                connection.execute(
+                    text(
+                        f"SELECT to_jsonb(row) FROM {table} row WHERE report_id IN "
+                        "(SELECT id FROM research_reports WHERE owner_id=:owner)"
+                    ),
+                    dict(owner=owner),
+                ).scalars()
+            )
+        originals.update(
+            {
+                table: list(
+                    connection.execute(
+                        text(
+                            f"SELECT to_jsonb(row) FROM {table} row "
+                            "WHERE owner_id=:owner"
+                        ),
+                        dict(owner=owner),
+                    ).scalars()
+                )
+                for table in TABLES
+            }
+        )
+        return originals
 
 
 def restore_library(connection, originals):
@@ -153,7 +184,7 @@ def test_receipt_plan_scope_survives_missing_conclusion_and_changed_wire_json(
 
 
 @pytest.mark.parametrize("kind", ["plan.delete", "actor.delete"])
-def test_deletion_fences_completed_tasks_without_destroying_historical_report(
+def test_deletion_erases_completed_reports_while_retaining_task_fences(
     completed_choice, kind
 ):
     engine, actor, _ = populate(completed_choice)
@@ -164,14 +195,14 @@ def test_deletion_fences_completed_tasks_without_destroying_historical_report(
             text("SELECT status,write_allowed FROM research_tasks WHERE id=:task"),
             dict(task=report.task_id),
         ).one()
-        assert row.status == "completed"
+        assert row.status == "cancelled"
         assert row.write_allowed is False
         assert (
             connection.scalar(
                 text("SELECT count(*) FROM research_reports WHERE id=:report"),
                 dict(report=report.id),
             )
-            == 1
+            == 0
         )
 
 
