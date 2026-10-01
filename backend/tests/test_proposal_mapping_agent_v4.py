@@ -1,8 +1,9 @@
+import json
 from uuid import UUID
 
 import pytest
 from pydantic_ai.exceptions import UnexpectedModelBehavior
-from pydantic_ai.messages import ModelResponse, ToolCallPart
+from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import FunctionModel
 
 from whisky.modules.discovery.public import CatalogReference, ReviewedFlavorMapping
@@ -31,7 +32,7 @@ def model_response(mapping, info):
             }
         ],
     }
-    return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, payload)])
+    return ModelResponse(parts=[TextPart(json.dumps(payload))])
 
 
 async def test_model_uses_only_a_provided_reviewed_anchor_for_an_unconfirmed_clue():

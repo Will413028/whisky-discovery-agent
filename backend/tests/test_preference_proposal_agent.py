@@ -1,6 +1,8 @@
+import json
+
 import pytest
 from pydantic_ai.exceptions import UnexpectedModelBehavior
-from pydantic_ai.messages import ModelResponse, ToolCallPart
+from pydantic_ai.messages import ModelResponse, TextPart
 from pydantic_ai.models.function import FunctionModel
 from pydantic_ai.usage import UsageLimits
 from test_proposal_mapping_agent_v4 import reviewed_mapping
@@ -29,9 +31,7 @@ def proposal(quote="喜歡甜點"):
 async def test_proposal_agent_preserves_food_clue_as_unconfirmed_and_exposes_no_tools():
     def model(messages, info):
         assert not info.function_tools
-        return ModelResponse(
-            parts=[ToolCallPart(info.output_tools[0].name, proposal())]
-        )
+        return ModelResponse(parts=[TextPart(json.dumps(proposal()))])
 
     result = await preference_proposal_agent_v4(FunctionModel(model)).run(
         "原描述：我喜歡甜點",
@@ -49,7 +49,7 @@ async def test_invalid_quote_is_retried_once_against_original_description():
         nonlocal calls
         calls += 1
         payload = proposal("喝過泥煤酒" if calls == 1 else "喜歡甜點")
-        return ModelResponse(parts=[ToolCallPart(info.output_tools[0].name, payload)])
+        return ModelResponse(parts=[TextPart(json.dumps(payload))])
 
     result = await preference_proposal_agent_v4(FunctionModel(model)).run(
         "原描述：我喜歡甜點",
@@ -66,9 +66,7 @@ async def test_repeated_fabricated_quotes_fail_without_returning_a_proposal():
     def model(messages, info):
         nonlocal calls
         calls += 1
-        return ModelResponse(
-            parts=[ToolCallPart(info.output_tools[0].name, proposal("不存在的原話"))]
-        )
+        return ModelResponse(parts=[TextPart(json.dumps(proposal("不存在的原話")))])
 
     with pytest.raises(UnexpectedModelBehavior):
         await preference_proposal_agent_v4(FunctionModel(model)).run(

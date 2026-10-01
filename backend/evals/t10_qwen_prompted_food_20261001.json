@@ -1,0 +1,334 @@
+{
+  "corpus_version": 1,
+  "controls_version": 1,
+  "corpus_sha256": "9f7dd1e012b3caa415fcc6dae8df126290975f82e1ef5ca4f29a74a066759e34",
+  "controls_sha256": "6bb4bb40b0e37abdd3db9353539a546e0495bbe6813a31138e33e04d10843179",
+  "catalog_manifest_sha256": "c19bc703381b6571905fdc1077698536000fbc80be7dfd1b01d42b2fdb9a3b25",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "scope": "real V4 workflow samples; provider attempts counted separately",
+  "daily_neuron_allowance": 965,
+  "daily_reserved_neurons": 202,
+  "provider_attempts": 2,
+  "source_failure_mode": "real network only",
+  "human_rubric_status": "pending",
+  "results": [
+    {
+      "case_id": "beginner_daily_food_clues",
+      "status": "needs_input",
+      "elapsed_ms": 14930,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+        "starting_bottle": null,
+        "preferences": [],
+        "budget_twd": null
+      },
+      "task_id": "65216a52-9859-4030-8288-1628728ba9ae",
+      "questions": [
+        {
+          "id": "fe2e44ee-3d9e-48a6-8421-56f8ffca83c8",
+          "prompt": "使用者提到喜歡梨子和奶油糖，但尚未明確偏好特定威士忌風格，預算設定為1000元。。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:34:13.969447Z",
+          "choices": [
+            {
+              "id": "be1f0024-7989-5b1c-93a5-a688f2b72ba2",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "3fe7d463-c9d5-584e-8092-cbbb880ef116",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "65216a52-9859-4030-8288-1628728ba9ae",
+          "planId": "81e6fffc-970d-42f3-a37a-38f651e52ed8",
+          "questionId": "fe2e44ee-3d9e-48a6-8421-56f8ffca83c8",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+          "proposal": {
+            "summary": "使用者提到喜歡梨子和奶油糖，但尚未明確偏好特定威士忌風格，預算設定為1000元。",
+            "intent": {
+              "origin_query": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+              "mode": "style_options",
+              "explore_feature": null,
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [
+              {
+                "description": "太妃糖風味",
+                "intent": "prefer",
+                "source_quote": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+                "source_kind": "direct_description",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "太妃糖",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "be37452e-960a-488d-ab88-6f5679fe8e21"
+                  },
+                  "evidence_ids": [
+                    "6e6549a4-f143-463c-99e6-962ec90234d8"
+                  ]
+                }
+              },
+              {
+                "description": "奶油糖風味",
+                "intent": "prefer",
+                "source_quote": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+                "source_kind": "direct_description",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "奶油糖",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+                  },
+                  "evidence_ids": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                }
+              },
+              {
+                "description": "果香特質",
+                "intent": "keep",
+                "source_quote": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+                "source_kind": "food_clue",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "果香",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+                  },
+                  "evidence_ids": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                }
+              },
+              {
+                "description": "辛香特質",
+                "intent": "keep",
+                "source_quote": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+                "source_kind": "food_clue",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "辛香",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "47ca1d78-50b4-400e-b571-7285cc624e97"
+                  },
+                  "evidence_ids": [
+                    "90802104-a519-49dc-b76e-cde795e94c1f"
+                  ]
+                }
+              }
+            ],
+            "budget": {
+              "action": "set",
+              "amount_twd": "1000",
+              "source_quote": "預算先抓 1000 元"
+            }
+          }
+        }
+      ],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 101,
+          "reserved_input_upper_bound": 8488,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 2018,
+          "output_tokens": 1420,
+          "latency_ms": 11144
+        }
+      ],
+      "provider_attempts": 1,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": null,
+      "failure_chain": null,
+      "cleanup": "cancelled after capturing the designated confirmation boundary",
+      "repetition": 1
+    },
+    {
+      "case_id": "beginner_daily_food_clues",
+      "status": "needs_input",
+      "elapsed_ms": 10976,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+        "starting_bottle": null,
+        "preferences": [],
+        "budget_twd": null
+      },
+      "task_id": "94b780c8-bf62-4ed4-97d4-c5265ab1d5a7",
+      "questions": [
+        {
+          "id": "0b100fdd-60f8-412b-9c64-3bb5b753b2c5",
+          "prompt": "用戶喜歡吃梨子和奶油糖，尚未明確偏好特定威士忌風格，預算設定為1000元新台幣。。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:34:24.430078Z",
+          "choices": [
+            {
+              "id": "1425a9f2-a9f6-57aa-8ae2-5fe3baf30c83",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "dac7b0df-3ebb-55c6-8614-4e9cef873903",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "94b780c8-bf62-4ed4-97d4-c5265ab1d5a7",
+          "planId": "89f830fd-54f9-404b-9739-85e35eddfb32",
+          "questionId": "0b100fdd-60f8-412b-9c64-3bb5b753b2c5",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+          "proposal": {
+            "summary": "用戶喜歡吃梨子和奶油糖，尚未明確偏好特定威士忌風格，預算設定為1000元新台幣。",
+            "intent": {
+              "origin_query": "平常喜歡吃梨子和奶油糖，還不知道自己喜歡什麼威士忌，預算先抓 1000 元",
+              "mode": "style_options",
+              "explore_feature": null,
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [
+              {
+                "description": "奶油糖",
+                "intent": "prefer",
+                "source_quote": "平常喜歡吃梨子和奶油糖",
+                "source_kind": "direct_description",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "奶油糖",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+                  },
+                  "evidence_ids": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                }
+              },
+              {
+                "description": "果香",
+                "intent": "prefer",
+                "source_quote": "平常喜歡吃梨子和奶油糖",
+                "source_kind": "food_clue",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "果香",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+                  },
+                  "evidence_ids": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                }
+              }
+            ],
+            "budget": {
+              "action": "set",
+              "amount_twd": "1000",
+              "source_quote": "預算先抓 1000 元"
+            }
+          }
+        }
+      ],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 101,
+          "reserved_input_upper_bound": 8490,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 2018,
+          "output_tokens": 1152,
+          "latency_ms": 7788
+        }
+      ],
+      "provider_attempts": 1,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": null,
+      "failure_chain": null,
+      "cleanup": "cancelled after capturing the designated confirmation boundary",
+      "repetition": 2
+    }
+  ]
+}

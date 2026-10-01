@@ -5,7 +5,7 @@ from uuid import uuid4
 
 import pytest
 from pydantic_ai.durable_exec.temporal import PydanticAIPlugin
-from pydantic_ai.messages import ModelResponse, ToolCallPart, UserPromptPart
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, UserPromptPart
 from pydantic_ai.models.function import FunctionModel
 from sqlalchemy import text
 from temporalio.client import Client, WorkflowExecutionStatus
@@ -40,22 +40,23 @@ def proposal_model(messages, info):
     mappings = provided_mappings(messages)
     return ModelResponse(
         parts=[
-            ToolCallPart(
-                info.output_tools[0].name,
-                {
-                    "summary": "甜香只是待確認線索",
-                    "preferences": [
-                        {
-                            "description": "甜香",
-                            "intent": "prefer",
-                            "source_quote": "喜歡甜點",
-                            "source_kind": "food_clue",
-                            "mapping": mappings[0],
-                        }
-                    ]
-                    if mappings
-                    else [],
-                },
+            TextPart(
+                json.dumps(
+                    {
+                        "summary": "甜香只是待確認線索",
+                        "preferences": [
+                            {
+                                "description": "甜香",
+                                "intent": "prefer",
+                                "source_quote": "喜歡甜點",
+                                "source_kind": "food_clue",
+                                "mapping": mappings[0],
+                            }
+                        ]
+                        if mappings
+                        else [],
+                    },
+                )
             )
         ]
     )
@@ -140,26 +141,27 @@ async def test_proposal_restart_keeps_question_and_unconfirmed_preferences(
     calls = {"proposal": 0, "source": 0}
 
     def model(messages, info):
-        if "preferences" in info.output_tools[0].parameters_json_schema["properties"]:
+        if not info.output_tools:
             calls["proposal"] += 1
             mappings = provided_mappings(messages)
             return ModelResponse(
                 parts=[
-                    ToolCallPart(
-                        info.output_tools[0].name,
-                        {
-                            "summary": "甜香只是待確認線索",
-                            "intent": {"origin_query": origin_query},
-                            "preferences": [
-                                {
-                                    "description": "甜香",
-                                    "intent": "prefer",
-                                    "source_quote": "喜歡甜點",
-                                    "source_kind": "food_clue",
-                                    "mapping": mappings[0],
-                                }
-                            ],
-                        },
+                    TextPart(
+                        json.dumps(
+                            {
+                                "summary": "甜香只是待確認線索",
+                                "intent": {"origin_query": origin_query},
+                                "preferences": [
+                                    {
+                                        "description": "甜香",
+                                        "intent": "prefer",
+                                        "source_quote": "喜歡甜點",
+                                        "source_kind": "food_clue",
+                                        "mapping": mappings[0],
+                                    }
+                                ],
+                            },
+                        )
                     )
                 ]
             )

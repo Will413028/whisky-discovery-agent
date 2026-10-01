@@ -4,7 +4,7 @@ import json
 from datetime import timedelta
 from hashlib import sha256
 
-from pydantic_ai import Agent, ModelRetry, RunContext
+from pydantic_ai import Agent, ModelRetry, PromptedOutput, RunContext
 from pydantic_ai.durable_exec.temporal import TemporalDurability
 from pydantic_ai.models import Model
 from temporalio.common import RetryPolicy
@@ -33,6 +33,7 @@ PROPOSAL_PROMPT_VERSION_V4 = (
     + sha256(
         (
             PROPOSAL_INSTRUCTIONS_V4
+            + "output-mode:prompted-v1"
             + json.dumps(PreferenceProposal.model_json_schema(), sort_keys=True)
         ).encode()
     ).hexdigest()[:12]
@@ -52,7 +53,7 @@ def preference_proposal_agent_v4(
         NoThinkingModel(model),
         name="whisky_preference_proposal_v4",
         deps_type=ProposalContextV4,
-        output_type=PreferenceProposal,
+        output_type=PromptedOutput(PreferenceProposal),
         instructions=PROPOSAL_INSTRUCTIONS_V4,
         retries=1,
         capabilities=[durability],

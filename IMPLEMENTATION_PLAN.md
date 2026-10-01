@@ -259,6 +259,14 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - Fresh design-review兩項B（完整展示依賴、缺來源關聯）均改完並複核fixed／open0；獨立correctness P2「退出沿用仍攜無效URL來源」先1 RED／18pass，再改為只有明確選取才帶source，退出使用無來源的新研究，複核fixed1／open0。指令檔現行路徑／規則核對0處修改。負例測試中欄位名稱誤用及違反現有report FK、item ID／version ID混淆僅列fixture修正，不冒充產品RED。
 - 最終本機：完整backend **611 passed（323.74秒）**（`/tmp/whisky-t10-restart-backend-full.log`）、installed wheel **4 passed（12.23秒）**（`/tmp/whisky-t10-restart-wheel.log`）、完整Web **199 passed**（`/tmp/whisky-t10-restart-web-review-final.log`）、typecheck、Next build、ruff check／format、mypy89 source files、Python／Web boundaries與scripts unittest11通過。Node／workerd Playwright **13 passed（18.5秒）**（`/tmp/whisky-t10-restart-browser-final.log`），新synthetic旅程驗明確選取、目前revision／budget、遺失回應重送same key／thread／run／input／source；初次缺Chromium runtime屬環境錯誤，補依賴後重跑。原TaskView生成物無差異。此增量尚未部署，T10 live模型／人工rubric／真雙入口與ARM出口仍待完成。
 
+### T10 真模型完整執行與輸出模式修正（2026-10-01，未驗收）
+
+- 使用者確認 Workers Free。固定 corpus／controls SHA 不變，26 次 V4 workflow 共用一份隔離 DB quota ledger、cap6,000 Neurons；40 provider attempts，保守保留4,052 Neurons。原始完整結果 `backend/evals/t10_qwen_20261001.json` 與 [T10_REVIEW.md](backend/evals/T10_REVIEW.md) 保留全部成功／失敗：17 次所有 hard gates通過，8 次 proposal上游錯誤，1 次真來源 fallback 的替代來源 `SOURCE_TOO_LARGE`；不改題或以成功子集取代。
+- 同輸入額外兩次診斷皆 HTTP500／Cloudflare8005，記錄 status/code而不輸出token／headers。官方 PydanticAI PromptedOutput 實驗仍用原model、prompt、schema及原文／reviewed mapping validators，未知口味兩次 completed、全部 hard gates通過；證據縮小到 proposal工具輸出路徑，不能宣稱已定位provider內部根因。
+- 正式 proposal改 `PromptedOutput(PreferenceProposal)`，prompt fingerprint納入輸出模式；研究來源Agent Tool Output、V1–V3 worker不改。新增輸出路徑1 RED→GREEN，原文／映射與真Temporal question共11 GREEN、runner14 GREEN、凍結V2 history replay正負例2 GREEN。第一次完整回歸611 passed／1 failed為eval fixture仍讀output_tools[0]，更新為JSON text，沒有把fixture錯誤算成新行為RED。
+- 正式修正後飲食線索／預算修改／偏好修改各兩次全部 hard gates通過，加上實驗未知口味兩次，原先四類失敗輸入都有兩次回歸。完整26次新版本eval／第二次來源fallback／人工rubric／正式部署仍待驗；保留各分批原始JSON，詳review稿。後續隔離ledger只允許6,000減既有保守reservation餘额，累計5,639 Neurons，不重置／退還unknown charge。
+- 最終完整backend **612／377.64秒**（`/tmp/whisky-t10-output-backend-final.log`）、wheel **4／15.28秒**、mypy89、ruff／format、Python邊界通過。API契約、Web與frozen codecs未變。此為後端相容性修正，不關閉T10。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

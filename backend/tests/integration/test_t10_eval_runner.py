@@ -7,7 +7,7 @@ from uuid import uuid4
 
 import pytest
 from pydantic_ai.durable_exec.temporal import PydanticAIPlugin
-from pydantic_ai.messages import ModelResponse, ToolCallPart, UserPromptPart
+from pydantic_ai.messages import ModelResponse, TextPart, ToolCallPart, UserPromptPart
 from pydantic_ai.models.function import FunctionModel
 from temporalio.client import Client
 from temporalio.testing import WorkflowEnvironment
@@ -104,15 +104,11 @@ async def test_eval_runs_real_durable_boundaries_without_external_model_calls(
     calls = []
 
     def model(messages, info):
-        calls.append(info.output_tools[0].name)
+        assert not info.output_tools
+        calls.append("prompted_proposal")
         assert case_id == "beginner_daily_food_clues"
         return ModelResponse(
-            parts=[
-                ToolCallPart(
-                    info.output_tools[0].name,
-                    {"summary": "待使用者確認", "preferences": []},
-                )
-            ]
+            parts=[TextPart(json.dumps({"summary": "待使用者確認", "preferences": []}))]
         )
 
     case = next(case for case in corpus["cases"] if case["id"] == case_id)
