@@ -1,0 +1,67 @@
+{
+  "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+  "evaluated_on": "2026-10-01",
+  "budget_twd": "2500",
+  "missing_flavors": [
+    "花香",
+    "乾果",
+    "煙燻"
+  ],
+  "price_gaps": [
+    {
+      "item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "name": "格蘭菲迪 15 年 Solera",
+      "code": "NO_QUALIFIED_PRICE"
+    }
+  ],
+  "paths": [
+    {
+      "starting_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "candidate_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "太妃糖",
+        "香草甜香"
+      ]
+    },
+    {
+      "starting_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "candidate_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "奶油糖"
+      ]
+    },
+    {
+      "starting_item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "candidate_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "奶油糖"
+      ]
+    },
+    {
+      "starting_item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "candidate_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "shared_tags": [
+        "果香",
+        "香草甜香"
+      ],
+      "candidate_tags": [
+        "太妃糖"
+      ]
+    }
+  ],
+  "missing_paths": [],
+  "publication_error": null,
+  "interpretation": "Source-described tags do not establish absent flavors or intensity.",
+  "manifest": "first-journey.reviewed.json",
+  "manifest_sha256": "c19bc703381b6571905fdc1077698536000fbc80be7dfd1b01d42b2fdb9a3b25",
+  "acceptance_status": "not_reviewed"
+}

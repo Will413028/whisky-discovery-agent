@@ -1,0 +1,274 @@
+{
+  "release_id": "4eac9c09-dc4b-5392-b7a3-c36a694edd43",
+  "evaluated_on": "2026-10-01",
+  "budget_twd": "2500",
+  "missing_flavors": [],
+  "price_gaps": [
+    {
+      "item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "name": "格蘭菲迪 15 年 Solera",
+      "code": "NO_QUALIFIED_PRICE"
+    },
+    {
+      "item_id": "6e177900-e128-5dce-af66-00db1bfb2191",
+      "name": "格蘭昆奇 12 年",
+      "code": "NO_QUALIFIED_PRICE"
+    }
+  ],
+  "paths": [
+    {
+      "starting_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "candidate_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "太妃糖",
+        "香草甜香"
+      ]
+    },
+    {
+      "starting_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "candidate_item_id": "7f25bca7-a96c-5fc5-b850-8f0ab6d28a91",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "太妃糖",
+        "辛香",
+        "香草甜香"
+      ]
+    },
+    {
+      "starting_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "candidate_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "煙燻",
+        "辛香",
+        "鹹味"
+      ]
+    },
+    {
+      "starting_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "candidate_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "奶油糖"
+      ]
+    },
+    {
+      "starting_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "candidate_item_id": "7f25bca7-a96c-5fc5-b850-8f0ab6d28a91",
+      "shared_tags": [
+        "太妃糖",
+        "果香",
+        "香草甜香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "辛香"
+      ]
+    },
+    {
+      "starting_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "candidate_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "煙燻",
+        "辛香",
+        "鹹味"
+      ]
+    },
+    {
+      "starting_item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "candidate_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "奶油糖"
+      ]
+    },
+    {
+      "starting_item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "candidate_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "shared_tags": [
+        "果香",
+        "香草甜香"
+      ],
+      "candidate_tags": [
+        "太妃糖"
+      ]
+    },
+    {
+      "starting_item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "candidate_item_id": "7f25bca7-a96c-5fc5-b850-8f0ab6d28a91",
+      "shared_tags": [
+        "果香",
+        "辛香",
+        "香草甜香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "太妃糖"
+      ]
+    },
+    {
+      "starting_item_id": "47ca1d78-50b4-400e-b571-7285cc624e97",
+      "candidate_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "shared_tags": [
+        "果香",
+        "辛香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "煙燻",
+        "鹹味"
+      ]
+    },
+    {
+      "starting_item_id": "7f25bca7-a96c-5fc5-b850-8f0ab6d28a91",
+      "candidate_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "奶油糖"
+      ]
+    },
+    {
+      "starting_item_id": "7f25bca7-a96c-5fc5-b850-8f0ab6d28a91",
+      "candidate_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "shared_tags": [
+        "乾果",
+        "果香",
+        "辛香"
+      ],
+      "candidate_tags": [
+        "煙燻",
+        "鹹味"
+      ]
+    },
+    {
+      "starting_item_id": "cd158a22-4bf8-523e-94b2-2331929f73c7",
+      "candidate_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "shared_tags": [
+        "煙燻",
+        "鹹味"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "果香",
+        "辛香"
+      ]
+    },
+    {
+      "starting_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "candidate_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "奶油糖"
+      ]
+    },
+    {
+      "starting_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "candidate_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "太妃糖",
+        "香草甜香"
+      ]
+    },
+    {
+      "starting_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "candidate_item_id": "7f25bca7-a96c-5fc5-b850-8f0ab6d28a91",
+      "shared_tags": [
+        "乾果",
+        "果香",
+        "辛香"
+      ],
+      "candidate_tags": [
+        "太妃糖",
+        "香草甜香"
+      ]
+    },
+    {
+      "starting_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "candidate_item_id": "cd158a22-4bf8-523e-94b2-2331929f73c7",
+      "shared_tags": [
+        "煙燻",
+        "鹹味"
+      ],
+      "candidate_tags": [
+        "海藻"
+      ]
+    },
+    {
+      "starting_item_id": "6e177900-e128-5dce-af66-00db1bfb2191",
+      "candidate_item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "奶油糖"
+      ]
+    },
+    {
+      "starting_item_id": "6e177900-e128-5dce-af66-00db1bfb2191",
+      "candidate_item_id": "be37452e-960a-488d-ab88-6f5679fe8e21",
+      "shared_tags": [
+        "果香",
+        "香草甜香"
+      ],
+      "candidate_tags": [
+        "太妃糖"
+      ]
+    },
+    {
+      "starting_item_id": "6e177900-e128-5dce-af66-00db1bfb2191",
+      "candidate_item_id": "7f25bca7-a96c-5fc5-b850-8f0ab6d28a91",
+      "shared_tags": [
+        "果香",
+        "香草甜香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "太妃糖",
+        "辛香"
+      ]
+    },
+    {
+      "starting_item_id": "6e177900-e128-5dce-af66-00db1bfb2191",
+      "candidate_item_id": "342283de-dadf-56f6-a4d5-44af65c58d44",
+      "shared_tags": [
+        "果香"
+      ],
+      "candidate_tags": [
+        "乾果",
+        "煙燻",
+        "辛香",
+        "鹹味"
+      ]
+    }
+  ],
+  "missing_paths": [],
+  "publication_error": null,
+  "interpretation": "Source-described tags do not establish absent flavors or intensity.",
+  "manifest": "t12-expansion.reviewed.json",
+  "manifest_sha256": "764b25709e999c310cf0780a034ecd8cc68e043ed03589123029ca21c28f6017",
+  "acceptance_status": "not_reviewed"
+}
