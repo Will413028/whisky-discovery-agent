@@ -177,6 +177,71 @@ def actor_plans_closed(connection: Connection, owner: UUID, generation: int) -> 
     )
 
 
+def purge_plan_originals(
+    connection: Connection, owner: UUID, generation: int, plan_id: UUID
+) -> None:
+    """Keep deduplication metadata only beneath a locked deleted plan fence."""
+    from whisky.modules.identity.public import control_actor_state
+
+    actor = control_actor_state(connection, owner, lock=True)
+    if actor is not None and actor[0] < generation:
+        raise RuntimeError("plan purge generation is not current")
+    if not locked_plan_deletion_fence(connection, plan_id, owner, generation):
+        raise RuntimeError("plan purge requires a deleted plan fence")
+    _scrub_plan_originals(
+        connection,
+        "id=:plan AND generation=:generation",
+        dict(owner=owner, generation=generation, plan=plan_id),
+    )
+
+
+def purge_actor_plan_originals(
+    connection: Connection, owner: UUID, generation: int
+) -> None:
+    """Erase only closed plans in the revoked generation and its predecessors."""
+    from sqlalchemy import text
+
+    from whisky.modules.identity.public import control_actor_state
+
+    actor = control_actor_state(connection, owner, lock=True)
+    if actor is not None and not (
+        actor[0] > generation or actor == (generation, False)
+    ):
+        raise RuntimeError("plan purge requires an advanced identity fence")
+    rows = connection.execute(
+        text("""
+            SELECT deleted_at FROM plans
+            WHERE owner_id=:owner AND generation<=:generation
+            ORDER BY id FOR UPDATE
+        """),
+        dict(owner=owner, generation=generation),
+    )
+    if any(row.deleted_at is None for row in rows):
+        raise RuntimeError("plan purge requires deleted plan fences")
+    _scrub_plan_originals(
+        connection, "generation<=:generation", dict(owner=owner, generation=generation)
+    )
+
+
+def _scrub_plan_originals(connection: Connection, predicate: str, values: dict) -> None:
+    from sqlalchemy import text
+
+    targets = "SELECT id FROM plans WHERE owner_id=:owner AND " + predicate
+    connection.execute(
+        text("UPDATE plans SET conditions='{}'::jsonb WHERE id IN (" + targets + ")"),
+        values,
+    )
+    connection.execute(
+        text(
+            "UPDATE discovery_commands command SET result=jsonb_build_object("
+            "'generation',plan.generation,'conditions_revision',1) FROM plans plan "
+            "WHERE command.target_id=plan.id AND command.owner_id=plan.owner_id "
+            "AND plan.id IN (" + targets + ")"
+        ),
+        values,
+    )
+
+
 def plan_control_effect_present(
     connection: Connection,
     plan_id: UUID,

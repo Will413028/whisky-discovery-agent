@@ -389,6 +389,14 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - OpenAPI／TypeScript 重生無 drift，frozen ControlWorkflowV1／V1 codec 無修改，最終 whitespace 通過。新版 worker／Schedule 尚未部署。
 - 備份唯讀 inventory `backend/evals/t11_backup_inventory_20261001.json`：6份full，最近 `20260930-192434F`；既有 service Result=success、timer active。合法私人還原 floor仍以T09已驗的 `20260929-190627F` 為依據，不把較早 preliminary full當合法點。清單不證明WAL連續性、當前還原或到期清除；沒有執行expire／restore／正式設定變更。
 
+### T11 plan 原文清除與有限期恢復資料（2026-10-01，未驗收）
+
+- 真 DB 三項 **3 RED／346.83 秒**：plan／actor 刪除仍保留原條件，以及建立命令重送仍回傳已刪原文。修正後由 discovery public 契約在原 fenced control transaction 清空 plan conditions；建立收據只保留 generation／初始 revision，typed target／key／hash 維持去重。已刪 target 重送回404，未刪收據仍回原建立結果。
+- scope gate、其他帳號、rollback 與 surviving-parent-fence 邏輯還原重清納入定向驗證。第一輪 **42 passed／1 failed／47.57 秒** 是舊 PITR fixture 只還原 deleted_at，未還原現在會清除的 conditions；失敗在對帳前 read 斷言。改為一致還原刪除前條件，保留對帳前可讀／後不可讀與外部故障不套 effect 的斷言，**81／86.39 秒**通過；不放寬 domain 驗證。
+- 相同258個 source／test／migration／dependency hashes 的 Oracle ARM 全套 **773 passed／846.86 秒**，installed wheel **4／14.62 秒**；ruff／format、mypy114、Python boundary、OpenAPI／TypeScript無 drift、whitespace 通過。獨立 design `NO DESIGN FINDINGS`、correctness `NO CONFIRMED DEFECTS`；frozen ControlWorkflowV1／V1 codec 未改。成功與失敗保留 `backend/evals/t11_plan_originals_validation_20261001.json`。
+- 正式唯讀前提 `backend/evals/t11_deploy_premises_20261001.json`：schema0012、5 plans／5 tasks／2 control rows，其中1項 condition change；只輸出 aggregate counts，沒有讀取原文或變更正式資料。此增量未部署，隔離 ARM migration 不代表正式 migration 已通過。
+- 使用者選有限期恢復資料，維持精確 PITR；ARCH／PRODUCT_SPEC 明列條件修改新輸入的恢復例外、final result起至少30日及 effect 前可還原窗口失效＋緩衝後清除，pending 不按年齡過期。pgBackRest time7 不是實體最大年齡，須核對 inventory／合法 floor。尚未執行 control expiry／backup expire，V1 reader 的 result／intent 完整性與合法清除、history／traces、正式 PITR 仍待完整出口；不能宣稱所有副本已清除。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。

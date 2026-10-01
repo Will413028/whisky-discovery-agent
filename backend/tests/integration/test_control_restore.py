@@ -35,11 +35,15 @@ def _recorded_delete(engine, actor, plan, journal):
     return command
 
 
-def _restore_before_delete(engine, command):
+def _restore_before_delete(engine, command, conditions):
     with engine.begin() as connection:
         connection.execute(
-            text("UPDATE plans SET deleted_at=NULL WHERE id=:plan"),
-            {"plan": command.target_id},
+            text(
+                "UPDATE plans SET deleted_at=NULL,"
+                "conditions=CAST(:conditions AS jsonb) "
+                "WHERE id=:plan"
+            ),
+            {"plan": command.target_id, "conditions": conditions.canonical_json()},
         )
         connection.execute(
             text("DELETE FROM control_commands WHERE id=:id"), {"id": command.id}
@@ -50,7 +54,7 @@ def test_completed_plan_delete_reapplies_after_pitr_and_is_idempotent(research_c
     engine, _, (actor, _), plan = research_context
     journal = PagedJournal(page_size=1)
     command = _recorded_delete(engine, actor, plan, journal)
-    _restore_before_delete(engine, command)
+    _restore_before_delete(engine, command, plan.conditions)
     assert PlanStore(engine).read(plan.id, actor.id) is not None
 
     restored = reconcile_control_log(journal, ControlStore(engine))
@@ -76,7 +80,7 @@ def test_failed_later_page_does_not_apply_an_earlier_delete(research_context):
     engine, _, (actor, _), plan = research_context
     journal = PagedJournal(page_size=1)
     command = _recorded_delete(engine, actor, plan, journal)
-    _restore_before_delete(engine, command)
+    _restore_before_delete(engine, command, plan.conditions)
     journal.fail_on_page = journal.page_calls + 2
 
     with pytest.raises(RecoveryError, match="list"):
@@ -141,8 +145,12 @@ def test_completed_receipt_with_visible_plan_fails_closed(research_context):
     command = _recorded_delete(engine, actor, plan, journal)
     with engine.begin() as connection:
         connection.execute(
-            text("UPDATE plans SET deleted_at=NULL WHERE id=:id"),
-            {"id": plan.id},
+            text(
+                "UPDATE plans SET deleted_at=NULL,"
+                "conditions=CAST(:conditions AS jsonb) "
+                "WHERE id=:id"
+            ),
+            {"id": plan.id, "conditions": plan.conditions.canonical_json()},
         )
 
     with pytest.raises(RecoveryError, match="effect"):
@@ -179,7 +187,7 @@ def test_unreadable_object_fails_before_effect(research_context):
     engine, _, (actor, _), plan = research_context
     journal = PagedJournal(page_size=1)
     command = _recorded_delete(engine, actor, plan, journal)
-    _restore_before_delete(engine, command)
+    _restore_before_delete(engine, command, plan.conditions)
     journal.fail_read = True
 
     with pytest.raises(RecoveryError, match="read"):

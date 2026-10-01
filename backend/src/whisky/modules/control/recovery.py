@@ -24,6 +24,8 @@ from whisky.modules.control.v1_codec import decode_conditions_v1, payload_hash_v
 from whisky.modules.discovery.public import (
     actor_plans_closed,
     plan_control_effect_present,
+    purge_actor_plan_originals,
+    purge_plan_originals,
 )
 from whisky.modules.identity.public import control_actor_state
 from whisky.modules.library.public import purge_actor_library, purge_plan_library
@@ -253,6 +255,7 @@ def _purge_beneath_completed_delete(
             close_actor_tasks(connection, owner, generation)
             purge_actor_library(connection, owner, generation)
             purge_actor_research(connection, owner, generation)
+            purge_actor_plan_originals(connection, owner, generation)
     elif command.kind == "plan.delete" and plan_control_effect_present(
         connection,
         target,
@@ -265,6 +268,7 @@ def _purge_beneath_completed_delete(
         close_plan_tasks(connection, owner, target, status="cancelled")
         purge_plan_library(connection, owner, generation, target)
         purge_plan_research(connection, owner, generation, target)
+        purge_plan_originals(connection, owner, generation, target)
 
 
 def _restore_one(
