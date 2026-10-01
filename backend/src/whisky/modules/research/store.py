@@ -53,19 +53,32 @@ class ResearchStore:
         self, task_id: UUID
     ) -> Literal["ResearchWorkflowV3", "ResearchWorkflowV4"]:
         with self.engine.connect() as connection:
-            is_v4 = connection.execute(
-                text("""
-                    SELECT (i.task_id IS NOT NULL)
+            row = (
+                connection.execute(
+                    text("""
+                    SELECT (i.task_id IS NOT NULL) AS is_v4,
+                        t.owner_id,t.plan_id,t.generation,t.write_allowed,t.status
                     FROM research_tasks t
                     LEFT JOIN research_v4_inputs i
                         ON i.task_id=t.id AND i.owner_id=t.owner_id
                     WHERE t.id=:task
                 """),
-                {"task": task_id},
-            ).scalar_one_or_none()
-        if is_v4 is None:
-            raise ResearchConflict("NOT_FOUND")
-        return "ResearchWorkflowV4" if is_v4 else "ResearchWorkflowV3"
+                    {"task": task_id},
+                )
+                .mappings()
+                .first()
+            )
+            if row is None:
+                raise ResearchConflict("NOT_FOUND")
+            plan = owned_plan(connection, row["plan_id"], row["owner_id"])
+            if (
+                actor_generation(connection, row["owner_id"]) != row["generation"]
+                or plan is None
+                or plan.generation != row["generation"]
+                or (not row["write_allowed"] and row["status"] != "completed")
+            ):
+                raise ResearchConflict("TASK_NOT_WRITABLE")
+            return "ResearchWorkflowV4" if row["is_v4"] else "ResearchWorkflowV3"
 
     def preference_proposal(
         self, task_id: UUID, owner: UUID

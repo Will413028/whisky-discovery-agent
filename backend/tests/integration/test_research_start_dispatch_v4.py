@@ -4,6 +4,9 @@ from uuid import uuid4
 
 import pytest
 from temporalio.testing import WorkflowEnvironment
+from test_comparison_reports_v4 import comparison_commit as comparison_commit
+from test_library_conclusions import completed_choice as completed_choice
+from test_library_purge import delete
 from test_research_inputs_v4 import make_turn
 
 from whisky.modules.research.domain import workflow_id_for
@@ -11,6 +14,18 @@ from whisky.modules.research.store import ResearchConflict
 from whisky.modules.research.temporal_start import ConnectingTemporalResearchStarter
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.mark.parametrize("kind", ["plan.delete", "actor.delete"])
+def test_deleted_task_cannot_be_dispatched_after_history_cleanup(
+    completed_choice, kind
+):
+    from whisky.modules.research.store import ResearchStore
+
+    engine, actor, report, choice = completed_choice
+    delete(engine, actor, choice, kind)
+    with pytest.raises(ResearchConflict, match="TASK_NOT_WRITABLE"):
+        ResearchStore(engine).workflow_type_for_task(report.task_id)
 
 
 def test_workflow_type_is_pinned_by_persisted_v4_input(research_context):

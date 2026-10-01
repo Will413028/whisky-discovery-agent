@@ -361,6 +361,13 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 完整 backend **742 passed／1081.28 秒**（`/tmp/whisky-t11-research-purge-full.log`）；ruff／format、mypy108、Python boundary、installed wheel **4／15.47 秒**通過。獨立 design 與 correctness review 無確認缺陷。上一每日用量提交 `f912360` 的 PR run36832309444／push run36832302807，各 backend／web jobs 均 success。
 - 未部署。此增量只清除研究 DB 原文；plan／control 原文、Temporal history、traces、備份與控制紀錄到期及正式 PITR／帳號旅程仍待驗收，不宣稱完整資料刪除。
 
+### T11 history 清除前的 dispatch 防線（2026-10-01，未驗收）
+
+- namespace／history 清除後 `REJECT_DUPLICATE` 不再是永久防重保障。刪除 plan／actor 後 executor lookup 仍成功的兩項真 DB 反例先 **2 RED／7.11 秒**，現透過 identity／discovery public 契約驗 parent 與 generation，拒絕不可寫的非 completed task；有效 completed retry 保留。最初缺少 fixture 屬準備錯誤，不算 RED。
+- dispatch／start／acceptance **16／17.88 秒**通過；獨立設計與 correctness 覆核無確認缺陷。這只保護 pre-start lookup，不宣稱封閉跨 DB／Temporal start race；post-check、持久掃描、全 run 分頁清除與非同步刪除完成核對仍待實作。
+- ruff／format、mypy108、Python boundary、installed wheel **4／18.27 秒**通過；未部署。
+- 研究 DB 清除提交 `9366213` 的 PR run36836507020／push run36836474692，各 backend／web jobs 均 success。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。
