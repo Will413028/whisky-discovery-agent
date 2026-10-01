@@ -348,6 +348,11 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 最後 backend 定向 **34／60.27 秒**（`/tmp/whisky-t11-export-finish-green.log`）、ruff／format、mypy107 通過。完整 backend **728 passed、1 BootstrapProbe workflow 超時／1255.87 秒**（`/tmp/whisky-t11-large-export-backend-release.log`）；該項未修改重跑 **1／4.14 秒**通過，超時根因未確定，不宣稱同次全綠。完整測試在最後 finish guard 之前；guard 之後由上述定向測試驗證。
 - Web **284**、typecheck、原生 Next build、Python／Web boundaries、scripts11、edge dry-run、最終 installed wheel **4／15.03 秒**通過；Node／workerd Playwright **17／21.6 秒**含小檔與 9 MiB 真下載（`/tmp/whisky-t11-large-export-browser.log`）。生成契約無 drift。尚未部署，不代替正式 Auth0、大帳號 Oracle 負載或 T11 完整資料清除驗收。
 
+### T11 清除前的每日用量保護（2026-10-01，未驗收）
+
+- 已結束 attempts 被實體清除後，同帳號第二次 reservation 繞過 daily cap 的真 DB 反例先 RED。新增 `0022_owner_daily_usage` owner／UTC day／reserved neurons 彙總，回填全部 model attempts（包含 unknown 與 overage），不保存 task／原文／provider response；不與 task cascade 綁定。reserve 與 provider overage 在原交易內同時更新 global／owner counters，重送／finish 冪等維持。
+- quota **12／15.47 秒** GREEN；真0021→0022 migration 與 quota **13／83.42 秒**通過（`/tmp/whisky-t11-purge-quota-migration.log`）。補驗 model saved-rate overage 後 quota **12／31.49 秒**通過。ruff／format、mypy107、Python boundary、wheel **4／32.11 秒**通過。獨立 correctness/security review NO CONFIRMED DEFECTS；不宣稱已完成研究原文清除或彙總到期政策。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。

@@ -194,13 +194,18 @@ class QuotaStore:
                 assert used is not None
                 if used + neurons > self.daily_neuron_limit:
                     raise QuotaError("DAILY_BUDGET_EXHAUSTED")
-                # The singleton limiter lock serializes the owner sum with all
-                # model reservations, including those from separate tasks.
+                connection.execute(
+                    text("""
+                    INSERT INTO research_owner_usage_days
+                        (owner_id,day_utc,reserved_neurons)
+                    VALUES (:owner,:day,0) ON CONFLICT DO NOTHING
+                    """),
+                    dict(owner=owner, day=day),
+                )
                 owner_used = connection.scalar(
                     text("""
-                    SELECT coalesce(sum(reserved_neurons),0)
-                    FROM research_usage_attempts
-                    WHERE owner_id=:owner AND day_utc=:day AND kind='model'
+                    SELECT reserved_neurons FROM research_owner_usage_days
+                    WHERE owner_id=:owner AND day_utc=:day FOR UPDATE
                     """),
                     dict(owner=owner, day=day),
                 )
@@ -238,6 +243,14 @@ class QuotaStore:
                     WHERE day_utc=:day
                     """),
                     dict(day=day, neurons=neurons),
+                )
+                connection.execute(
+                    text("""
+                    UPDATE research_owner_usage_days
+                    SET reserved_neurons=reserved_neurons+:neurons
+                    WHERE owner_id=:owner AND day_utc=:day
+                    """),
+                    dict(owner=owner, day=day, neurons=neurons),
                 )
             return QuotaReservation(
                 identifier, task_id, activity_id, attempt, kind, "active", neurons
@@ -329,6 +342,18 @@ class QuotaStore:
                         WHERE day_utc=:day
                         """),
                         dict(extra=extra_neurons, day=row["day_utc"]),
+                    )
+                    connection.execute(
+                        text("""
+                        UPDATE research_owner_usage_days
+                        SET reserved_neurons=reserved_neurons+:extra
+                        WHERE owner_id=:owner AND day_utc=:day
+                        """),
+                        dict(
+                            owner=row["owner_id"],
+                            extra=extra_neurons,
+                            day=row["day_utc"],
+                        ),
                     )
                 connection.execute(
                     text("""

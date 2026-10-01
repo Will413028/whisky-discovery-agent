@@ -116,6 +116,23 @@ def test_account_daily_usage_spans_tasks_without_consuming_another_accounts_budg
     assert quota.daily_reserved_neurons() > first.reserved_neurons
 
 
+def test_erasing_attempt_details_does_not_reset_account_daily_budget(research_context):
+    engine, research, (actor, _), plan = research_context
+    first_task = ready_task(engine, research, actor, plan, "erase-usage-1")
+    second_task = ready_task(engine, research, actor, plan, "erase-usage-2")
+    quota = QuotaStore(engine, daily_neuron_limit=2000)
+    first = quota.reserve(first_task, "first-model", 1, "model", 10_000, 16_000)
+    quota.finish(first.id, known=False)
+    with engine.begin() as connection:
+        connection.execute(
+            text("DELETE FROM research_usage_attempts WHERE task_id=:task"),
+            dict(task=first_task),
+        )
+    assert quota.daily_reserved_neurons() == first.reserved_neurons
+    with pytest.raises(QuotaError, match="OWNER_DAILY_BUDGET_EXHAUSTED"):
+        quota.reserve(second_task, "second-model", 1, "model", 10_000, 16_000)
+
+
 def test_same_account_parallel_reservations_cannot_cross_daily_cap(
     research_context,
 ):
@@ -179,6 +196,17 @@ def test_completion_uses_the_model_rate_saved_with_the_attempt(research_context)
     assert qwen.daily_reserved_neurons() == reserved_neurons(
         1000, 1000, model_name=qwen_model
     )
+    with engine.connect() as connection:
+        assert (
+            connection.scalar(
+                text("""
+                SELECT reserved_neurons FROM research_owner_usage_days
+                WHERE owner_id=:owner AND day_utc=timezone('UTC',now())::date
+            """),
+                dict(owner=actor.id),
+            )
+            == qwen.daily_reserved_neurons()
+        )
 
 
 def test_exhausted_retry_retires_prior_active_slot_without_refunding(research_context):
