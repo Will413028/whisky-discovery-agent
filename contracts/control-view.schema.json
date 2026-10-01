@@ -1,0 +1,60 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "enum": [
+        "task.cancel",
+        "plan.change_conditions",
+        "plan.delete",
+        "actor.delete"
+      ],
+      "title": "Kind",
+      "type": "string"
+    },
+    "result": {
+      "anyOf": [
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Result"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "intent_confirmed",
+        "effect_applied",
+        "effect_rejected",
+        "completed",
+        "rejected"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "targetId": {
+      "format": "uuid",
+      "title": "Targetid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "id",
+    "kind",
+    "targetId",
+    "status",
+    "result"
+  ],
+  "title": "ControlView",
+  "type": "object"
+}

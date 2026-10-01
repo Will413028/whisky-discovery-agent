@@ -6,7 +6,7 @@ commands and Temporal payloads remain recoverable.
 
 import json
 from decimal import Decimal
-from typing import Literal, Self
+from typing import Annotated, Literal, Self
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_serializer, model_validator
@@ -51,7 +51,9 @@ class ResearchConditions(ConditionsModel):
         return self
 
     @field_serializer("budget_twd")
-    def serialize_budget(self, value: Decimal | None) -> str | None:
+    def serialize_budget(
+        self, value: Decimal | None
+    ) -> Annotated[str, Field(pattern=r"^[0-9]+(?:\.[0-9]+)?$")] | None:
         if value is None:
             return None
         whole, dot, fraction = format(value, "f").partition(".")

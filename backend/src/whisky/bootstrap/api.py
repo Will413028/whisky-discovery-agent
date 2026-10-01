@@ -17,6 +17,7 @@ from starlette.responses import Response
 
 from whisky.bootstrap.errors import ErrorView, error_response
 from whisky.bootstrap.settings import Settings
+from whisky.modules.catalog.http import catalog_router as make_catalog_router
 from whisky.modules.control.http import control_router as make_control_router
 from whisky.modules.control.service import ControlController
 from whisky.modules.control.store import ControlStore
@@ -58,6 +59,7 @@ def configured_app(
             settings.temporal.address,
             settings.temporal.namespace,
             settings.temporal.task_queue,
+            workflow_type_for_task=research_store.workflow_type_for_task,
         )
         acceptance = AcceptResearch(
             research_store,
@@ -92,6 +94,7 @@ def configured_app(
         control_router=make_control_router(
             IdentityAccess(engine, verifier), control_store, control_controller
         ),
+        catalog_router=make_catalog_router(engine),
     )
 
     @asynccontextmanager
@@ -118,6 +121,7 @@ def create_app(
     observation_router: APIRouter | None = None,
     plan_router: APIRouter | None = None,
     control_router: APIRouter | None = None,
+    catalog_router: APIRouter | None = None,
 ) -> FastAPI:
     app = FastAPI(
         title="Whisky Discovery Agent",
@@ -128,6 +132,9 @@ def create_app(
     )
     app.include_router(
         identity_router if identity_router is not None else router(None, None)
+    )
+    app.include_router(
+        catalog_router if catalog_router is not None else make_catalog_router(None)
     )
     app.include_router(
         observation_router

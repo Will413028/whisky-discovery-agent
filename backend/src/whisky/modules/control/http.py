@@ -16,7 +16,11 @@ from whisky.modules.control.store import (
     ControlReceipt,
     ControlStore,
 )
-from whisky.modules.discovery.public import ResearchConditions
+from whisky.modules.discovery.public import (
+    ConditionPatch,
+    ResearchConditions,
+    apply_condition_patch,
+)
 from whisky.modules.identity.public import AccessSession, IdentityAccess
 from whisky.platform.http_errors import PublicAPIError
 
@@ -62,6 +66,15 @@ class ChangeConditionsRequest(KeyRequest):
     conditions: ResearchConditions
 
 
+class PatchConditionsRequest(KeyRequest):
+    model_config = ConfigDict(
+        extra="forbid", alias_generator=to_camel, populate_by_name=True
+    )
+    expected_revision: int = Field(ge=1)
+    base_conditions: ResearchConditions
+    patch: ConditionPatch
+
+
 def control_router(
     identity: IdentityAccess,
     store: ControlStore | None,
@@ -91,6 +104,7 @@ def control_router(
         *,
         expected_revision: int = 0,
         conditions: ResearchConditions | None = None,
+        base_conditions: ResearchConditions | None = None,
     ) -> ControlView:
         if controller is None:
             raise PublicAPIError(503, "CONTROL_UNAVAILABLE")
@@ -103,6 +117,7 @@ def control_router(
                 key,
                 expected_revision=expected_revision,
                 conditions=conditions,
+                base_conditions=base_conditions,
             )
         except ControlConflict as error:
             code = str(error)
@@ -111,6 +126,7 @@ def control_router(
                 "IDENTITY_CHANGED": 403,
                 "REVISION_CONFLICT": 409,
                 "IDEMPOTENCY_CONFLICT": 409,
+                "BASE_CONDITIONS_CONFLICT": 409,
             }.get(code)
             if status is None:
                 raise
@@ -144,6 +160,30 @@ def control_router(
             response,
             expected_revision=body.expected_revision,
             conditions=body.conditions,
+        )
+
+    @routes.post("/plans/{plan_id}/conditions/patch", response_model=ControlView)
+    async def patch_plan_conditions(
+        plan_id: UUID,
+        body: PatchConditionsRequest,
+        response: Response,
+        actor: AccessSession = Depends(active_actor),
+    ) -> ControlView:
+        try:
+            conditions = apply_condition_patch(
+                body.base_conditions, body.patch.model_dump(exclude_unset=True)
+            )
+        except ValueError:
+            raise PublicAPIError(422, "INVALID_CONDITION_PATCH") from None
+        return await issue(
+            actor,
+            "plan.change_conditions",
+            plan_id,
+            str(body.key),
+            response,
+            expected_revision=body.expected_revision,
+            conditions=conditions,
+            base_conditions=body.base_conditions,
         )
 
     @routes.post("/plans/{plan_id}/delete", response_model=ControlView)

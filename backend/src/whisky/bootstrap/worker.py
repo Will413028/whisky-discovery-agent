@@ -33,12 +33,14 @@ from whisky.modules.research.activities import ResearchActivities
 from whisky.modules.research.agent import configure_research_agent
 from whisky.modules.research.agent_v2 import configure_research_agent_v2
 from whisky.modules.research.agent_v3 import configure_research_agent_v3
+from whisky.modules.research.agent_v4 import configure_research_agents_v4
 from whisky.modules.research.model import QuotaModel
 from whisky.modules.research.quota import DEFAULT_MODEL, QuotaStore
 from whisky.modules.research.source_reader import SourceReader
 from whisky.modules.research.workflow import ResearchWorkflow
 from whisky.modules.research.workflow_v2 import ResearchWorkflowV2
 from whisky.modules.research.workflow_v3 import ResearchWorkflowV3
+from whisky.modules.research.workflow_v4 import ResearchWorkflowV4
 from whisky.platform.recovery_gate import assert_recovery_ready, install_recovery_gate
 
 WORKERS_AI_MODEL = DEFAULT_MODEL
@@ -123,6 +125,7 @@ def research_worker(
     configure_research_agent(engine, model)
     configure_research_agent_v2(engine, model)
     configure_research_agent_v3(model)
+    configure_research_agents_v4(model)
     db = ResearchActivities(engine, quota=quota, source_reader=source_reader)
     control = (
         ControlActivities(
@@ -136,6 +139,8 @@ def research_worker(
             "whisky.modules.research.agent",
             "whisky.modules.research.agent_v2",
             "whisky.modules.research.agent_v3",
+            "whisky.modules.research.agent_v4",
+            "whisky.modules.research.proposal_agent_v4",
         )
     )
     return Worker(
@@ -146,18 +151,24 @@ def research_worker(
             ResearchWorkflow,
             ResearchWorkflowV2,
             ResearchWorkflowV3,
+            ResearchWorkflowV4,
             *([ControlWorkflow] if control is not None else []),
         ],
         activities=[
             db.begin_research,
             db.begin_research_v2,
             db.begin_research_v3,
+            db.begin_research_v4,
+            db.publish_preference_question_v4,
+            db.proposal_mappings_v4,
             db.catalog_snapshot_v3,
             db.read_source_v3,
             db.save_report,
+            db.save_report_v4,
             db.fail_research,
             db.publish_question,
             db.publish_question_v3,
+            db.publish_question_v4,
             db.accept_answer,
             db.expire_question,
             *(

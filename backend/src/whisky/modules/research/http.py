@@ -1,11 +1,14 @@
 """Authenticated, read-only task observation HTTP adapter."""
 
+import base64
+import binascii
+from typing import Annotated, Literal
 from uuid import UUID
 
 from ag_ui.core import RunAgentInput
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import Field, field_validator
+from pydantic import AwareDatetime, Field, field_validator
 from starlette.concurrency import run_in_threadpool
 from starlette.responses import Response, StreamingResponse
 
@@ -13,23 +16,46 @@ from whisky.modules.identity.public import AccessSession, IdentityAccess
 from whisky.modules.research.acceptance import AcceptResearch
 from whisky.modules.research.answer import AnswerResearch
 from whisky.modules.research.commands import parse_resume, parse_start
+from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.contracts import AnswerInput
 from whisky.modules.research.db_observation import DBObservationSource
+from whisky.modules.research.inputs_v4 import parse_start_v4
 from whisky.modules.research.observation import (
     ObservationPolicy,
     ObservationSource,
     ObserveInput,
     Observer,
 )
+from whisky.modules.research.proposal_view_v4 import PreferenceProposalViewV4
 from whisky.modules.research.report_store import ReportStore
-from whisky.modules.research.store import ResearchConflict, ResearchStore
+from whisky.modules.research.restart_context_v4 import (
+    RestartContextViewV4,
+    read_restart_context_v4,
+)
+from whisky.modules.research.store import (
+    ResearchConflict,
+    ResearchStore,
+    TaskHistoryCursor,
+)
 from whisky.modules.research.views import (
     ReportView,
     ResearchCommandView,
+    TaskHistoryView,
     TaskView,
     ViewModel,
 )
 from whisky.platform.http_errors import PublicAPIError
+
+
+class TaskHistoryQuery(ViewModel):
+    limit: int = Field(default=20, ge=1, le=50)
+    cursor: str | None = Field(default=None, min_length=1, max_length=512)
+
+
+class TaskHistoryCursorPayload(ViewModel):
+    version: Literal[1] = 1
+    created_at: AwareDatetime
+    id: UUID
 
 
 class AuthorizedSource:
@@ -96,6 +122,57 @@ def observation_router(
     ) -> AccessSession:
         return identity.authenticate(credentials.credentials if credentials else None)
 
+    @routes.get("/api/v1/plans/{plan_id}/tasks", response_model=TaskHistoryView)
+    def task_history(
+        plan_id: UUID,
+        request: Request,
+        query: Annotated[TaskHistoryQuery, Query()],
+        session: AccessSession = Depends(authenticate),
+    ) -> TaskHistoryView:
+        if any(
+            len(request.query_params.getlist(key)) > 1 for key in ("limit", "cursor")
+        ):
+            raise PublicAPIError(422, "INVALID_REQUEST")
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        cursor = None
+        if query.cursor is not None:
+            try:
+                payload = TaskHistoryCursorPayload.model_validate_json(
+                    base64.b64decode(query.cursor, altchars=b"-_", validate=True)
+                )
+            except (ValueError, binascii.Error):
+                raise PublicAPIError(422, "INVALID_REQUEST") from None
+            cursor = TaskHistoryCursor(payload.created_at, payload.id)
+        page = store.history(plan_id, session.actor_id, query.limit, cursor)
+        if page is None:
+            raise HTTPException(404, "NOT_FOUND")
+        next_cursor = None
+        if page.next_cursor is not None:
+            payload = TaskHistoryCursorPayload(
+                created_at=page.next_cursor.created_at, id=page.next_cursor.id
+            )
+            next_cursor = base64.urlsafe_b64encode(
+                payload.model_dump_json().encode()
+            ).decode("ascii")
+        return TaskHistoryView(items=page.items, next_cursor=next_cursor)
+
+    @routes.get(
+        "/api/v1/plans/{plan_id}/tasks/{task_id}/restart-context",
+        response_model=RestartContextViewV4,
+    )
+    def read_restart_context(
+        plan_id: UUID,
+        task_id: UUID,
+        session: AccessSession = Depends(authenticate),
+    ) -> RestartContextViewV4:
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = read_restart_context_v4(store.engine, session.actor_id, plan_id, task_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
+
     @routes.get("/api/v1/tasks", response_model=tuple[TaskView, ...])
     def list_open_tasks(
         session: AccessSession = Depends(authenticate),
@@ -115,6 +192,20 @@ def observation_router(
             raise HTTPException(404, "NOT_FOUND")
         return view
 
+    @routes.get(
+        "/api/v1/tasks/{task_id}/preference-proposal",
+        response_model=PreferenceProposalViewV4,
+    )
+    def read_preference_proposal(
+        task_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> PreferenceProposalViewV4:
+        if store is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = store.preference_proposal(task_id, session.actor_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
+
     @routes.get("/api/v1/reports/{report_id}", response_model=ReportView)
     def read_report(
         report_id: UUID, session: AccessSession = Depends(authenticate)
@@ -122,6 +213,20 @@ def observation_router(
         if reports is None:
             raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
         view = reports.read(session.actor_id, report_id)
+        if view is None:
+            raise HTTPException(404, "NOT_FOUND")
+        return view
+
+    @routes.get(
+        "/api/v1/reports/{report_id}/comparison",
+        response_model=ComparisonReportViewV4,
+    )
+    def read_comparison(
+        report_id: UUID, session: AccessSession = Depends(authenticate)
+    ) -> ComparisonReportViewV4:
+        if reports is None:
+            raise PublicAPIError(503, "RESEARCH_UNAVAILABLE")
+        view = reports.read_comparison_v4(session.actor_id, report_id)
         if view is None:
             raise HTTPException(404, "NOT_FOUND")
         return view
@@ -239,7 +344,11 @@ def observation_router(
             response.headers["X-Command-Id"] = str(result.command_id)
             return response
         try:
-            start_turn = parse_start(request)
+            start_turn = (
+                parse_start_v4(request)
+                if request.forwarded_props.get("type") == "start_v4"
+                else parse_start(request)
+            )
         except ValueError:
             raise PublicAPIError(422, "INVALID_REQUEST") from None
         if acceptance is None:

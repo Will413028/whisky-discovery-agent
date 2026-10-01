@@ -50,6 +50,46 @@ class PublishedSource:
 
 
 @dataclass(frozen=True)
+class ReviewedFlavorReference:
+    release_id: UUID
+    item_id: UUID
+    label: str
+    evidence_ids: tuple[UUID, ...]
+
+
+def reviewed_flavor_references(
+    connection: Connection, release_id: UUID | None
+) -> tuple[ReviewedFlavorReference, ...]:
+    """Read only sealed, reviewed tag citations; no price or research projection."""
+    if release_id is None:
+        return ()
+    citations: dict[tuple[UUID, str], list[UUID]] = {}
+    for row in connection.execute(
+        text("""
+        SELECT i.id AS item_id,c.value AS label,e.id AS evidence_id
+        FROM catalog_releases r
+        JOIN catalog_items i ON i.release_id=r.id
+        JOIN catalog_claims c ON c.release_id=i.release_id AND c.item_id=i.id
+        JOIN catalog_citations q ON q.release_id=c.release_id AND q.item_id=c.item_id
+            AND q.kind=c.kind AND q.key=c.key
+        JOIN catalog_evidence e ON e.release_id=q.release_id AND e.id=q.evidence_id
+            AND e.bottle_version_id=i.bottle_version_id
+        WHERE r.id=:release AND r.sealed AND i.reviewed AND e.reviewed
+            AND c.kind='tag'
+        ORDER BY i.id,c.value,e.id
+        """),
+        {"release": release_id},
+    ).mappings():
+        citations.setdefault((row["item_id"], row["label"]), []).append(
+            row["evidence_id"]
+        )
+    return tuple(
+        ReviewedFlavorReference(release_id, item_id, label, tuple(evidence_ids))
+        for (item_id, label), evidence_ids in citations.items()
+    )
+
+
+@dataclass(frozen=True)
 class ReviewedCatalogSource:
     item_id: UUID
     bottle_version_id: UUID
@@ -68,52 +108,57 @@ def reviewed_catalog_snapshot(
     engine: Engine, as_of: date, budget: Decimal | None
 ) -> ReviewedCatalogSnapshot:
     """Pin one immutable sealed release for eligibility and source selection."""
-    from whisky.modules.catalog.store import CatalogStore
 
     with engine.connect().execution_options(
         isolation_level="REPEATABLE READ"
     ) as connection:
         release_id = current_release_id(connection)
-        candidates = CatalogStore.candidates_in_release(
-            connection, release_id, as_of, None
+        return reviewed_catalog_snapshot_in_release(
+            connection, release_id, as_of, budget
         )
-        eligible_ids = frozenset(
-            candidate.item.id
-            for candidate in candidates
-            if fits_budget(candidate.price_upper_bound, budget)
-        )
-        sources = []
-        if release_id is not None:
-            for candidate in candidates:
-                item = candidate.item
-                evidence_ids = sorted(
-                    (
-                        {
-                            evidence_id
-                            for fact in item.facts
-                            for evidence_id in fact.evidence_ids
-                        }
-                        | {
-                            evidence_id
-                            for tag in item.flavor_tags
-                            for evidence_id in tag.evidence_ids
-                        }
-                    ),
-                    key=str,
+
+
+def reviewed_catalog_snapshot_in_release(
+    connection: Connection,
+    release_id: UUID | None,
+    as_of: date,
+    budget: Decimal | None,
+) -> ReviewedCatalogSnapshot:
+    """Read a pinned release inside the caller's artifact transaction."""
+    from whisky.modules.catalog.store import CatalogStore
+
+    candidates = CatalogStore.candidates_in_release(connection, release_id, as_of, None)
+    eligible_ids = frozenset(
+        candidate.item.id
+        for candidate in candidates
+        if fits_budget(candidate.price_upper_bound, budget)
+    )
+    sources = []
+    if release_id is not None:
+        for candidate in candidates:
+            item = candidate.item
+            evidence_ids = sorted(
+                {
+                    evidence_id
+                    for fact in item.facts
+                    for evidence_id in fact.evidence_ids
+                }
+                | {
+                    evidence_id
+                    for tag in item.flavor_tags
+                    for evidence_id in tag.evidence_ids
+                },
+                key=str,
+            )
+            for evidence_id in evidence_ids:
+                source = published_source(
+                    connection, release_id, evidence_id, item.bottle.version_id
                 )
-                for evidence_id in evidence_ids:
-                    source = published_source(
-                        connection, release_id, evidence_id, item.bottle.version_id
+                if source is not None:
+                    sources.append(
+                        ReviewedCatalogSource(item.id, item.bottle.version_id, source)
                     )
-                    if source is not None:
-                        sources.append(
-                            ReviewedCatalogSource(
-                                item.id, item.bottle.version_id, source
-                            )
-                        )
-        return ReviewedCatalogSnapshot(
-            release_id, candidates, eligible_ids, tuple(sources)
-        )
+    return ReviewedCatalogSnapshot(release_id, candidates, eligible_ids, tuple(sources))
 
 
 @dataclass(frozen=True)

@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Catalog */
+        get: operations["read_catalog_api_v1_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/commands/{command_id}": {
         parameters: {
             query?: never;
@@ -175,6 +192,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans/{plan_id}/conditions/patch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Patch Plan Conditions */
+        post: operations["patch_plan_conditions_api_v1_plans__plan_id__conditions_patch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/plans/{plan_id}/delete": {
         parameters: {
             query?: never;
@@ -192,6 +226,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/plans/{plan_id}/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Task History */
+        get: operations["task_history_api_v1_plans__plan_id__tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/plans/{plan_id}/tasks/{task_id}/restart-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Restart Context */
+        get: operations["read_restart_context_api_v1_plans__plan_id__tasks__task_id__restart_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reports/{report_id}": {
         parameters: {
             query?: never;
@@ -201,6 +269,23 @@ export interface paths {
         };
         /** Read Report */
         get: operations["read_report_api_v1_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/{report_id}/comparison": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Comparison */
+        get: operations["read_comparison_api_v1_reports__report_id__comparison_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -271,6 +356,23 @@ export interface paths {
         put?: never;
         /** Answer Question */
         post: operations["answer_question_api_v1_tasks__task_id__clarifications__question_id__answer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/{task_id}/preference-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Preference Proposal */
+        get: operations["read_preference_proposal_api_v1_tasks__task_id__preference_proposal_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -416,6 +518,121 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** BudgetSuggestion */
+        BudgetSuggestion: {
+            /**
+             * Action
+             * @enum {string}
+             */
+            action: "set" | "clear";
+            /** Amount Twd */
+            amount_twd?: string | null;
+            /** Source Quote */
+            source_quote: string;
+        };
+        /** CandidateComparisonV4 */
+        CandidateComparisonV4: {
+            candidate: components["schemas"]["CatalogReference"];
+            /** Candidateclaims */
+            candidateClaims: components["schemas"]["ReportClaim"][];
+            candidateDescription: components["schemas"]["ReportClaim"] | null;
+            /** Commontags */
+            commonTags: string[];
+            difference: components["schemas"]["DescriptorDifferenceV4"] | null;
+            /** Exploreclaims */
+            exploreClaims: components["schemas"]["ReportClaim"][];
+            /**
+             * Mode
+             * @enum {string}
+             */
+            mode: "style_options" | "similar" | "small_step" | "contrast";
+            origin: components["schemas"]["CatalogReference"] | null;
+            /** Originclaims */
+            originClaims: components["schemas"]["ReportClaim"][];
+            originDescription: components["schemas"]["ReportClaim"] | null;
+        };
+        /** CatalogClaimView */
+        CatalogClaimView: {
+            /** Key */
+            key: string;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "fact" | "tag";
+            /** Sources */
+            sources: components["schemas"]["CatalogSourceView"][];
+            /** Value */
+            value: string;
+        };
+        /** CatalogFlavorView */
+        CatalogFlavorView: {
+            /** Evidenceids */
+            evidenceIds: string[];
+            /** Label */
+            label: string;
+            /** Method */
+            method: string | null;
+            /** Methodversion */
+            methodVersion: string | null;
+        };
+        /** CatalogItemView */
+        CatalogItemView: {
+            /** Abv */
+            abv: string | null;
+            /**
+             * Bottleversionid
+             * Format: uuid
+             */
+            bottleVersionId: string;
+            /** Claims */
+            claims: components["schemas"]["CatalogClaimView"][];
+            /** Flavortags */
+            flavorTags: components["schemas"]["CatalogFlavorView"][];
+            /**
+             * Itemid
+             * Format: uuid
+             */
+            itemId: string;
+            /** Name */
+            name: string;
+            /**
+             * Pricequalification
+             * @enum {string}
+             */
+            priceQualification: "qualified" | "unqualified";
+            /** Priceupperboundtwd */
+            priceUpperBoundTwd: string | null;
+            /** Prices */
+            prices: components["schemas"]["CatalogPriceView"][];
+            /** Versionlabel */
+            versionLabel: string;
+            /** Volumeml */
+            volumeMl: number | null;
+        };
+        /** CatalogPriceView */
+        CatalogPriceView: {
+            /** Amount */
+            amount: string | null;
+            /** Checkedon */
+            checkedOn: string | null;
+            /** Currency */
+            currency: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Market */
+            market: string;
+            /** Qualified */
+            qualified: boolean;
+            source: components["schemas"]["CatalogSourceView"];
+            /** Unconditional */
+            unconditional: boolean;
+            /** Volumeml */
+            volumeMl: number | null;
+        };
         /** CatalogReference */
         CatalogReference: {
             /**
@@ -428,6 +645,37 @@ export interface components {
              * Format: uuid
              */
             release_id: string;
+        };
+        /** CatalogSourceView */
+        CatalogSourceView: {
+            /**
+             * Checkedon
+             * Format: date
+             */
+            checkedOn: string;
+            /**
+             * Evidenceid
+             * Format: uuid
+             */
+            evidenceId: string;
+            /** Publisher */
+            publisher: string | null;
+            /** Url */
+            url: string;
+        };
+        /** CatalogView */
+        CatalogView: {
+            /**
+             * Evaluatedon
+             * Format: date
+             */
+            evaluatedOn: string;
+            /** Items */
+            items: components["schemas"]["CatalogItemView"][];
+            /** Pricepolicyversion */
+            pricePolicyVersion: string;
+            /** Releaseid */
+            releaseId: string | null;
         };
         /** ChangeConditionsRequest */
         ChangeConditionsRequest: {
@@ -456,6 +704,81 @@ export interface components {
             questionId: string;
             /** Reviewedinrelease */
             reviewedInRelease: boolean;
+        };
+        /** ComparisonArtifactV4 */
+        ComparisonArtifactV4: {
+            /** Candidates */
+            candidates: components["schemas"]["CandidateComparisonV4"][];
+            intent: components["schemas"]["ExplorationIntent"];
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /** Unlistedname */
+            unlistedName: string | null;
+            /** Unresolved */
+            unresolved: string[];
+        };
+        /** ComparisonItemEvidenceV4 */
+        ComparisonItemEvidenceV4: {
+            /** Name */
+            name: string;
+            reference: components["schemas"]["CatalogReference"];
+            /** Sources */
+            sources: components["schemas"]["ReportSourceView"][];
+        };
+        /** ComparisonReportViewV4 */
+        ComparisonReportViewV4: {
+            /** Catalogreleaseid */
+            catalogReleaseId: string | null;
+            comparison: components["schemas"]["ComparisonArtifactV4"];
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Evaluatedon
+             * Format: date
+             */
+            evaluatedOn: string;
+            /** Items */
+            items: components["schemas"]["ComparisonItemEvidenceV4"][];
+            /**
+             * Reportid
+             * Format: uuid
+             */
+            reportId: string;
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+        };
+        /** ConditionPatch */
+        ConditionPatch: {
+            /** Budget Twd */
+            budget_twd?: number | string | null;
+            /** Entry */
+            entry?: ("beginner" | "existing_bottle") | null;
+            /** Goal */
+            goal?: string | null;
+            /**
+             * Remove Preferences
+             * @default []
+             */
+            remove_preferences: string[];
+            starting_bottle?: components["schemas"]["CatalogReference"] | null;
+            /**
+             * Upsert Preferences
+             * @default []
+             */
+            upsert_preferences: components["schemas"]["Preference"][];
         };
         /**
          * Context
@@ -501,6 +824,22 @@ export interface components {
             conditions: components["schemas"]["ResearchConditions-Input"];
             /** Key */
             key: string;
+        };
+        /** DescriptorDifferenceV4 */
+        DescriptorDifferenceV4: {
+            /**
+             * Axis
+             * @constant
+             */
+            axis: "flavor_description";
+            /** Candidateclaims */
+            candidateClaims: components["schemas"]["ReportClaim"][];
+            /** Candidatefeature */
+            candidateFeature: string;
+            /** Originclaims */
+            originClaims: components["schemas"]["ReportClaim"][];
+            /** Originfeature */
+            originFeature: string;
         };
         /**
          * DeveloperMessage
@@ -559,6 +898,77 @@ export interface components {
             request_id: string;
             /** Retryable */
             retryable: boolean;
+        };
+        /** ExplorationIntent */
+        ExplorationIntent: {
+            contrast?: components["schemas"]["FlavorContrast"] | null;
+            /** Explore Feature */
+            explore_feature?: string | null;
+            /**
+             * Mode
+             * @default style_options
+             * @enum {string}
+             */
+            mode: "style_options" | "similar" | "small_step" | "contrast";
+            /** Origin Query */
+            origin_query?: string | null;
+            /**
+             * Smoke Comparison
+             * @default false
+             */
+            smoke_comparison: boolean;
+        };
+        /** ExplorationIntent */
+        ExplorationIntentInput: {
+            /** @default null */
+            contrast: components["schemas"]["FlavorContrastInput"] | null;
+            /**
+             * Explore Feature
+             * @default null
+             */
+            explore_feature: string | null;
+            /**
+             * Mode
+             * @default style_options
+             * @enum {string}
+             */
+            mode: "style_options" | "similar" | "small_step" | "contrast";
+            /**
+             * Origin Query
+             * @default null
+             */
+            origin_query: string | null;
+            /**
+             * Smoke Comparison
+             * @default false
+             */
+            smoke_comparison: boolean;
+        };
+        /** FlavorContrast */
+        FlavorContrast: {
+            /**
+             * Axis
+             * @default flavor_description
+             * @constant
+             */
+            axis: "flavor_description";
+            /** Candidate Feature */
+            candidate_feature: string;
+            /** Origin Feature */
+            origin_feature: string;
+        };
+        /** FlavorContrast */
+        FlavorContrastInput: {
+            /**
+             * Axis
+             * @default flavor_description
+             * @constant
+             */
+            axis: "flavor_description";
+            /** Candidate Feature */
+            candidate_feature: string;
+            /** Origin Feature */
+            origin_feature: string;
         };
         /**
          * FunctionCall
@@ -646,6 +1056,18 @@ export interface components {
              */
             taskId: string;
         };
+        /** PatchConditionsRequest */
+        PatchConditionsRequest: {
+            baseConditions: components["schemas"]["ResearchConditions-Input"];
+            /** Expectedrevision */
+            expectedRevision: number;
+            /**
+             * Key
+             * Format: uuid
+             */
+            key: string;
+            patch: components["schemas"]["ConditionPatch"];
+        };
         /** PlanListView */
         PlanListView: {
             /** Items */
@@ -683,6 +1105,79 @@ export interface components {
              * @enum {string}
              */
             strength: "soft" | "hard";
+        };
+        /** PreferenceProposal */
+        PreferenceProposal: {
+            budget?: components["schemas"]["BudgetSuggestion"] | null;
+            intent?: components["schemas"]["ExplorationIntent"];
+            /**
+             * Preferences
+             * @default []
+             */
+            preferences: components["schemas"]["PreferenceSuggestion"][];
+            /** Summary */
+            summary: string;
+        };
+        /** PreferenceProposalViewV4 */
+        PreferenceProposalViewV4: {
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            /**
+             * Planid
+             * Format: uuid
+             */
+            planId: string;
+            proposal: components["schemas"]["PreferenceProposal"];
+            /**
+             * Questionid
+             * Format: uuid
+             */
+            questionId: string;
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /** Sourcetext */
+            sourceText: string;
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+            /** Waitingversion */
+            waitingVersion: number;
+        };
+        /** PreferenceSuggestion */
+        PreferenceSuggestion: {
+            /**
+             * Certainty
+             * @default inferred
+             * @constant
+             */
+            certainty: "inferred";
+            /** Description */
+            description: string;
+            /**
+             * Intent
+             * @enum {string}
+             */
+            intent: "prefer" | "keep" | "change" | "avoid";
+            mapping?: components["schemas"]["ReviewedFlavorMapping"] | null;
+            /**
+             * Source Kind
+             * @enum {string}
+             */
+            source_kind: "direct_description" | "food_clue" | "uncertain";
+            /** Source Quote */
+            source_quote: string;
+            /**
+             * Strength
+             * @default soft
+             * @constant
+             */
+            strength: "soft";
         };
         /** QuestionChoiceView */
         QuestionChoiceView: {
@@ -766,6 +1261,17 @@ export interface components {
              * Format: uuid
              */
             releaseId: string;
+        };
+        /** ReportClaim */
+        ReportClaim: {
+            /** Evidenceids */
+            evidenceIds: string[];
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string;
+            /** Value */
+            value: string;
         };
         /** ReportClaimView */
         ReportClaimView: {
@@ -974,6 +1480,68 @@ export interface components {
             schema_version: 1;
             starting_bottle?: components["schemas"]["CatalogReference"] | null;
         };
+        /** ResearchInputV4 */
+        ResearchInputV4: {
+            intent?: components["schemas"]["ExplorationIntent"];
+            /**
+             * Phase
+             * @default research
+             * @enum {string}
+             */
+            phase: "proposal" | "research";
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /** Sourcetext */
+            sourceText?: string | null;
+        };
+        /** ResearchInputV4 */
+        ResearchInputV4Input: {
+            intent?: components["schemas"]["ExplorationIntentInput"];
+            /**
+             * Phase
+             * @default research
+             * @enum {string}
+             */
+            phase: "proposal" | "research";
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /**
+             * Sourcetext
+             * @default null
+             */
+            sourceText: string | null;
+        };
+        /** RestartContextViewV4 */
+        RestartContextViewV4: {
+            input: components["schemas"]["ResearchInputV4"];
+            /**
+             * Planid
+             * Format: uuid
+             */
+            planId: string;
+            /**
+             * Schemaversion
+             * @default 4
+             * @constant
+             */
+            schemaVersion: 4;
+            /** Sourceconditionsrevision */
+            sourceConditionsRevision: number;
+            sourceStartingBottle: components["schemas"]["CatalogReference"] | null;
+            /**
+             * Taskid
+             * Format: uuid
+             */
+            taskId: string;
+        };
         /**
          * ResumeEntry
          * @description A per-interrupt response in the resume array of a RunAgentInput.
@@ -998,6 +1566,14 @@ export interface components {
             status: "resolved" | "cancelled";
         } & {
             [key: string]: unknown;
+        };
+        /** ReviewedFlavorMapping */
+        ReviewedFlavorMapping: {
+            /** Evidence Ids */
+            evidence_ids: string[];
+            /** Feature Key */
+            feature_key: string;
+            reference: components["schemas"]["CatalogReference"];
         };
         /**
          * RunAgentInput
@@ -1024,6 +1600,29 @@ export interface components {
             tools: components["schemas"]["Tool"][];
         } & {
             [key: string]: unknown;
+        };
+        /** StartCommandV4 */
+        StartCommandV4: {
+            /** Conditionsrevision */
+            conditionsRevision: number;
+            input: components["schemas"]["ResearchInputV4Input"];
+            /** Key */
+            key: string;
+            /**
+             * Planid
+             * Format: uuid
+             */
+            planId: string;
+            /**
+             * Sourcetaskid
+             * @default null
+             */
+            sourceTaskId: string | null;
+            /**
+             * Type
+             * @constant
+             */
+            type: "start_v4";
         };
         /**
          * SystemMessage
@@ -1060,6 +1659,22 @@ export interface components {
             message: string;
             /** Retryable */
             retryable: boolean;
+        };
+        /** TaskHistoryItem */
+        TaskHistoryItem: {
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            task: components["schemas"]["TaskView"];
+        };
+        /** TaskHistoryView */
+        TaskHistoryView: {
+            /** Items */
+            items: components["schemas"]["TaskHistoryItem"][];
+            /** Nextcursor */
+            nextCursor: string | null;
         };
         /** TaskView */
         TaskView: {
@@ -1431,6 +2046,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ActorView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_catalog_api_v1_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogView"];
                 };
             };
             /** @description Unauthorized */
@@ -2185,6 +2883,95 @@ export interface operations {
             };
         };
     };
+    patch_plan_conditions_api_v1_plans__plan_id__conditions_patch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PatchConditionsRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ControlView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
     delete_plan_api_v1_plans__plan_id__delete_post: {
         parameters: {
             query?: never;
@@ -2274,6 +3061,180 @@ export interface operations {
             };
         };
     };
+    task_history_api_v1_plans__plan_id__tasks_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TaskHistoryView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_restart_context_api_v1_plans__plan_id__tasks__task_id__restart_context_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestartContextViewV4"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
     read_report_api_v1_reports__report_id__get: {
         parameters: {
             query?: never;
@@ -2292,6 +3253,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ReportView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_comparison_api_v1_reports__report_id__comparison_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComparisonReportViewV4"];
                 };
             };
             /** @description Unauthorized */
@@ -2639,6 +3685,91 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResearchCommandView"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_preference_proposal_api_v1_tasks__task_id__preference_proposal_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreferenceProposalViewV4"];
                 };
             };
             /** @description Unauthorized */

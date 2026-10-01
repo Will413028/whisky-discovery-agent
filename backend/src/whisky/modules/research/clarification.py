@@ -2,10 +2,11 @@
 
 import json
 from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from hashlib import sha256
 from typing import Literal
-from uuid import UUID, uuid4
+from uuid import UUID, uuid4, uuid5
 
 from sqlalchemy import Connection, Engine, RowMapping, text
 
@@ -13,7 +14,11 @@ from whisky.modules.catalog.public import (
     current_release_id,
     reviewed_version_in_release,
 )
-from whisky.modules.discovery.public import locked_plan
+from whisky.modules.discovery.public import (
+    PreferenceProposal,
+    locked_plan,
+    persist_preference_proposal,
+)
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.contracts import (
     AnswerReceipt,
@@ -22,12 +27,42 @@ from whisky.modules.research.contracts import (
     ResearchRunContext,
 )
 from whisky.modules.research.decision import ClarificationDraft
+from whisky.modules.research.inputs_v4 import ResearchInputV4
 from whisky.modules.research.store import ResearchConflict
+
+
+@dataclass(frozen=True)
+class _ReviewedVersionContent:
+    version_ids: tuple[UUID, ...]
+    prompt_for: Callable[[list[dict[str, str]]], str]
+    expected_release_id: UUID | None = None
+    minimum_choices: int = 2
+
+
+@dataclass(frozen=True)
+class _PreferenceContent:
+    source_text: str
+    proposal: PreferenceProposal
 
 
 class ClarificationStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def publish_preference_proposal(
+        self,
+        context: ResearchRunContext,
+        waiting_version: int,
+        source_text: str,
+        proposal: PreferenceProposal,
+        expires_at: datetime,
+    ) -> PublishedQuestion:
+        return self._publish_question(
+            context,
+            waiting_version,
+            expires_at,
+            _PreferenceContent(source_text, proposal),
+        )
 
     def publish(
         self,
@@ -78,6 +113,22 @@ class ClarificationStore:
             expected_release_id=release_id,
         )
 
+    def publish_reviewed_versions_v4(
+        self,
+        context: ResearchRunContext,
+        waiting_version: int,
+        version_ids: tuple[UUID, ...],
+        expires_at: datetime,
+        release_id: UUID,
+    ) -> PublishedQuestion:
+        """V4 also confirms an exact name with a single reviewed match."""
+        return self._publish_question(
+            context,
+            waiting_version,
+            expires_at,
+            _ReviewedVersionContent(version_ids, self._reviewed_prompt, release_id, 1),
+        )
+
     @staticmethod
     def _reviewed_prompt(versions: list[dict[str, str]]) -> str:
         return (
@@ -96,9 +147,46 @@ class ClarificationStore:
         *,
         expected_release_id: UUID | None = None,
     ) -> PublishedQuestion:
+        return self._publish_question(
+            context,
+            waiting_version,
+            expires_at,
+            _ReviewedVersionContent(version_ids, prompt_for, expected_release_id),
+        )
+
+    def _publish_question(
+        self,
+        context: ResearchRunContext,
+        waiting_version: int,
+        expires_at: datetime,
+        content: _ReviewedVersionContent | _PreferenceContent,
+    ) -> PublishedQuestion:
+        if isinstance(content, _ReviewedVersionContent):
+            kind = "version"
+            stage = "等待版本補充"
+            version_ids = content.version_ids
+            prompt_for = content.prompt_for
+            minimum_choices = content.minimum_choices
+        else:
+            minimum_choices = 2
+            kind = "preference_proposal"
+            stage = "等待偏好確認"
+            version_ids = (
+                uuid5(context.task_id, "proposal:use-intent"),
+                uuid5(context.task_id, "proposal:skip"),
+            )
+            proposal_prompt = (
+                content.proposal.summary
+                + "。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。"
+            )
+
+            def preference_prompt(_: list[dict[str, str]]) -> str:
+                return proposal_prompt
+
+            prompt_for = preference_prompt
         if (
             waiting_version < 1
-            or not 2 <= len(version_ids) <= 5
+            or not minimum_choices <= len(version_ids) <= 5
             or len(set(version_ids)) != len(version_ids)
             or expires_at.utcoffset() is None
         ):
@@ -134,6 +222,31 @@ class ClarificationStore:
                 or not task.write_allowed
             ):
                 raise ResearchConflict("TASK_NOT_WRITABLE")
+            if isinstance(content, _PreferenceContent):
+                raw = connection.execute(
+                    text(
+                        "SELECT input FROM research_v4_inputs "
+                        "WHERE task_id=:task AND owner_id=:owner"
+                    ),
+                    dict(task=context.task_id, owner=context.owner_id),
+                ).scalar_one_or_none()
+                request = (
+                    ResearchInputV4.model_validate(raw) if raw is not None else None
+                )
+                if (
+                    request is None
+                    or request.phase != "proposal"
+                    or request.source_text != content.source_text
+                ):
+                    raise ResearchConflict("INVALID_PROPOSAL_SOURCE")
+                persist_preference_proposal(
+                    connection,
+                    context.task_id,
+                    plan,
+                    content.source_text,
+                    content.proposal,
+                    context.prompt_version,
+                )
             existing = (
                 connection.execute(
                     text("""
@@ -147,7 +260,8 @@ class ClarificationStore:
             )
             if existing is not None:
                 if (
-                    existing["prompt"] != prompt_for(existing["choices"])
+                    existing["kind"] != kind
+                    or existing["prompt"] != prompt_for(existing["choices"])
                     or tuple(UUID(choice["id"]) for choice in existing["choices"])
                     != version_ids
                     or existing["expires_at"] != expires_at
@@ -160,19 +274,31 @@ class ClarificationStore:
                 raise ValueError("Invalid clarification question")
             if task.status != "researching":
                 raise ResearchConflict("TASK_NOT_WRITABLE")
-            release_id = current_release_id(connection)
-            if expected_release_id is not None and release_id != expected_release_id:
-                raise ResearchConflict("CATALOG_CHANGED")
             versions = []
-            for version_id in version_ids:
-                version = (
-                    reviewed_version_in_release(connection, release_id, version_id)
-                    if release_id is not None
-                    else None
-                )
-                if version is None:
-                    raise ValueError("INVALID_VERSION_CHOICE")
-                versions.append({"id": str(version_id), "label": version.name})
+            if isinstance(content, _ReviewedVersionContent):
+                release_id = current_release_id(connection)
+                if (
+                    content.expected_release_id is not None
+                    and release_id != content.expected_release_id
+                ):
+                    raise ResearchConflict("CATALOG_CHANGED")
+                for version_id in version_ids:
+                    version = (
+                        reviewed_version_in_release(connection, release_id, version_id)
+                        if release_id is not None
+                        else None
+                    )
+                    if version is None:
+                        raise ValueError("INVALID_VERSION_CHOICE")
+                    versions.append({"id": str(version_id), "label": version.name})
+            else:
+                versions = [
+                    {
+                        "id": str(version_ids[0]),
+                        "label": "使用建議探索方向，不新增偏好",
+                    },
+                    {"id": str(version_ids[1]), "label": "忽略建議，使用已保存條件"},
+                ]
             prompt = prompt_for(versions)
             if not prompt.strip() or len(prompt) > 2000:
                 raise ValueError("Invalid clarification question")
@@ -181,9 +307,9 @@ class ClarificationStore:
                 text("""
                 INSERT INTO clarifications
                     (id,task_id,owner_id,generation,conditions_revision,
-                     waiting_version,prompt,choices,status,expires_at)
+                     waiting_version,prompt,choices,status,expires_at,kind)
                 VALUES (:id,:task,:owner,:generation,:revision,:version,
-                        :prompt,CAST(:choices AS jsonb),'pending',:expires)
+                        :prompt,CAST(:choices AS jsonb),'pending',:expires,:kind)
                 """),
                 dict(
                     id=question_id,
@@ -195,6 +321,7 @@ class ClarificationStore:
                     prompt=prompt,
                     choices=json.dumps(versions, ensure_ascii=False),
                     expires=expires_at,
+                    kind=kind,
                 ),
             )
             question_view = dict(
@@ -221,7 +348,7 @@ class ClarificationStore:
             connection.execute(
                 text("""
                 UPDATE research_tasks
-                SET status='needs_input',stage='等待版本補充',
+                SET status='needs_input',stage=:stage,
                     active_question_id=:question,question=CAST(:view AS jsonb),
                     view_version=view_version+1,updated_at=now()
                 WHERE id=:task AND owner_id=:owner
@@ -231,6 +358,7 @@ class ClarificationStore:
                     task=context.task_id,
                     owner=context.owner_id,
                     view=json.dumps(question_view, ensure_ascii=False),
+                    stage=stage,
                 ),
             )
             return PublishedQuestion(

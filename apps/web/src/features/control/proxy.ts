@@ -2,7 +2,7 @@ import {forwardPrivate, privateFailure, type PrivateAPI} from "../../shared/api/
 
 const uuid = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 const taskCancel = new RegExp(`^/api/v1/tasks/${uuid}/cancel$`);
-const planConditions = new RegExp(`^/api/v1/plans/${uuid}/conditions$`);
+const planConditions = new RegExp(`^/api/v1/plans/${uuid}/conditions(?:/patch)?$`);
 const planDelete = new RegExp(`^/api/v1/plans/${uuid}/delete$`);
 const commandRead = new RegExp(`^/api/v1/control-commands/${uuid}$`);
 

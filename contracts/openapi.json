@@ -306,6 +306,400 @@
         "title": "BinaryInputContent",
         "type": "object"
       },
+      "BudgetSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "action": {
+            "enum": [
+              "set",
+              "clear"
+            ],
+            "title": "Action",
+            "type": "string"
+          },
+          "amount_twd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*(?:\\d{0,16}|(?=[\\d.]{1,19}0*$)\\d{0,16}\\.\\d{0,2}0*$)",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount Twd"
+          },
+          "source_quote": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          }
+        },
+        "required": [
+          "action",
+          "source_quote"
+        ],
+        "title": "BudgetSuggestion",
+        "type": "object"
+      },
+      "CandidateComparisonV4": {
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/CatalogReference"
+          },
+          "candidateClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Candidateclaims",
+            "type": "array"
+          },
+          "candidateDescription": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "commonTags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Commontags",
+            "type": "array"
+          },
+          "difference": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DescriptorDifferenceV4"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "exploreClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Exploreclaims",
+            "type": "array"
+          },
+          "mode": {
+            "enum": [
+              "style_options",
+              "similar",
+              "small_step",
+              "contrast"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "origin": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "originClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Originclaims",
+            "type": "array"
+          },
+          "originDescription": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportClaim"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "candidate",
+          "mode",
+          "origin",
+          "commonTags",
+          "originClaims",
+          "candidateClaims",
+          "originDescription",
+          "candidateDescription",
+          "difference",
+          "exploreClaims"
+        ],
+        "title": "CandidateComparisonV4",
+        "type": "object"
+      },
+      "CatalogClaimView": {
+        "properties": {
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "fact",
+              "tag"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "value",
+          "sources"
+        ],
+        "title": "CatalogClaimView",
+        "type": "object"
+      },
+      "CatalogFlavorView": {
+        "properties": {
+          "evidenceIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Evidenceids",
+            "type": "array"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method"
+          },
+          "methodVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methodversion"
+          }
+        },
+        "required": [
+          "label",
+          "evidenceIds",
+          "method",
+          "methodVersion"
+        ],
+        "title": "CatalogFlavorView",
+        "type": "object"
+      },
+      "CatalogItemView": {
+        "properties": {
+          "abv": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abv"
+          },
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "claims": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogClaimView"
+            },
+            "title": "Claims",
+            "type": "array"
+          },
+          "flavorTags": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogFlavorView"
+            },
+            "title": "Flavortags",
+            "type": "array"
+          },
+          "itemId": {
+            "format": "uuid",
+            "title": "Itemid",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "priceQualification": {
+            "enum": [
+              "qualified",
+              "unqualified"
+            ],
+            "title": "Pricequalification",
+            "type": "string"
+          },
+          "priceUpperBoundTwd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priceupperboundtwd"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogPriceView"
+            },
+            "title": "Prices",
+            "type": "array"
+          },
+          "versionLabel": {
+            "title": "Versionlabel",
+            "type": "string"
+          },
+          "volumeMl": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volumeml"
+          }
+        },
+        "required": [
+          "itemId",
+          "bottleVersionId",
+          "name",
+          "versionLabel",
+          "abv",
+          "volumeMl",
+          "claims",
+          "flavorTags",
+          "prices",
+          "priceUpperBoundTwd",
+          "priceQualification"
+        ],
+        "title": "CatalogItemView",
+        "type": "object"
+      },
+      "CatalogPriceView": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "checkedOn": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checkedon"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "qualified": {
+            "title": "Qualified",
+            "type": "boolean"
+          },
+          "source": {
+            "$ref": "#/components/schemas/CatalogSourceView"
+          },
+          "unconditional": {
+            "title": "Unconditional",
+            "type": "boolean"
+          },
+          "volumeMl": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volumeml"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "currency",
+          "market",
+          "volumeMl",
+          "checkedOn",
+          "unconditional",
+          "qualified",
+          "source"
+        ],
+        "title": "CatalogPriceView",
+        "type": "object"
+      },
       "CatalogReference": {
         "additionalProperties": false,
         "properties": {
@@ -325,6 +719,84 @@
           "item_id"
         ],
         "title": "CatalogReference",
+        "type": "object"
+      },
+      "CatalogSourceView": {
+        "properties": {
+          "checkedOn": {
+            "format": "date",
+            "title": "Checkedon",
+            "type": "string"
+          },
+          "evidenceId": {
+            "format": "uuid",
+            "title": "Evidenceid",
+            "type": "string"
+          },
+          "publisher": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher"
+          },
+          "url": {
+            "pattern": "^https?://",
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evidenceId",
+          "url",
+          "publisher",
+          "checkedOn"
+        ],
+        "title": "CatalogSourceView",
+        "type": "object"
+      },
+      "CatalogView": {
+        "properties": {
+          "evaluatedOn": {
+            "format": "date",
+            "title": "Evaluatedon",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogItemView"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pricePolicyVersion": {
+            "title": "Pricepolicyversion",
+            "type": "string"
+          },
+          "releaseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Releaseid"
+          }
+        },
+        "required": [
+          "releaseId",
+          "evaluatedOn",
+          "pricePolicyVersion",
+          "items"
+        ],
+        "title": "CatalogView",
         "type": "object"
       },
       "ChangeConditionsRequest": {
@@ -381,6 +853,217 @@
           "reviewedInRelease"
         ],
         "title": "ClarifiedBottleView",
+        "type": "object"
+      },
+      "ComparisonArtifactV4": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateComparisonV4"
+            },
+            "title": "Candidates",
+            "type": "array"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntent"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "unlistedName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unlistedname"
+          },
+          "unresolved": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Unresolved",
+            "type": "array"
+          }
+        },
+        "required": [
+          "intent",
+          "candidates",
+          "unresolved",
+          "unlistedName"
+        ],
+        "title": "ComparisonArtifactV4",
+        "type": "object"
+      },
+      "ComparisonItemEvidenceV4": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/CatalogReference"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ReportSourceView"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "reference",
+          "name",
+          "sources"
+        ],
+        "title": "ComparisonItemEvidenceV4",
+        "type": "object"
+      },
+      "ComparisonReportViewV4": {
+        "additionalProperties": false,
+        "properties": {
+          "catalogReleaseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalogreleaseid"
+          },
+          "comparison": {
+            "$ref": "#/components/schemas/ComparisonArtifactV4"
+          },
+          "conditionsRevision": {
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "evaluatedOn": {
+            "format": "date",
+            "title": "Evaluatedon",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonItemEvidenceV4"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "reportId": {
+            "format": "uuid",
+            "title": "Reportid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "reportId",
+          "taskId",
+          "conditionsRevision",
+          "catalogReleaseId",
+          "evaluatedOn",
+          "comparison",
+          "items"
+        ],
+        "title": "ComparisonReportViewV4",
+        "type": "object"
+      },
+      "ConditionPatch": {
+        "additionalProperties": false,
+        "properties": {
+          "budget_twd": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budget Twd"
+          },
+          "entry": {
+            "anyOf": [
+              {
+                "enum": [
+                  "beginner",
+                  "existing_bottle"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry"
+          },
+          "goal": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Goal"
+          },
+          "remove_preferences": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Remove Preferences",
+            "type": "array"
+          },
+          "starting_bottle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "upsert_preferences": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/Preference"
+            },
+            "maxItems": 64,
+            "title": "Upsert Preferences",
+            "type": "array"
+          }
+        },
+        "title": "ConditionPatch",
         "type": "object"
       },
       "Context": {
@@ -481,6 +1164,46 @@
           "conditions"
         ],
         "title": "CreatePlanInput",
+        "type": "object"
+      },
+      "DescriptorDifferenceV4": {
+        "properties": {
+          "axis": {
+            "const": "flavor_description",
+            "title": "Axis",
+            "type": "string"
+          },
+          "candidateClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Candidateclaims",
+            "type": "array"
+          },
+          "candidateFeature": {
+            "title": "Candidatefeature",
+            "type": "string"
+          },
+          "originClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaim"
+            },
+            "title": "Originclaims",
+            "type": "array"
+          },
+          "originFeature": {
+            "title": "Originfeature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "axis",
+          "originFeature",
+          "candidateFeature",
+          "originClaims",
+          "candidateClaims"
+        ],
+        "title": "DescriptorDifferenceV4",
         "type": "object"
       },
       "DeveloperMessage": {
@@ -626,6 +1349,185 @@
           "retryable"
         ],
         "title": "ErrorView",
+        "type": "object"
+      },
+      "ExplorationIntent": {
+        "additionalProperties": false,
+        "properties": {
+          "contrast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlavorContrast"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "explore_feature": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Explore Feature"
+          },
+          "mode": {
+            "default": "style_options",
+            "enum": [
+              "style_options",
+              "similar",
+              "small_step",
+              "contrast"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "origin_query": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Origin Query"
+          },
+          "smoke_comparison": {
+            "default": false,
+            "title": "Smoke Comparison",
+            "type": "boolean"
+          }
+        },
+        "title": "ExplorationIntent",
+        "type": "object"
+      },
+      "ExplorationIntentInput": {
+        "additionalProperties": false,
+        "properties": {
+          "contrast": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FlavorContrastInput"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "explore_feature": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Explore Feature"
+          },
+          "mode": {
+            "default": "style_options",
+            "enum": [
+              "style_options",
+              "similar",
+              "small_step",
+              "contrast"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "origin_query": {
+            "anyOf": [
+              {
+                "maxLength": 1000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Origin Query"
+          },
+          "smoke_comparison": {
+            "default": false,
+            "title": "Smoke Comparison",
+            "type": "boolean"
+          }
+        },
+        "title": "ExplorationIntent",
+        "type": "object"
+      },
+      "FlavorContrast": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "const": "flavor_description",
+            "default": "flavor_description",
+            "title": "Axis",
+            "type": "string"
+          },
+          "candidate_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Candidate Feature",
+            "type": "string"
+          },
+          "origin_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Origin Feature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin_feature",
+          "candidate_feature"
+        ],
+        "title": "FlavorContrast",
+        "type": "object"
+      },
+      "FlavorContrastInput": {
+        "additionalProperties": false,
+        "properties": {
+          "axis": {
+            "const": "flavor_description",
+            "default": "flavor_description",
+            "title": "Axis",
+            "type": "string"
+          },
+          "candidate_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Candidate Feature",
+            "type": "string"
+          },
+          "origin_feature": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Origin Feature",
+            "type": "string"
+          }
+        },
+        "required": [
+          "origin_feature",
+          "candidate_feature"
+        ],
+        "title": "FlavorContrast",
         "type": "object"
       },
       "FunctionCall": {
@@ -792,6 +1694,35 @@
         "title": "ObserveInput",
         "type": "object"
       },
+      "PatchConditionsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "baseConditions": {
+            "$ref": "#/components/schemas/ResearchConditions-Input"
+          },
+          "expectedRevision": {
+            "minimum": 1.0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "key": {
+            "format": "uuid",
+            "title": "Key",
+            "type": "string"
+          },
+          "patch": {
+            "$ref": "#/components/schemas/ConditionPatch"
+          }
+        },
+        "required": [
+          "key",
+          "expectedRevision",
+          "baseConditions",
+          "patch"
+        ],
+        "title": "PatchConditionsRequest",
+        "type": "object"
+      },
       "PlanListView": {
         "properties": {
           "items": {
@@ -888,6 +1819,162 @@
           "strength"
         ],
         "title": "Preference",
+        "type": "object"
+      },
+      "PreferenceProposal": {
+        "additionalProperties": false,
+        "properties": {
+          "budget": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BudgetSuggestion"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntent"
+          },
+          "preferences": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/PreferenceSuggestion"
+            },
+            "maxItems": 8,
+            "title": "Preferences",
+            "type": "array"
+          },
+          "summary": {
+            "maxLength": 1600,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "summary"
+        ],
+        "title": "PreferenceProposal",
+        "type": "object"
+      },
+      "PreferenceProposalViewV4": {
+        "additionalProperties": false,
+        "properties": {
+          "conditionsRevision": {
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "proposal": {
+            "$ref": "#/components/schemas/PreferenceProposal"
+          },
+          "questionId": {
+            "format": "uuid",
+            "title": "Questionid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceText": {
+            "title": "Sourcetext",
+            "type": "string"
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          },
+          "waitingVersion": {
+            "title": "Waitingversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "taskId",
+          "planId",
+          "questionId",
+          "conditionsRevision",
+          "waitingVersion",
+          "sourceText",
+          "proposal"
+        ],
+        "title": "PreferenceProposalViewV4",
+        "type": "object"
+      },
+      "PreferenceSuggestion": {
+        "additionalProperties": false,
+        "properties": {
+          "certainty": {
+            "const": "inferred",
+            "default": "inferred",
+            "title": "Certainty",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "intent": {
+            "enum": [
+              "prefer",
+              "keep",
+              "change",
+              "avoid"
+            ],
+            "title": "Intent",
+            "type": "string"
+          },
+          "mapping": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReviewedFlavorMapping"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_kind": {
+            "enum": [
+              "direct_description",
+              "food_clue",
+              "uncertain"
+            ],
+            "title": "Source Kind",
+            "type": "string"
+          },
+          "source_quote": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Source Quote",
+            "type": "string"
+          },
+          "strength": {
+            "const": "soft",
+            "default": "soft",
+            "title": "Strength",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "intent",
+          "source_quote",
+          "source_kind"
+        ],
+        "title": "PreferenceSuggestion",
         "type": "object"
       },
       "QuestionChoiceView": {
@@ -1065,6 +2152,38 @@
           "prices"
         ],
         "title": "ReportCandidateView",
+        "type": "object"
+      },
+      "ReportClaim": {
+        "properties": {
+          "evidenceIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Evidenceids",
+            "type": "array"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "value",
+          "evidenceIds"
+        ],
+        "title": "ReportClaim",
         "type": "object"
       },
       "ReportClaimView": {
@@ -1524,6 +2643,7 @@
           "budget_twd": {
             "anyOf": [
               {
+                "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
                 "type": "string"
               },
               {
@@ -1579,6 +2699,131 @@
         "title": "ResearchConditions",
         "type": "object"
       },
+      "ResearchInputV4": {
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntent"
+          },
+          "phase": {
+            "default": "research",
+            "enum": [
+              "proposal",
+              "research"
+            ],
+            "title": "Phase",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceText": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcetext"
+          }
+        },
+        "title": "ResearchInputV4",
+        "type": "object"
+      },
+      "ResearchInputV4Input": {
+        "additionalProperties": false,
+        "properties": {
+          "intent": {
+            "$ref": "#/components/schemas/ExplorationIntentInput"
+          },
+          "phase": {
+            "default": "research",
+            "enum": [
+              "proposal",
+              "research"
+            ],
+            "title": "Phase",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceText": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourcetext"
+          }
+        },
+        "title": "ResearchInputV4",
+        "type": "object"
+      },
+      "RestartContextViewV4": {
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "$ref": "#/components/schemas/ResearchInputV4"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 4,
+            "default": 4,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "sourceConditionsRevision": {
+            "minimum": 1.0,
+            "title": "Sourceconditionsrevision",
+            "type": "integer"
+          },
+          "sourceStartingBottle": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatalogReference"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId",
+          "taskId",
+          "sourceConditionsRevision",
+          "sourceStartingBottle",
+          "input"
+        ],
+        "title": "RestartContextViewV4",
+        "type": "object"
+      },
       "ResumeEntry": {
         "additionalProperties": true,
         "description": "A per-interrupt response in the resume array of a RunAgentInput.\n\n``metadata`` carries envelope data about the response — signatures, routing\nkeys — as opposed to ``payload``, which is the answer the agent asked for\nand will act on.",
@@ -1622,6 +2867,36 @@
           "status"
         ],
         "title": "ResumeEntry",
+        "type": "object"
+      },
+      "ReviewedFlavorMapping": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_ids": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "feature_key": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Feature Key",
+            "type": "string"
+          },
+          "reference": {
+            "$ref": "#/components/schemas/CatalogReference"
+          }
+        },
+        "required": [
+          "feature_key",
+          "reference",
+          "evidence_ids"
+        ],
+        "title": "ReviewedFlavorMapping",
         "type": "object"
       },
       "RunAgentInput": {
@@ -1734,6 +3009,57 @@
         "title": "RunAgentInput",
         "type": "object"
       },
+      "StartCommandV4": {
+        "additionalProperties": false,
+        "properties": {
+          "conditionsRevision": {
+            "minimum": 1,
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "input": {
+            "$ref": "#/components/schemas/ResearchInputV4Input"
+          },
+          "key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "sourceTaskId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sourcetaskid"
+          },
+          "type": {
+            "const": "start_v4",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "key",
+          "planId",
+          "conditionsRevision",
+          "input"
+        ],
+        "title": "StartCommandV4",
+        "type": "object"
+      },
       "SystemMessage": {
         "additionalProperties": true,
         "description": "A system message.",
@@ -1831,6 +3157,54 @@
           "retryable"
         ],
         "title": "TaskError",
+        "type": "object"
+      },
+      "TaskHistoryItem": {
+        "additionalProperties": false,
+        "properties": {
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "task": {
+            "$ref": "#/components/schemas/TaskView"
+          }
+        },
+        "required": [
+          "task",
+          "createdAt"
+        ],
+        "title": "TaskHistoryItem",
+        "type": "object"
+      },
+      "TaskHistoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaskHistoryItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "TaskHistoryView",
         "type": "object"
       },
       "TaskView": {
@@ -2663,6 +4037,94 @@
           }
         ],
         "summary": "Read Actor"
+      }
+    },
+    "/api/v1/catalog": {
+      "get": {
+        "operationId": "read_catalog_api_v1_catalog_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "summary": "Read Catalog"
       }
     },
     "/api/v1/commands/{command_id}": {
@@ -3517,6 +4979,121 @@
         "summary": "Change Plan Conditions"
       }
     },
+    "/api/v1/plans/{plan_id}/conditions/patch": {
+      "post": {
+        "operationId": "patch_plan_conditions_api_v1_plans__plan_id__conditions_patch_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchConditionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ControlView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Patch Plan Conditions"
+      }
+    },
     "/api/v1/plans/{plan_id}/delete": {
       "post": {
         "operationId": "delete_plan_api_v1_plans__plan_id__delete_post",
@@ -3632,6 +5209,256 @@
         "summary": "Delete Plan"
       }
     },
+    "/api/v1/plans/{plan_id}/tasks": {
+      "get": {
+        "operationId": "task_history_api_v1_plans__plan_id__tasks_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskHistoryView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Task History"
+      }
+    },
+    "/api/v1/plans/{plan_id}/tasks/{task_id}/restart-context": {
+      "get": {
+        "operationId": "read_restart_context_api_v1_plans__plan_id__tasks__task_id__restart_context_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "plan_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Plan Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestartContextViewV4"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Restart Context"
+      }
+    },
     "/api/v1/reports/{report_id}": {
       "get": {
         "operationId": "read_report_api_v1_reports__report_id__get",
@@ -3735,6 +5562,111 @@
           }
         ],
         "summary": "Read Report"
+      }
+    },
+    "/api/v1/reports/{report_id}/comparison": {
+      "get": {
+        "operationId": "read_comparison_api_v1_reports__report_id__comparison_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonReportViewV4"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Comparison"
       }
     },
     "/api/v1/tasks": {
@@ -4177,6 +6109,111 @@
           }
         ],
         "summary": "Answer Question"
+      }
+    },
+    "/api/v1/tasks/{task_id}/preference-proposal": {
+      "get": {
+        "operationId": "read_preference_proposal_api_v1_tasks__task_id__preference_proposal_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "task_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Task Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PreferenceProposalViewV4"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Preference Proposal"
       }
     },
     "/health/live": {

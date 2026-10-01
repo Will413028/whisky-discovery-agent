@@ -1,6 +1,8 @@
 """Temporal acceptance adapter; inputs come from a persisted research task."""
 
 import asyncio
+from collections.abc import Callable
+from typing import Literal
 from uuid import UUID
 
 from temporalio.client import Client
@@ -14,17 +16,28 @@ from whisky.modules.research.domain import workflow_id_for
 class ConnectingTemporalResearchStarter:
     """Share a lazy client without making API startup depend on Temporal."""
 
-    def __init__(self, address: str, namespace: str, task_queue: str) -> None:
+    def __init__(
+        self,
+        address: str,
+        namespace: str,
+        task_queue: str,
+        *,
+        workflow_type_for_task: Callable[
+            [UUID], Literal["ResearchWorkflowV3", "ResearchWorkflowV4"]
+        ],
+    ) -> None:
         self.address = address
         self.namespace = namespace
         self.task_queue = task_queue
+        self.workflow_type_for_task = workflow_type_for_task
         self._client: Client | None = None
         self._lock = asyncio.Lock()
 
     async def start(self, task_id: UUID) -> str:
+        workflow_type = await asyncio.to_thread(self.workflow_type_for_task, task_id)
         client = await self._get_client()
         return await TemporalResearchStarter(
-            client, self.task_queue, workflow_type="ResearchWorkflowV3"
+            client, self.task_queue, workflow_type=workflow_type
         ).start(task_id)
 
     async def answer(self, receipt: AnswerReceipt) -> AnswerResult:

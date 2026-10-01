@@ -1,0 +1,201 @@
+{
+  "$defs": {
+    "CatalogReference": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "item_id"
+      ],
+      "title": "CatalogReference",
+      "type": "object"
+    },
+    "ExplorationIntent": {
+      "additionalProperties": false,
+      "properties": {
+        "contrast": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FlavorContrast"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "explore_feature": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Explore Feature"
+        },
+        "mode": {
+          "default": "style_options",
+          "enum": [
+            "style_options",
+            "similar",
+            "small_step",
+            "contrast"
+          ],
+          "title": "Mode",
+          "type": "string"
+        },
+        "origin_query": {
+          "anyOf": [
+            {
+              "maxLength": 1000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Origin Query"
+        },
+        "smoke_comparison": {
+          "default": false,
+          "title": "Smoke Comparison",
+          "type": "boolean"
+        }
+      },
+      "title": "ExplorationIntent",
+      "type": "object"
+    },
+    "FlavorContrast": {
+      "additionalProperties": false,
+      "properties": {
+        "axis": {
+          "const": "flavor_description",
+          "default": "flavor_description",
+          "title": "Axis",
+          "type": "string"
+        },
+        "candidate_feature": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Candidate Feature",
+          "type": "string"
+        },
+        "origin_feature": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Origin Feature",
+          "type": "string"
+        }
+      },
+      "required": [
+        "origin_feature",
+        "candidate_feature"
+      ],
+      "title": "FlavorContrast",
+      "type": "object"
+    },
+    "ResearchInputV4": {
+      "additionalProperties": false,
+      "properties": {
+        "intent": {
+          "$ref": "#/$defs/ExplorationIntent"
+        },
+        "phase": {
+          "default": "research",
+          "enum": [
+            "proposal",
+            "research"
+          ],
+          "title": "Phase",
+          "type": "string"
+        },
+        "schemaVersion": {
+          "const": 4,
+          "default": 4,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "sourceText": {
+          "anyOf": [
+            {
+              "maxLength": 2000,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcetext"
+        }
+      },
+      "title": "ResearchInputV4",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "input": {
+      "$ref": "#/$defs/ResearchInputV4"
+    },
+    "planId": {
+      "format": "uuid",
+      "title": "Planid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 4,
+      "default": 4,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "sourceConditionsRevision": {
+      "minimum": 1,
+      "title": "Sourceconditionsrevision",
+      "type": "integer"
+    },
+    "sourceStartingBottle": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CatalogReference"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "taskId": {
+      "format": "uuid",
+      "title": "Taskid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "planId",
+    "taskId",
+    "sourceConditionsRevision",
+    "sourceStartingBottle",
+    "input"
+  ],
+  "title": "RestartContextViewV4",
+  "type": "object"
+}

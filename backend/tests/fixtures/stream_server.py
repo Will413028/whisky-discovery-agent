@@ -55,7 +55,9 @@ def reset_research():
 
 @app.get("/research", response_class=HTMLResponse)
 @app.get("/research/{task_id}", response_class=HTMLResponse)
-def research_page(task_id: str | None = None):
+@app.get("/plans", response_class=HTMLResponse)
+@app.get("/plans/{plan_id}", response_class=HTMLResponse)
+def research_page(task_id: str | None = None, plan_id: str | None = None):
     return HTMLResponse((RESEARCH_FIXTURE / "index.html").read_text())
 
 

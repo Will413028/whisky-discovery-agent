@@ -1,0 +1,526 @@
+{
+  "corpus_version": 1,
+  "controls_version": 1,
+  "corpus_sha256": "9f7dd1e012b3caa415fcc6dae8df126290975f82e1ef5ca4f29a74a066759e34",
+  "controls_sha256": "6bb4bb40b0e37abdd3db9353539a546e0495bbe6813a31138e33e04d10843179",
+  "catalog_manifest_sha256": "c19bc703381b6571905fdc1077698536000fbc80be7dfd1b01d42b2fdb9a3b25",
+  "model": "@cf/qwen/qwen3-30b-a3b-fp8",
+  "scope": "real V4 workflow samples; provider attempts counted separately",
+  "daily_neuron_allowance": 763,
+  "daily_reserved_neurons": 402,
+  "provider_attempts": 4,
+  "source_failure_mode": "real network only",
+  "human_rubric_status": "pending",
+  "results": [
+    {
+      "case_id": "patch_budget_only",
+      "status": "needs_input",
+      "elapsed_ms": 6502,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "預算改成 900 元，其他條件不變",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "預算改成 900 元，其他條件不變",
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ],
+        "budget_twd": "1000"
+      },
+      "task_id": "fb39f83c-6ce9-439f-aac7-11526abfaa00",
+      "questions": [
+        {
+          "id": "a7f00a27-9f47-4e59-8101-9ff361ddbf79",
+          "prompt": "預算調整為900元，其他條件維持不變。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:38:10.919891Z",
+          "choices": [
+            {
+              "id": "f2879d16-6e34-553b-b4d8-39090189971d",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "6e221d1d-adb0-51d7-b711-c9059b00abb0",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "fb39f83c-6ce9-439f-aac7-11526abfaa00",
+          "planId": "88692e14-2ad1-4000-ad61-8f1f2941600b",
+          "questionId": "a7f00a27-9f47-4e59-8101-9ff361ddbf79",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "預算改成 900 元，其他條件不變",
+          "proposal": {
+            "summary": "預算調整為900元，其他條件維持不變",
+            "intent": {
+              "origin_query": null,
+              "mode": "style_options",
+              "explore_feature": null,
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [],
+            "budget": {
+              "action": "set",
+              "amount_twd": "900",
+              "source_quote": "預算改成 900 元"
+            }
+          }
+        }
+      ],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 100,
+          "reserved_input_upper_bound": 8430,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 2003,
+          "output_tokens": 531,
+          "latency_ms": 5986
+        }
+      ],
+      "provider_attempts": 1,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": null,
+      "failure_chain": null,
+      "cleanup": "cancelled after capturing the designated confirmation boundary",
+      "repetition": 1
+    },
+    {
+      "case_id": "patch_budget_only",
+      "status": "needs_input",
+      "elapsed_ms": 6041,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "預算改成 900 元，其他條件不變",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "預算改成 900 元，其他條件不變",
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ],
+        "budget_twd": "1000"
+      },
+      "task_id": "9359918d-8a29-415e-be92-095aa79813e6",
+      "questions": [
+        {
+          "id": "6563aab5-e16c-44d4-b78f-087dc2b26e95",
+          "prompt": "預算調整為900元，其他條件維持不變。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:38:17.064911Z",
+          "choices": [
+            {
+              "id": "bc8998b2-b7bc-53d2-8974-e23f072f4742",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "07186cae-b840-5c31-ad76-518948e46fea",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "9359918d-8a29-415e-be92-095aa79813e6",
+          "planId": "6d3d0301-f055-4597-8da0-5369000eae56",
+          "questionId": "6563aab5-e16c-44d4-b78f-087dc2b26e95",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "預算改成 900 元，其他條件不變",
+          "proposal": {
+            "summary": "預算調整為900元，其他條件維持不變",
+            "intent": {
+              "origin_query": null,
+              "mode": "style_options",
+              "explore_feature": null,
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [],
+            "budget": {
+              "action": "set",
+              "amount_twd": "900",
+              "source_quote": "預算改成 900 元"
+            }
+          }
+        }
+      ],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 100,
+          "reserved_input_upper_bound": 8432,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 2003,
+          "output_tokens": 590,
+          "latency_ms": 5448
+        }
+      ],
+      "provider_attempts": 1,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": null,
+      "failure_chain": null,
+      "cleanup": "cancelled after capturing the designated confirmation boundary",
+      "repetition": 2
+    },
+    {
+      "case_id": "patch_one_preference",
+      "status": "needs_input",
+      "elapsed_ms": 8672,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "保留果香，只把想探索的方向改成太妃糖",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "保留果香，只把想探索的方向改成太妃糖",
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ],
+        "budget_twd": "1000"
+      },
+      "task_id": "94074241-5875-4d72-952f-4954c61edb1b",
+      "questions": [
+        {
+          "id": "b85c6ecf-2749-497b-824f-ca2c2c30afd5",
+          "prompt": "保留果香並探索太妃糖風味。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:38:25.718728Z",
+          "choices": [
+            {
+              "id": "e302baf9-8930-5a34-a08f-9ee06d9eaa62",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "51e99e09-ce31-5b26-b690-bbb6b051e333",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "94074241-5875-4d72-952f-4954c61edb1b",
+          "planId": "0f6a0f29-db0c-4ac9-816e-baefedba3a6a",
+          "questionId": "b85c6ecf-2749-497b-824f-ca2c2c30afd5",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "保留果香，只把想探索的方向改成太妃糖",
+          "proposal": {
+            "summary": "保留果香並探索太妃糖風味",
+            "intent": {
+              "origin_query": "果香",
+              "mode": "style_options",
+              "explore_feature": "太妃糖",
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [
+              {
+                "description": "保留果香",
+                "intent": "keep",
+                "source_quote": "保留果香",
+                "source_kind": "direct_description",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "果香",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+                  },
+                  "evidence_ids": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                }
+              },
+              {
+                "description": "探索太妃糖",
+                "intent": "prefer",
+                "source_quote": "只把想探索的方向改成太妃糖",
+                "source_kind": "direct_description",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "太妃糖",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "be37452e-960a-488d-ab88-6f5679fe8e21"
+                  },
+                  "evidence_ids": [
+                    "6e6549a4-f143-463c-99e6-962ec90234d8"
+                  ]
+                }
+              }
+            ],
+            "budget": null
+          }
+        }
+      ],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 101,
+          "reserved_input_upper_bound": 8445,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 2002,
+          "output_tokens": 864,
+          "latency_ms": 8083
+        }
+      ],
+      "provider_attempts": 1,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": null,
+      "failure_chain": null,
+      "cleanup": "cancelled after capturing the designated confirmation boundary",
+      "repetition": 1
+    },
+    {
+      "case_id": "patch_one_preference",
+      "status": "needs_input",
+      "elapsed_ms": 6940,
+      "input": {
+        "schemaVersion": 4,
+        "phase": "proposal",
+        "sourceText": "保留果香，只把想探索的方向改成太妃糖",
+        "intent": {
+          "origin_query": null,
+          "mode": "style_options",
+          "explore_feature": null,
+          "smoke_comparison": false,
+          "contrast": null
+        }
+      },
+      "initial_conditions": {
+        "schema_version": 1,
+        "entry": "beginner",
+        "goal": "保留果香，只把想探索的方向改成太妃糖",
+        "starting_bottle": null,
+        "preferences": [
+          {
+            "description": "果香",
+            "intent": "keep",
+            "certainty": "user_stated",
+            "strength": "soft"
+          }
+        ],
+        "budget_twd": "1000"
+      },
+      "task_id": "b65e07ac-c965-44ac-8617-2a7ecc97d4de",
+      "questions": [
+        {
+          "id": "677e82e9-da1a-4b57-89d9-677c3b4da1fc",
+          "prompt": "保留果香，並嘗試探索太妃糖風味。偏好仍未確認；使用建議探索方向不會套用偏好，也可先使用原條件研究。",
+          "waitingVersion": 1,
+          "expiresAt": "2026-10-08T00:38:32.565372Z",
+          "choices": [
+            {
+              "id": "6e13cb22-0ba4-5d28-9c0a-024f2b36068a",
+              "label": "使用建議探索方向，不新增偏好"
+            },
+            {
+              "id": "31d3332a-2748-5f20-b9c3-2617ed948841",
+              "label": "忽略建議，使用已保存條件"
+            }
+          ]
+        }
+      ],
+      "proposals": [
+        {
+          "schemaVersion": 4,
+          "taskId": "b65e07ac-c965-44ac-8617-2a7ecc97d4de",
+          "planId": "3fd6aaa1-edec-4bc9-8758-cd5f5f046c60",
+          "questionId": "677e82e9-da1a-4b57-89d9-677c3b4da1fc",
+          "conditionsRevision": 1,
+          "waitingVersion": 1,
+          "sourceText": "保留果香，只把想探索的方向改成太妃糖",
+          "proposal": {
+            "summary": "保留果香，並嘗試探索太妃糖風味",
+            "intent": {
+              "origin_query": "保留果香，只把想探索的方向改成太妃糖",
+              "mode": "style_options",
+              "explore_feature": "太妃糖",
+              "smoke_comparison": false,
+              "contrast": null
+            },
+            "preferences": [
+              {
+                "description": "果香",
+                "intent": "keep",
+                "source_quote": "保留果香",
+                "source_kind": "direct_description",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "果香",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "3e3c188d-6d45-4d28-8920-ed9377bde739"
+                  },
+                  "evidence_ids": [
+                    "445346ab-9eef-45a1-801d-2ba0b480acd8"
+                  ]
+                }
+              },
+              {
+                "description": "太妃糖",
+                "intent": "prefer",
+                "source_quote": "把想探索的方向改成太妃糖",
+                "source_kind": "direct_description",
+                "certainty": "inferred",
+                "strength": "soft",
+                "mapping": {
+                  "feature_key": "太妃糖",
+                  "reference": {
+                    "release_id": "e629c492-07a7-46e7-82f0-ef20c58202b4",
+                    "item_id": "be37452e-960a-488d-ab88-6f5679fe8e21"
+                  },
+                  "evidence_ids": [
+                    "6e6549a4-f143-463c-99e6-962ec90234d8"
+                  ]
+                }
+              }
+            ],
+            "budget": null
+          }
+        }
+      ],
+      "report": null,
+      "comparison": null,
+      "hard_gates": {
+        "expected_outcome": true,
+        "owner_isolation": true,
+        "conditions_not_changed_by_model": true,
+        "at_most_three_candidates": true,
+        "qualified_catalog_candidates": true,
+        "comparison_atomically_available": true,
+        "proposal_quotes_and_reviewed_mappings": true,
+        "source_observations_unreviewed": true
+      },
+      "all_hard_gates_passed": true,
+      "usage": [
+        {
+          "kind": "model",
+          "status": "completed",
+          "attempts": 1,
+          "reserved_neurons": 101,
+          "reserved_input_upper_bound": 8445,
+          "reserved_output_tokens": 2000,
+          "input_tokens": 2002,
+          "output_tokens": 723,
+          "latency_ms": 6033
+        }
+      ],
+      "provider_attempts": 1,
+      "source_reads": [],
+      "source_observations": [],
+      "error_code": null,
+      "failure_chain": null,
+      "cleanup": "cancelled after capturing the designated confirmation boundary",
+      "repetition": 2
+    }
+  ]
+}

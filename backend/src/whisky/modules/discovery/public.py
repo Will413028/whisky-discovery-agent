@@ -5,9 +5,21 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import UUID
 
+from whisky.modules.discovery.condition_patch import ConditionPatch as ConditionPatch
+from whisky.modules.discovery.condition_patch import (
+    apply_condition_patch as apply_condition_patch,
+)
+from whisky.modules.discovery.conditions import CatalogReference as CatalogReference
 from whisky.modules.discovery.conditions import ResearchConditions as ResearchConditions
 from whisky.modules.discovery.conditions_v1 import (
     ResearchConditionsV1 as ResearchConditionsV1,
+)
+from whisky.modules.discovery.intent import ExplorationIntent as ExplorationIntent
+from whisky.modules.discovery.intent import ExplorationMode as ExplorationMode
+from whisky.modules.discovery.intent import FlavorContrast as FlavorContrast
+from whisky.modules.discovery.proposal import PreferenceProposal as PreferenceProposal
+from whisky.modules.discovery.proposal import (
+    ReviewedFlavorMapping as ReviewedFlavorMapping,
 )
 from whisky.platform.domain_errors import DomainRejection
 
@@ -17,11 +29,49 @@ if TYPE_CHECKING:
     from whisky.modules.discovery.store import Plan
 
 
+def persist_preference_proposal(
+    connection: Connection,
+    task_id: UUID,
+    plan: Plan,
+    source: str,
+    proposal: PreferenceProposal,
+    prompt_version: str,
+) -> None:
+    """Publish a draft in the caller's fenced product transaction."""
+    from whisky.modules.discovery.proposal_store import persist_preference_proposal
+
+    persist_preference_proposal(
+        connection, task_id, plan, source, proposal, prompt_version
+    )
+
+
 def locked_plan(connection: Connection, plan_id: UUID, owner: UUID) -> Plan | None:
     """Caller locks identity first; retain this plan lock until task commit."""
     from whisky.modules.discovery.store import PlanStore
 
     return PlanStore._read(connection, plan_id, owner, lock=True)
+
+
+def preference_proposal_for_task(
+    connection: Connection,
+    task_id: UUID,
+    owner_id: UUID,
+    generation: int,
+    conditions_revision: int,
+) -> PreferenceProposal | None:
+    """Read a fenced draft through its owning module in the caller's transaction."""
+    from whisky.modules.discovery.proposal_store import preference_proposal_for_task
+
+    return preference_proposal_for_task(
+        connection, task_id, owner_id, generation, conditions_revision
+    )
+
+
+def owned_plan(connection: Connection, plan_id: UUID, owner: UUID) -> Plan | None:
+    """Read a live owned plan without acquiring a write lock."""
+    from whisky.modules.discovery.store import PlanStore
+
+    return PlanStore._read(connection, plan_id, owner)
 
 
 def change_conditions(

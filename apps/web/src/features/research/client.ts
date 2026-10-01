@@ -5,16 +5,24 @@ import type { TaskView } from "./state";
 
 export type ReportView = components["schemas"]["ReportView"];
 export type ResearchCommandView = components["schemas"]["ResearchCommandView"];
+export type ResearchInputV4 = components["schemas"]["ResearchInputV4Input"];
+
+export async function startResearchV4(token:string,plan:{id:string;conditionsRevision:number},key:string,threadId:string,runId:string,input:ResearchInputV4,sourceTaskId?:string):Promise<TaskView> {
+  return startResearchCommand(token,plan,threadId,runId,{
+    type:"start_v4",key,planId:plan.id,conditionsRevision:plan.conditionsRevision,input,sourceTaskId:sourceTaskId ?? null,
+  });
+}
 
 async function jsonResponse(response: Response): Promise<unknown> {
   if (!response.ok) throw new Error(response.status === 401 ? "AUTH_REQUIRED" : "REQUEST_FAILED");
   return response.json();
 }
 
-export async function createPlan(token: string, key: string, goal: string, budgetTwd: string | null): Promise<{id:string; conditionsRevision:number}> {
+export async function createPlan(token: string, key: string, goal: string, budgetTwd: string | null, preferences:components["schemas"]["Preference"][]=[]): Promise<{id:string; conditionsRevision:number}> {
+  const body:components["schemas"]["CreatePlanInput"]={key,conditions:{schema_version:1,entry:"beginner",goal,budget_twd:budgetTwd,starting_bottle:null,preferences}};
   const value = await jsonResponse(await fetch("/api/v1/plans", {
     method:"POST", cache:"no-store", headers:{Authorization:`Bearer ${token}`, "Content-Type":"application/json"},
-    body:JSON.stringify({key, conditions:{schema_version:1, entry:"beginner", goal, budget_twd:budgetTwd}}),
+    body:JSON.stringify(body),
   }));
   if (!value || typeof value !== "object" || !("id" in value) || typeof value.id !== "string" ||
       !("conditionsRevision" in value) || typeof value.conditionsRevision !== "number") throw new Error("INVALID_RESPONSE");
@@ -22,13 +30,22 @@ export async function createPlan(token: string, key: string, goal: string, budge
 }
 
 export async function startResearch(token: string, plan: {id:string; conditionsRevision:number}, key: string, threadId: string, runId: string): Promise<TaskView> {
+  return startResearchCommand(token,plan,threadId,runId,{
+    type:"start",key,planId:plan.id,conditionsRevision:plan.conditionsRevision,
+  });
+}
+
+type StartCommandV4 = components["schemas"]["StartCommandV4"];
+type StartCommandV1 = Omit<StartCommandV4,"input" | "type" | "sourceTaskId"> & {type:"start"};
+
+async function startResearchCommand(token:string,plan:{id:string;conditionsRevision:number},threadId:string,runId:string,command:StartCommandV1 | StartCommandV4):Promise<TaskView> {
   const controller = new AbortController();
   let task: TaskView | null = null;
   try {
     await readEvents(signal => fetch("/agent", {
-      method:"POST", headers:{Authorization:`Bearer ${token}`, "Content-Type":"application/json"}, signal,
+      method:"POST", cache:"no-store", headers:{Authorization:`Bearer ${token}`, "Content-Type":"application/json"}, signal,
       body:JSON.stringify({threadId, runId, messages:[], state:{}, tools:[], context:[],
-        forwardedProps:{type:"start", key, planId:plan.id, conditionsRevision:plan.conditionsRevision}}),
+        forwardedProps:command}),
     }), event => {
       if (event.type === "STATE_SNAPSHOT" && validTask(event.snapshot) &&
           event.snapshot.threadId === threadId && event.snapshot.conditionsRevision === plan.conditionsRevision) {

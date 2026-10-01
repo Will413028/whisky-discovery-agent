@@ -9,15 +9,32 @@ from uuid import UUID, uuid4
 
 from sqlalchemy import Connection, Engine, RowMapping, text
 
-from whisky.modules.discovery.public import locked_plan
+from whisky.modules.discovery.public import locked_plan, owned_plan
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.commands import StartTurn
 from whisky.modules.research.domain import workflow_id_for
-from whisky.modules.research.views import ResearchCommandView, TaskView
+from whisky.modules.research.inputs_v4 import StartTurnV4
+from whisky.modules.research.proposal_view_v4 import (
+    PreferenceProposalViewV4,
+    read_preference_proposal_v4,
+)
+from whisky.modules.research.views import ResearchCommandView, TaskHistoryItem, TaskView
 
 
 class ResearchConflict(ValueError):
     pass
+
+
+@dataclass(frozen=True)
+class TaskHistoryCursor:
+    created_at: datetime
+    id: UUID
+
+
+@dataclass(frozen=True)
+class TaskHistoryPage:
+    items: tuple[TaskHistoryItem, ...]
+    next_cursor: TaskHistoryCursor | None
 
 
 @dataclass(frozen=True)
@@ -32,8 +49,41 @@ class ResearchStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
 
+    def workflow_type_for_task(
+        self, task_id: UUID
+    ) -> Literal["ResearchWorkflowV3", "ResearchWorkflowV4"]:
+        with self.engine.connect() as connection:
+            is_v4 = connection.execute(
+                text("""
+                    SELECT (i.task_id IS NOT NULL)
+                    FROM research_tasks t
+                    LEFT JOIN research_v4_inputs i
+                        ON i.task_id=t.id AND i.owner_id=t.owner_id
+                    WHERE t.id=:task
+                """),
+                {"task": task_id},
+            ).scalar_one_or_none()
+        if is_v4 is None:
+            raise ResearchConflict("NOT_FOUND")
+        return "ResearchWorkflowV4" if is_v4 else "ResearchWorkflowV3"
+
+    def preference_proposal(
+        self, task_id: UUID, owner: UUID
+    ) -> PreferenceProposalViewV4 | None:
+        return read_preference_proposal_v4(self.engine, owner, task_id)
+
+    def reserve_turn_v4(
+        self, owner: UUID, generation: int, turn: StartTurnV4
+    ) -> StartReceipt:
+        return self._reserve_turn(owner, generation, turn)
+
     def reserve_turn(
         self, owner: UUID, generation: int, turn: StartTurn
+    ) -> StartReceipt:
+        return self._reserve_turn(owner, generation, turn)
+
+    def _reserve_turn(
+        self, owner: UUID, generation: int, turn: StartTurn | StartTurnV4
     ) -> StartReceipt:
         with self.engine.begin() as connection:
             self._identity(connection, owner, generation)
@@ -62,6 +112,23 @@ class ResearchStore:
                 ):
                     raise ResearchConflict("TURN_CONFLICT")
             command = turn.command
+            source_task_id = (
+                turn.command.source_task_id if isinstance(turn, StartTurnV4) else None
+            )
+            if source_task_id is not None and existing is None:
+                source = connection.execute(
+                    text("""SELECT id FROM research_tasks
+                        WHERE id=:source AND owner_id=:owner AND generation=:generation
+                            AND plan_id=:plan AND status='completed'"""),
+                    dict(
+                        source=source_task_id,
+                        owner=owner,
+                        generation=generation,
+                        plan=command.plan_id,
+                    ),
+                ).first()
+                if source is None:
+                    raise ResearchConflict("NOT_FOUND")
             receipt = self._reserve(
                 connection,
                 owner,
@@ -70,7 +137,43 @@ class ResearchStore:
                 command.conditions_revision,
                 command.key,
                 turn.thread_id,
+                sha256(
+                    json.dumps(
+                        dict(
+                            schema_version=4,
+                            plan_id=str(command.plan_id),
+                            revision=command.conditions_revision,
+                            input=turn.command.input.model_dump(
+                                mode="json", by_alias=True
+                            ),
+                            **(
+                                {"source_task_id": str(source_task_id)}
+                                if source_task_id is not None
+                                else {}
+                            ),
+                        ),
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode()
+                ).hexdigest()
+                if isinstance(turn, StartTurnV4)
+                else None,
             )
+            if isinstance(turn, StartTurnV4):
+                connection.execute(
+                    text("""
+                    INSERT INTO research_v4_inputs
+                        (task_id,owner_id,input,source_task_id)
+                    VALUES (:task,:owner,CAST(:input AS jsonb),:source)
+                    ON CONFLICT (task_id) DO NOTHING
+                """),
+                    dict(
+                        task=receipt.task_id,
+                        owner=owner,
+                        source=source_task_id,
+                        input=turn.command.input.model_dump_json(by_alias=True),
+                    ),
+                )
             actual_thread: UUID = connection.execute(
                 text(
                     "SELECT thread_id FROM research_tasks "
@@ -111,14 +214,18 @@ class ResearchStore:
         revision: int,
         key: str,
         thread_id: UUID | None = None,
+        payload_digest: str | None = None,
     ) -> StartReceipt:
         if not key.strip() or len(key) > 128 or revision < 1:
             raise ValueError("Invalid research command key or revision")
-        digest = sha256(
-            json.dumps(
-                dict(plan_id=str(plan_id), revision=revision), sort_keys=True
-            ).encode()
-        ).hexdigest()
+        digest = (
+            payload_digest
+            or sha256(
+                json.dumps(
+                    dict(plan_id=str(plan_id), revision=revision), sort_keys=True
+                ).encode()
+            ).hexdigest()
+        )
         existing = self._receipt(connection, owner, key=key)
         if existing is not None:
             if existing["payload_hash"] != digest:
@@ -329,6 +436,61 @@ class ResearchStore:
                 dict(owner=owner, generation=generation),
             ).mappings()
             return tuple(self._task_view(row) for row in rows)
+
+    def history(
+        self,
+        plan_id: UUID,
+        owner: UUID,
+        limit: int,
+        cursor: TaskHistoryCursor | None = None,
+    ) -> TaskHistoryPage | None:
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            plan = owned_plan(connection, plan_id, owner)
+            if plan is None or generation is None or plan.generation != generation:
+                return None
+            predicate = (
+                "AND (t.created_at,t.id)<(:created_at,:cursor_id)" if cursor else ""
+            )
+            rows = (
+                connection.execute(
+                    text(
+                        """
+                SELECT t.*, (
+                    SELECT a.run_id FROM agent_turns a
+                    WHERE a.task_id=t.id AND a.owner_id=t.owner_id AND a.outcome IS NULL
+                    LIMIT 1
+                ) AS active_run_id
+                FROM research_tasks t
+                WHERE t.plan_id=:plan AND t.owner_id=:owner AND t.generation=:generation
+                """
+                        + predicate
+                        + " ORDER BY t.created_at DESC,t.id DESC LIMIT :limit"
+                    ),
+                    dict(
+                        plan=plan_id,
+                        owner=owner,
+                        generation=generation,
+                        limit=limit + 1,
+                        created_at=cursor.created_at if cursor else None,
+                        cursor_id=cursor.id if cursor else None,
+                    ),
+                )
+                .mappings()
+                .all()
+            )
+            visible = rows[:limit]
+            return TaskHistoryPage(
+                tuple(
+                    TaskHistoryItem(
+                        task=self._task_view(row), created_at=row["created_at"]
+                    )
+                    for row in visible
+                ),
+                TaskHistoryCursor(visible[-1]["created_at"], visible[-1]["id"])
+                if len(rows) > limit
+                else None,
+            )
 
     @staticmethod
     def _task_view(row: RowMapping) -> TaskView:

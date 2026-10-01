@@ -4,13 +4,13 @@
 
 ## 目前狀態
 
-T00–T08 已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、reviewed catalog、可靠受理、durable Agent、等待恢復、控制命令、真來源與配額均有本機與 CI 證據；[固定模型對照](backend/evals/T08_REVIEW.md)已完成人工 rubric，選定 Qwen。原 vinext SSR 因 Free CPU 門檻撤回。研究 worker、三款 reviewed catalog 與 migrations 已部署 Oracle VM；加密全備份、WAL PITR 與外部停機 probe 已有真部署證據，T09 的完整登入旅程、告警通知與首次排程仍待驗，T10–T12 尚未完成。
+T00–T09 已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、reviewed catalog、可靠受理、durable Agent、等待恢復、控制命令、真來源與配額均有本機與 CI 證據；[固定模型對照](backend/evals/T08_REVIEW.md)已完成人工 rubric，選定 Qwen。原 vinext SSR 因 Free CPU 門檻撤回。研究 worker、三款 reviewed catalog 與 migrations 已部署 Oracle VM；加密全備份、WAL PITR、外部停機 probe、真登入／跨帳號、告警收件及首次 main 排程已有真部署證據。T10 雙入口、偏好確認與比較正在 draft PR 實作，尚未部署或整體驗收；T11–T12 尚未完成。
 
 主軸是保留喜歡的特徵、探索剛剛好的差異，最後留下可回看的選擇與取捨。互動流程、資料契約、建議工程預設與驗收情境見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。目前有三款人工覆核起始樣本，完整探索功能仍待實作。
 
 ## 開發方向
 
-- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前進行 T09 replay、安全部署與備份還原。
+- [TDD 實作計畫](IMPLEMENTATION_PLAN.md) 保存 RED → GREEN 證據及尚未通過的 gate；目前進行 T10 雙入口、完整探索計畫與 eval。
 - [技術架構](ARCHITECTURE.md) 採 Oracle VM 上的 Next.js／Node、FastAPI／PostgreSQL／PydanticAI＋Temporal，AG-UI 管互動。`workers.dev` 薄 Worker 經 VPC／具名 Tunnel 連 VM Web，不執行 SSR；Web 固定轉送私有 API，Auth0 Free 管登入。完整新路徑、資源與備份還原仍須實測；目前 VM 帳單 US$0 不是未來保證。
 - 這是可獨立開發與部署的產品；不依賴其他作品的執行環境。
 - 專案採單一 repo：前端依功能組織，後端以業務模組為主、模組內按需分層，保留 Python `backend/src/whisky/`。目錄與責任見 [技術架構](ARCHITECTURE.md)，首個流程契約與驗證見 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。目前有 bootstrap、identity、catalog、welcome 與 research 的契約／transport 基礎，按用例加入模組。
@@ -55,6 +55,14 @@ Catalog 人工發布：先設定此專案的 `WHISKY_DATABASE_URL`，執行
 `GET /health/live` 只代表 API 存活。研究 worker 要求 `WHISKY_DATABASE_URL`、`WHISKY_CLOUDFLARE_ACCOUNT_ID`、`WHISKY_CLOUDFLARE_AI_TOKEN` 同時存在，啟動命令為 `uv run --project backend whisky-worker --address <host:port> --namespace <namespace> --task-queue <research-queue>`；缺設定會在 polling 前失敗。預設模型為 Workers AI Free 的 `@cf/qwen/qwen3-30b-a3b-fp8`。`WHISKY_DAILY_MODEL_NEURONS` 須依此帳戶當日剩餘免費額度設定為 1–10,000；未設定時 worker 可啟動，但 live model 呼叫明確拒絕，不自動切付費模型。單一 worker process 僅綁一組模型／資料庫設定。基礎設施 probe 須明確加 `--probe-only`，並使用 `whisky-probe-` 前綴的獨立 queue；probe 不處理研究。整合測試會建立短生命週期 Temporal server 與獨立 queue；首次執行可能下載 SDK 測試 server。Docker／Temporal 缺失會失敗，不會 skip。
 
 邊界 gate 檢查直接、靜態可解析 imports：Python domain 只依賴同模組 domain 與非 framework 函式庫，跨模組經 `public.py`／`public/`；Web shared 不引用 features，feature 對外出口為 `index.ts(x)`。動態組合字串與執行時載入不在靜態 gate 的保證範圍，新增此類機制前須擴充檢查。CI 設定涵蓋 T00–T02 已實作的 deterministic checks；各提交遠端結果見實作計畫，不代表真 Auth0、恢復或 release gates 已通過。
+
+T10 eval 的固定語料與 typed controls 分開保存；先執行
+`uv run --project backend python backend/evals/run_t10.py --dry-run` 核對題數與 SHA256，這一步不讀 credentials。
+Live 執行另需專用 loopback `WHISKY_TEST_POSTGRES_URL`、本專案 account ID、
+`WHISKY_CLOUDFLARE_AI_TOKEN_FILE` 與當日剩餘免費額度內的 `WHISKY_DAILY_MODEL_NEURONS`，
+再加 `--output <new-file.json>`；runner 自建／清理獨立 DB，既有輸出檔會拒絕覆寫。
+`--inject-source-failure` 明示單次來源故障 fixture，替代來源仍讀真網路；未使用此旗標時全為真網路。
+輸出分別計算 workflow samples、provider attempts 與保留配額，人工 rubric 仍需另行覆核。
 
 ## T01 身份設定與契約
 
