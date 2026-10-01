@@ -51,6 +51,58 @@ test("completed candidates expose independent favorite and tasting feedback",asy
   expect(screen.getByLabelText("品飲感受")).toBeTruthy();
 });
 
+test("new research explicitly applies selected long-term preferences while leaving the current budget empty",async()=>{
+  const fetch=vi.fn(async(input,init?:RequestInit)=>{
+    const path=String(input);
+    if(path.endsWith("/library/preferences"))return Response.json({schemaVersion:1,revision:1,preferences:[{description:"果香",intent:"prefer",strength:"soft",certainty:"user_stated",statement:"我明確喜歡果香",sourceFeedbackId:null,sourceFeedbackRevision:null}],updatedAt:"2026-10-01T00:00:00Z"});
+    if(path.endsWith("/tasks"))return Response.json([]);
+    if(path.endsWith("/plans"))return Response.json({id,conditionsRevision:1});
+    if(path==="/agent"){
+      const command=JSON.parse(String(init?.body));
+      return new Response(`data: ${JSON.stringify({type:"STATE_SNAPSHOT",snapshot:{...waiting,threadId:command.threadId,status:"queued",question:null}})}\n\n`,{headers:{"Content-Type":"text/event-stream"}});
+    }
+    throw new Error(`Unexpected fixture path ${path}`);
+  });
+  vi.stubGlobal("fetch",fetch);render(<ResearchStart/>);
+  fireEvent.click(await screen.findByLabelText("套用 果香"));
+  fireEvent.change(screen.getByLabelText("想探索什麼風味？"),{target:{value:"看看目前有來源的選擇"}});
+  fireEvent.click(screen.getByRole("button",{name:"開始探索"}));
+  await waitFor(()=>expect(fetch.mock.calls.some(([input])=>String(input).endsWith("/plans"))).toBe(true));
+  const request=fetch.mock.calls.find(([input])=>String(input).endsWith("/plans"));
+  const body=JSON.parse(String(request?.[1]?.body));
+  expect(body.conditions.preferences).toEqual([{description:"果香",intent:"prefer",certainty:"user_stated",strength:"soft"}]);
+  expect(body.conditions.budget_twd).toBeNull();
+  await waitFor(()=>expect(push).toHaveBeenCalledWith(`/research/${id}`));
+});
+
+test.each(["prefer","avoid"] as const)("retaining a feature never silently discards a selected hard %s preference",async intent=>{
+  const fetch=vi.fn(async(input,init?:RequestInit)=>{
+    const path=String(input);
+    if(path.endsWith("/library/preferences"))return Response.json({schemaVersion:1,revision:1,preferences:[{description:"果香",intent,strength:"hard",certainty:"user_stated",statement:"我的明確限制",sourceFeedbackId:null,sourceFeedbackRevision:null}],updatedAt:"2026-10-01T00:00:00Z"});
+    if(path.endsWith("/tasks"))return Response.json([]);
+    if(path.endsWith("/plans"))return Response.json({id,conditionsRevision:1});
+    if(path==="/agent"){
+      const command=JSON.parse(String(init?.body));
+      return new Response(`data: ${JSON.stringify({type:"STATE_SNAPSHOT",snapshot:{...waiting,threadId:command.threadId,status:"queued",question:null}})}\n\n`,{headers:{"Content-Type":"text/event-stream"}});
+    }
+    throw new Error(`Unexpected fixture path ${path}`);
+  });
+  vi.stubGlobal("fetch",fetch);render(<ResearchStart/>);
+  fireEvent.click(await screen.findByLabelText("套用 果香"));
+  fireEvent.click(screen.getByLabelText("我有喜歡的酒款"));
+  fireEvent.change(screen.getByLabelText("喜歡的酒款名稱"),{target:{value:"合成起點"}});
+  fireEvent.change(screen.getByLabelText("想保留的風味標籤"),{target:{value:"果香"}});
+  fireEvent.click(screen.getByRole("button",{name:"開始探索"}));
+  if(intent==="avoid"){
+    expect((await screen.findByRole("alert")).textContent).toContain("已選排斥偏好與保留特徵衝突");
+    expect(fetch.mock.calls.some(([input])=>String(input).endsWith("/plans"))).toBe(false);
+  } else {
+    await waitFor(()=>expect(push).toHaveBeenCalledWith(`/research/${id}`));
+    const request=fetch.mock.calls.find(([input])=>String(input).endsWith("/plans"));
+    expect(JSON.parse(String(request?.[1]?.body)).conditions.preferences).toEqual([{description:"果香",intent:"keep",certainty:"user_stated",strength:"hard"}]);
+  }
+});
+
 test("reopening a proposal question restores original clues and unconfirmed taste mapping",async()=>{
   vi.stubGlobal("fetch",vi.fn(async input=>{
     if(String(input).endsWith("/preference-proposal")) return Response.json({schemaVersion:4,taskId:id,planId:id,questionId,conditionsRevision:1,waitingVersion:1,sourceText:"我喜歡水果甜點",proposal:{summary:"原文只是線索",intent:{mode:"style_options",smoke_comparison:false},preferences:[{description:"可能喜歡果香",intent:"prefer",source_quote:"喜歡水果甜點",source_kind:"food_clue",certainty:"inferred",strength:"soft",mapping:{feature_key:"果香",reference:{release_id:id,item_id:id},evidence_ids:[id]}}],budget:null}});
@@ -187,6 +239,7 @@ test("unfinished task read failures remain visible and retry without creating a 
   let reads = 0;
   const fetch = vi.fn(async (input: RequestInfo | URL) => {
     const url = new URL(String(input), window.location.origin);
+    if(url.pathname==="/api/v1/library/preferences")return Response.json({schemaVersion:1,revision:0,preferences:[],updatedAt:null});
     expect(url.pathname).toBe("/api/v1/tasks");
     reads++;
     return reads === 1 ? new Response(null, {status:503}) : Response.json([waiting]);

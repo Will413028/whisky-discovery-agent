@@ -22,12 +22,12 @@ export async function readBottleFeedback(version:string,token:string,signal?:Abo
 export async function saveBottleFeedback(command:SaveBottleFeedback,token:string):Promise<BottleFeedback> {
   const response=await fetch("/api/v1/library/feedback",{method:"POST",cache:"no-store",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(command)});
   if(!response.ok) {
-    if([401,404,409,422].includes(response.status)) {
+    if([401,403,404,409,422].includes(response.status)) {
       let code=response.status===401 ? "AUTH_REQUIRED" : "REQUEST_REJECTED";
       try {
         const body:unknown=await response.json();
         const received=body && typeof body==="object" && "code" in body ? body.code : null;
-        if(typeof received==="string" && ["AUTH_REQUIRED","NOT_FOUND","REVISION_CONFLICT","IDEMPOTENCY_CONFLICT","IDENTITY_CHANGED","UNKNOWN_BOTTLE_VERSION","INVALID_TASTING_REASON"].includes(received))code=received;
+        if(typeof received==="string" && ["AUTH_REQUIRED","ACTOR_DISABLED","NOT_FOUND","REVISION_CONFLICT","IDEMPOTENCY_CONFLICT","IDENTITY_CHANGED","UNKNOWN_BOTTLE_VERSION","INVALID_TASTING_REASON"].includes(received))code=received;
       } catch { /* An HTTP rejection is acknowledged even without a valid body. */ }
       throw new FeedbackRejected(code,response.status);
     }

@@ -38,12 +38,12 @@ export async function saveConclusion(command:SaveConclusion,token:string):Promis
     method:"POST",cache:"no-store",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json"},body:JSON.stringify(command),
   });
   if(!response.ok) {
-    if([401,404,409,422].includes(response.status)) {
+    if([401,403,404,409,422].includes(response.status)) {
       let code=response.status===401 ? "AUTH_REQUIRED" : "REQUEST_REJECTED";
       try {
         const body:unknown=await response.json();
         const received=body && typeof body==="object" && "code" in body ? body.code : null;
-        if(typeof received==="string" && ["AUTH_REQUIRED","NOT_FOUND","REVISION_CONFLICT","IDEMPOTENCY_CONFLICT","IDENTITY_CHANGED","INVALID_REPORT_CANDIDATES","NOT_A_REPORT_CANDIDATE","INVALID_REASON","INVALID_TRADEOFF"].includes(received)) code=received;
+        if(typeof received==="string" && ["AUTH_REQUIRED","ACTOR_DISABLED","NOT_FOUND","REVISION_CONFLICT","IDEMPOTENCY_CONFLICT","IDENTITY_CHANGED","INVALID_REPORT_CANDIDATES","NOT_A_REPORT_CANDIDATE","INVALID_REASON","INVALID_TRADEOFF"].includes(received)) code=received;
       } catch {/* The HTTP status still acknowledges a rejected write. */}
       throw new ConclusionRejected(code,response.status);
     }

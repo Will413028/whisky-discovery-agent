@@ -1,0 +1,118 @@
+{
+  "$defs": {
+    "LongTermPreferenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "certainty": {
+          "const": "user_stated",
+          "default": "user_stated",
+          "title": "Certainty",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "prefer",
+            "avoid"
+          ],
+          "title": "Intent",
+          "type": "string"
+        },
+        "sourceFeedbackId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcefeedbackid"
+        },
+        "sourceFeedbackRevision": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcefeedbackrevision"
+        },
+        "statement": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Statement",
+          "type": "string"
+        },
+        "strength": {
+          "enum": [
+            "soft",
+            "hard"
+          ],
+          "title": "Strength",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "intent",
+        "strength",
+        "statement"
+      ],
+      "title": "LongTermPreferenceV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "preferences": {
+      "items": {
+        "$ref": "#/$defs/LongTermPreferenceV1"
+      },
+      "maxItems": 64,
+      "title": "Preferences",
+      "type": "array"
+    },
+    "revision": {
+      "minimum": 0,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "updatedAt": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Updatedat"
+    }
+  },
+  "required": [
+    "revision",
+    "preferences",
+    "updatedAt"
+  ],
+  "title": "LongTermPreferencesViewV1",
+  "type": "object"
+}

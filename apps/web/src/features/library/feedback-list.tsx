@@ -5,6 +5,7 @@ import type {components} from "../../../../../contracts/api";
 import validCatalog from "../../../../../contracts/catalog-view.validator.js";
 import {listBottleFeedback,type BottleFeedback} from "./feedback-client";
 import {BottleFeedbackEditor} from "./feedback-editor";
+import {LongTermPreferencesEditor,type FeedbackPreferenceSource} from "./preferences-editor";
 import {safeReturnTo} from "../identity";
 type CatalogView=components["schemas"]["CatalogView"];
 export function BottleFeedbackLibrary(){
@@ -23,6 +24,7 @@ function FeedbackSession(){
   const [busy,setBusy]=useState(false);
   const [cursor,setCursor]=useState<string|null>(null);
   const [refresh,setRefresh]=useState(0);
+  const [preferenceSource,setPreferenceSource]=useState<FeedbackPreferenceSource>();
   const epoch=useRef(0);
   const retryCursor=useRef<string|null>(null);
   async function load(next:string|null,current:number,signal?:AbortSignal){
@@ -60,9 +62,11 @@ function FeedbackSession(){
         <p>{item.wantToExplore ? "想探索" : "未收藏"}；{item.tasting==="liked" ? "喝過喜歡" : item.tasting==="disliked" ? "喝過不喜歡" : "尚未品飲"}</p>
         {item.tastingReason && <p>{item.tastingReason}</p>}
         <BottleFeedbackEditor version={item.bottleVersionId} name={resolved?.name ?? "未解析版本"} token={token}/>
+        {item.tasting!=="not_tasted" && <button onClick={()=>setPreferenceSource({id:item.id,revision:item.revision,reason:item.tastingReason})}>從這筆回饋寫明確偏好</button>}
       </article>;
     })}
     {cursor && !error && <button disabled={busy} onClick={()=>void load(cursor,epoch.current)}>讀取更多回饋</button>}
+    <LongTermPreferencesEditor token={token} source={preferenceSource}/>
     <button disabled={busy} onClick={()=>setRefresh(value=>value+1)}>更新列表與目前酒款</button>{" "}<a href="/catalog">查看目前已覆核酒款</a>{" "}<a href="/plans">重新選擇探索方向</a>
   </section>;
 }

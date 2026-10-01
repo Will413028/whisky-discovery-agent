@@ -20,9 +20,12 @@ from whisky.modules.library.contracts import (
     ConclusionRevisitViewV1,
     ConclusionViewV1,
     LibraryModel,
+    LongTermPreferencesViewV1,
     SaveBottleFeedbackV1,
     SaveConclusionV1,
+    SaveLongTermPreferencesV1,
 )
+from whisky.modules.library.preference_store import PreferenceStore
 from whisky.modules.library.store import ConclusionCursor, LibraryConflict, LibraryStore
 from whisky.platform.http_errors import PublicAPIError
 
@@ -71,6 +74,36 @@ def library_router(identity: IdentityAccess, store: LibraryStore | None) -> APIR
         credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     ) -> AccessSession:
         return identity.authenticate(credentials.credentials if credentials else None)
+
+    @routes.get("/preferences", response_model=LongTermPreferencesViewV1)
+    def read_preferences(
+        request: Request, session: AccessSession = Depends(authenticate)
+    ) -> LongTermPreferencesViewV1:
+        if request.query_params:
+            raise PublicAPIError(422, "INVALID_REQUEST")
+        if store is None:
+            raise PublicAPIError(503, "LIBRARY_UNAVAILABLE")
+        value = PreferenceStore(store.engine).read(session.actor_id)
+        if value is None:
+            raise PublicAPIError(404, "NOT_FOUND")
+        return value
+
+    @routes.post(
+        "/preferences", response_model=LongTermPreferencesViewV1, status_code=201
+    )
+    def save_preferences(
+        command: SaveLongTermPreferencesV1,
+        session: AccessSession = Depends(authenticate),
+    ) -> LongTermPreferencesViewV1:
+        if store is None:
+            raise PublicAPIError(503, "LIBRARY_UNAVAILABLE")
+        try:
+            return PreferenceStore(store.engine).save(
+                session.actor_id, session.generation, command
+            )
+        except LibraryConflict as error:
+            code = str(error)
+            raise PublicAPIError(404 if code == "NOT_FOUND" else 409, code) from None
 
     @routes.post("/feedback", response_model=BottleFeedbackViewV1, status_code=201)
     def save_feedback(

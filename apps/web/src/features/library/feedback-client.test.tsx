@@ -5,6 +5,10 @@ const other="00000000-0000-4000-8000-000000000002";
 const command:SaveBottleFeedback={schemaVersion:1,key:"stable-feedback",bottleVersionId:id,expectedRevision:0,wantToExplore:true,tasting:"not_tasted",tastingReason:""};
 const value={schemaVersion:1,id,bottleVersionId:id,revision:1,wantToExplore:true,tasting:"not_tasted",tastingReason:"",createdAt:"2026-10-01T00:00:00Z",updatedAt:"2026-10-01T00:00:00Z"};
 afterEach(()=>vi.unstubAllGlobals());
+test("a disabled actor is a confirmed write rejection",async()=>{
+  vi.stubGlobal("fetch",vi.fn(async()=>Response.json({code:"ACTOR_DISABLED"},{status:403})));
+  await expect(saveBottleFeedback(command,"fixture")).rejects.toMatchObject({code:"ACTOR_DISABLED",status:403});
+});
 test("feedback write binds the accepted revision and tasting to the immutable private command",async()=>{
   const fetch=vi.fn(async()=>Response.json(value));vi.stubGlobal("fetch",fetch);
   expect(await saveBottleFeedback(command,"fixture")).toEqual(value);

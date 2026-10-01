@@ -8,6 +8,12 @@ vi.mock("@auth0/auth0-react",()=>({useAuth0:()=>auth}));
 afterEach(()=>{cleanup();vi.resetAllMocks();vi.unstubAllGlobals();auth.user={sub:"owner-a"};auth.getAccessTokenSilently.mockResolvedValue("fixture");});
 const id="00000000-0000-4000-8000-000000000001";
 const feedback={schemaVersion:1 as const,id,bottleVersionId:id,revision:1,wantToExplore:true,tasting:"not_tasted" as const,tastingReason:"",createdAt:"2026-10-01T00:00:00Z",updatedAt:"2026-10-01T00:00:00Z"};
+test("the private library provides an explicit long-term preference editor",async()=>{
+  vi.mocked(listBottleFeedback).mockResolvedValue({schemaVersion:1,items:[],nextCursor:null});
+  vi.stubGlobal("fetch",vi.fn(async input=>String(input).endsWith("/preferences") ? Response.json({schemaVersion:1,revision:0,preferences:[],updatedAt:null}) : Response.json({releaseId:null,evaluatedOn:"2026-10-01",pricePolicyVersion:"fixture",items:[]})));
+  render(<BottleFeedbackLibrary/>);
+  expect(await screen.findByLabelText("我的明確陳述")).toBeTruthy();
+});
 test("reopening a removed favorite preserves its identity and provides editing and catalog exits",async()=>{
   vi.mocked(listBottleFeedback).mockResolvedValue({schemaVersion:1,items:[feedback],nextCursor:null});
   vi.mocked(readBottleFeedback).mockResolvedValue(feedback);

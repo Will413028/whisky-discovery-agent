@@ -307,6 +307,15 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - backend **675／597.44 秒**（`/tmp/whisky-t11-feedback-backend-release.log`）、wheel **4／15.42 秒**、ruff／format、mypy96、Python／Web boundaries、scripts11、private startup gate 通過。Web review 後 **254**（`/tmp/whisky-t11-feedback-web-reviewed.log`）、typecheck、原生 build 通過。新增 browser 合成收藏保存→丟失回覆→同命令重送→關頁登入重開→未品飲／移除版本出口，缺 fixture 接線先 1 RED，修正後全部 **14／24.5 秒**（`/tmp/whisky-t11-feedback-browser-final.log`）；其後僅修列表首頁 retry，對應回歸已 GREEN。生成物 SHA256 重生前後一致；frozen TaskView／V1 codec 不改，最終 diff／whitespace 已檢查。
 - 此增量未部署，不代替真 Auth0／Oracle／跨瀏覽器驗收。T11 長期明確偏好、完整匯出、實際清除及防復活仍待完成。
 
+### T11 長期明確偏好增量（2026-10-01，未驗收）
+
+- `0020_long_term_preferences` 保存 owner／generation 下的一份有界明確偏好集合，revision／CAS 與 `preferences.save` receipt 在 actor 鎖內原子提交。只接受 user_stated、明確陳述與喜歡／排斥、軟／硬限制；拒絕預算及 inferred 欄位。可連結自己的當代品飲回饋 ID／revision，但不由酒款全部標籤推論偏好。
+- 有效 RED：domain 5、真 DB 保存／收據／空狀態／隔離 5、signed JWT HTTP 3；修改／清空、並行 CAS、交易 rollback、来源 ownership／revision 與 generation 負例是回歸保障，domain＋store 合計 15 GREEN。新 profile schema 與 standalone validator 由契約生成，CI 檢查 drift。
+- Web client 3／proxy 2／editor 3／選擇套用 2／收藏列表接線 1／開始探索接線 1 RED。長期偏好預設不套用，本次預算獨立；熟手保留同特徵須保留原 hard 強度，與 avoid 衝突須先解決，兩項反例 RED→GREEN。
+- fresh design-review 無 findings；獨立 correctness review 找到 ACTOR_DISABLED 的 403 被誤判 unknown，新增 1 RED 後改為已知拒絕。同類搜尋 `rg -n '\[401.*404|ACTOR_DISABLED' apps/web/src/features/library` 確認結論及回饋保存也有同一分類缺漏，另 2 RED 後修正。拒絕後重讀，不盲目重送。指令檔現行規則无需改動。
+- Web **271 passed**（`/tmp/whisky-t11-library-disabled-green.log`）；此前原生 Next build／typecheck、Node／workerd browser **15／21.8 秒**（`/tmp/whisky-t11-preferences-browser-final.log`）、wheel **4／13.18 秒**、ruff／format、mypy98、Python／Web boundaries、scripts11 通過。browser 新案例是合成 API 的保存→重開→明確勾選套用，不取代真 Auth0。舊 saved 測試文字查詢會與非同步失敗訊息撞字、clearAllMocks 不清尚未消耗的 once queue，已改語意 heading 查詢及獨立清理；這是測試穩定性修正，不算新產品 RED。
+- 完整 backend **694／403.22 秒**（`/tmp/whisky-t11-preferences-backend-release.log`）通過。最後 403 client 修正後 typecheck、原生 build 與 browser **15／12.1 秒**（`/tmp/whisky-t11-preferences-browser-reviewed.log`）再次通過。生成 contracts SHA256 前後相同、無 drift，frozen TaskView／V1 conditions／control codec 無 diff；最終 diff／whitespace 已檢查。此增量未部署，T11 完整匯出、實際清除、防復活與正式旅程仍未完成。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。

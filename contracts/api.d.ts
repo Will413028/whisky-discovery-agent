@@ -193,6 +193,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/library/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Preferences */
+        get: operations["read_preferences_api_v1_library_preferences_get"];
+        put?: never;
+        /** Save Preferences */
+        post: operations["save_preferences_api_v1_library_preferences_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/library/reports/{report_id}/conclusion-context": {
         parameters: {
             query?: never;
@@ -1344,6 +1362,48 @@ export interface components {
              */
             key: string;
         };
+        /** LongTermPreferenceV1 */
+        LongTermPreferenceV1: {
+            /**
+             * Certainty
+             * @default user_stated
+             * @constant
+             */
+            certainty: "user_stated";
+            /** Description */
+            description: string;
+            /**
+             * Intent
+             * @enum {string}
+             */
+            intent: "prefer" | "avoid";
+            /** Sourcefeedbackid */
+            sourceFeedbackId?: string | null;
+            /** Sourcefeedbackrevision */
+            sourceFeedbackRevision?: number | null;
+            /** Statement */
+            statement: string;
+            /**
+             * Strength
+             * @enum {string}
+             */
+            strength: "soft" | "hard";
+        };
+        /** LongTermPreferencesViewV1 */
+        LongTermPreferencesViewV1: {
+            /** Preferences */
+            preferences: components["schemas"]["LongTermPreferenceV1"][];
+            /** Revision */
+            revision: number;
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
+            /** Updatedat */
+            updatedAt: string | null;
+        };
         /** ObserveInput */
         ObserveInput: {
             /** Conditionsrevision */
@@ -2025,6 +2085,21 @@ export interface components {
              * @default
              */
             tradeoff: string;
+        };
+        /** SaveLongTermPreferencesV1 */
+        SaveLongTermPreferencesV1: {
+            /** Expectedrevision */
+            expectedRevision: number;
+            /** Key */
+            key: string;
+            /** Preferences */
+            preferences: components["schemas"]["LongTermPreferenceV1"][];
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
         };
         /** StartCommandV4 */
         StartCommandV4: {
@@ -3326,6 +3401,176 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["BottleFeedbackViewV1"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_preferences_api_v1_library_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LongTermPreferencesViewV1"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    save_preferences_api_v1_library_preferences_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveLongTermPreferencesV1"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LongTermPreferencesViewV1"];
                 };
             };
             /** @description Unauthorized */

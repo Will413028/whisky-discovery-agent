@@ -14,6 +14,7 @@ from whisky.modules.library.contracts import (
     ConclusionListViewV1,
     ConclusionRevisitViewV1,
     ConclusionViewV1,
+    LongTermPreferencesViewV1,
 )
 from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.inputs_v4 import StartCommandV4
@@ -64,6 +65,7 @@ for name, model in (
     ("conclusion-revisit-view", ConclusionRevisitViewV1),
     ("bottle-feedback-view", BottleFeedbackViewV1),
     ("bottle-feedback-list-view", BottleFeedbackListViewV1),
+    ("long-term-preferences-view", LongTermPreferencesViewV1),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

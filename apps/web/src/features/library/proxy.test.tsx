@@ -2,6 +2,14 @@ import {afterEach,expect,test,vi} from "vitest";
 import {GET,POST} from "../../app/api/[...path]/route";
 const id="00000000-0000-4000-8000-000000000001";
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
+test.each(["GET","POST"])("account preferences %s uses fixed private transport",async method=>{
+  vi.stubEnv("WHISKY_API_ORIGIN","http://127.0.0.1:9000");
+  const upstream=vi.fn(async(_request:Request)=>Response.json({schemaVersion:1}));vi.stubGlobal("fetch",upstream);
+  const request=new Request("https://web.example/api/v1/library/preferences",{method,headers:{Authorization:"Bearer fixture"},...(method==="POST" ? {body:"{}"}: {})});
+  const result=await(method==="POST" ? POST(request):GET(request));
+  expect(result.status).toBe(200);
+  expect((upstream.mock.calls[0]?.[0] as Request|undefined)?.url).toBe("http://127.0.0.1:9000/api/v1/library/preferences");
+});
 test.each(["save","read","list"])("feedback %s keeps fixed private transport",async mode=>{
   vi.stubEnv("WHISKY_API_ORIGIN","http://127.0.0.1:9000");
   const upstream=vi.fn(async(_request:Request)=>Response.json({schemaVersion:1}));vi.stubGlobal("fetch",upstream);

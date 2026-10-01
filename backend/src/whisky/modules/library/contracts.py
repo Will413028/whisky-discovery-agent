@@ -11,6 +11,7 @@ from pydantic.alias_generators import to_camel
 from whisky.modules.discovery.public import ResearchConditionsV1
 from whisky.modules.library.domain import exploration_choice
 from whisky.modules.library.feedback import bottle_feedback
+from whisky.modules.library.preferences import StatedPreference, stated_preferences
 
 
 def conclusion_schema(schema: dict[str, Any]) -> None:
@@ -179,3 +180,45 @@ class BottleFeedbackListViewV1(LibraryModel):
     schema_version: Literal[1] = 1
     items: tuple[BottleFeedbackViewV1, ...]
     next_cursor: str | None
+
+
+class LongTermPreferenceV1(LibraryModel):
+    description: str = Field(min_length=1, max_length=1000)
+    intent: Literal["prefer", "avoid"]
+    strength: Literal["soft", "hard"]
+    certainty: Literal["user_stated"] = "user_stated"
+    statement: str = Field(min_length=1, max_length=2000)
+    source_feedback_id: UUID | None = None
+    source_feedback_revision: int | None = Field(default=None, ge=1)
+
+    @model_validator(mode="after")
+    def paired_feedback_source(self) -> Self:
+        if (self.source_feedback_id is None) != (self.source_feedback_revision is None):
+            raise ValueError("INCOMPLETE_FEEDBACK_REFERENCE")
+        return self
+
+
+class SaveLongTermPreferencesV1(LibraryModel):
+    schema_version: Literal[1] = 1
+    key: str = Field(min_length=1, max_length=128)
+    expected_revision: int = Field(ge=0)
+    preferences: tuple[LongTermPreferenceV1, ...] = Field(max_length=64)
+
+    @model_validator(mode="after")
+    def explicit_preferences(self) -> Self:
+        stated_preferences(
+            tuple(
+                StatedPreference(
+                    value.description, value.intent, value.strength, value.statement
+                )
+                for value in self.preferences
+            )
+        )
+        return self
+
+
+class LongTermPreferencesViewV1(LibraryModel):
+    schema_version: Literal[1] = 1
+    revision: int = Field(ge=0)
+    preferences: tuple[LongTermPreferenceV1, ...] = Field(max_length=64)
+    updated_at: AwareDatetime | None

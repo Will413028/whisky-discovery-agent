@@ -12,6 +12,73 @@ from whisky.modules.library.store import LibraryStore
 pytestmark = pytest.mark.integration
 
 
+async def test_account_preferences_are_explicit_private_and_budget_free(library_api):
+    client, sign, _, _ = library_api
+    headers = {"Authorization": f"Bearer {sign()}"}
+    body = {
+        "schemaVersion": 1,
+        "key": "explicit-profile",
+        "expectedRevision": 0,
+        "preferences": [
+            {
+                "description": "果香",
+                "intent": "prefer",
+                "strength": "soft",
+                "statement": "我明確表示喜歡果香",
+            }
+        ],
+    }
+    response = await client.post(
+        "/api/v1/library/preferences", headers=headers, json=body
+    )
+    assert response.status_code == 201
+    read = await client.get("/api/v1/library/preferences", headers=headers)
+    assert read.status_code == 200 and read.json() == response.json()
+    assert read.headers["cache-control"] == "no-store"
+    assert (await client.get("/api/v1/library/preferences")).status_code == 401
+    foreign = await client.get(
+        "/api/v1/library/preferences",
+        headers={"Authorization": f"Bearer {sign(sub='auth0|other')}"},
+    )
+    assert (
+        foreign.status_code == 200
+        and foreign.json()["preferences"] == []
+        and foreign.json()["revision"] == 0
+    )
+
+
+@pytest.mark.parametrize(
+    "field,value", [("budgetTwd", "1000"), ("certainty", "inferred")]
+)
+async def test_long_term_preferences_reject_temporary_budget_or_inferred_values(
+    library_api, field, value
+):
+    client, sign, _, _ = library_api
+    body = {
+        "schemaVersion": 1,
+        "key": "invalid-profile",
+        "expectedRevision": 0,
+        "preferences": [
+            {
+                "description": "果香",
+                "intent": "prefer",
+                "strength": "soft",
+                "statement": "我明確表示喜歡果香",
+            }
+        ],
+    }
+    if field == "certainty":
+        body["preferences"][0][field] = value
+    else:
+        body[field] = value
+    response = await client.post(
+        "/api/v1/library/preferences",
+        headers={"Authorization": f"Bearer {sign()}"},
+        json=body,
+    )
+    assert response.status_code == 422
+
+
 @pytest.mark.parametrize(
     "suffix", ["?limit=0", "?cursor=bad", "?limit=2&limit=3", "?planId=unexpected"]
 )
