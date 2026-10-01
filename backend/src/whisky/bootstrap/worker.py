@@ -34,6 +34,14 @@ from whisky.modules.research.agent import configure_research_agent
 from whisky.modules.research.agent_v2 import configure_research_agent_v2
 from whisky.modules.research.agent_v3 import configure_research_agent_v3
 from whisky.modules.research.agent_v4 import configure_research_agents_v4
+from whisky.modules.research.history_cleanup import TemporalResearchHistoryPurger
+from whisky.modules.research.history_cleanup_activities import HistoryCleanupActivities
+from whisky.modules.research.history_cleanup_schedule import (
+    ensure_history_cleanup_schedule,
+)
+from whisky.modules.research.history_cleanup_workflow import (
+    ResearchHistoryCleanupWorkflow,
+)
 from whisky.modules.research.model import QuotaModel
 from whisky.modules.research.quota import DEFAULT_MODEL, QuotaStore
 from whisky.modules.research.source_reader import SourceReader
@@ -127,6 +135,7 @@ def research_worker(
     configure_research_agent_v3(model)
     configure_research_agents_v4(model)
     db = ResearchActivities(engine, quota=quota, source_reader=source_reader)
+    cleanup = HistoryCleanupActivities(engine, TemporalResearchHistoryPurger(client))
     control = (
         ControlActivities(
             ControlStore(engine), control_journal, TemporalResearchCanceller(client)
@@ -152,9 +161,12 @@ def research_worker(
             ResearchWorkflowV2,
             ResearchWorkflowV3,
             ResearchWorkflowV4,
+            ResearchHistoryCleanupWorkflow,
             *([ControlWorkflow] if control is not None else []),
         ],
         activities=[
+            cleanup.page,
+            cleanup.erase,
             db.begin_research,
             db.begin_research_v2,
             db.begin_research_v3,
@@ -225,6 +237,7 @@ async def run(
             engine,
             daily_neuron_limit=int(values.get("WHISKY_DAILY_MODEL_NEURONS", "0")),
         )
+        await ensure_history_cleanup_schedule(client, task_queue)
         await research_worker(
             client,
             task_queue,

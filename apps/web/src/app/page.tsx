@@ -8,5 +8,6 @@ export default function Home() {
     <p><a href="/catalog">瀏覽已覆核酒款</a></p>
     <p><a href="/research">開始探索</a></p>
     <a href="/account">我的帳號</a>
+    <p><a href="/library">我的收藏與品飲回饋</a></p>
   </main>;
 }

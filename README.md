@@ -4,7 +4,7 @@
 
 ## 目前狀態
 
-T00–T09 已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、reviewed catalog、可靠受理、durable Agent、等待恢復、控制命令、真來源與配額均有本機與 CI 證據；[固定模型對照](backend/evals/T08_REVIEW.md)已完成人工 rubric，選定 Qwen。原 vinext SSR 因 Free CPU 門檻撤回。研究 worker、三款 reviewed catalog 與 migrations 已部署 Oracle VM；加密全備份、WAL PITR、外部停機 probe、真登入／跨帳號、告警收件及首次 main 排程已有真部署證據。T10 雙入口、偏好確認與比較正在 draft PR 實作，尚未部署或整體驗收；T11–T12 尚未完成。
+T00–T09 已驗收：Oracle 原生 Next.js／Node 經薄 Worker／VPC 對外服務，真 Google 登入、跨帳號隔離、串流／重連／取消、reviewed catalog、可靠受理、durable Agent、等待恢復、控制命令、真來源與配額均有本機與 CI 證據；[固定模型對照](backend/evals/T08_REVIEW.md)已完成人工 rubric，選定 Qwen。原 vinext SSR 因 Free CPU 門檻撤回。研究 worker、三款 reviewed catalog 與 migrations 已部署 Oracle VM；加密全備份、WAL PITR、外部停機 probe、真登入／跨帳號、告警收件及首次 main 排程已有真部署證據。T10 雙入口、偏好確認與比較正在 draft PR 實作，尚未部署或整體驗收；T11 的保存結論與私人回訪正在本機增量實作；收藏／回饋、匯出／刪除與 T12 仍待完成。
 
 主軸是保留喜歡的特徵、探索剛剛好的差異，最後留下可回看的選擇與取捨。互動流程、資料契約、建議工程預設與驗收情境見 [PRODUCT_SPEC.md](PRODUCT_SPEC.md)。目前有三款人工覆核起始樣本，完整探索功能仍待實作。
 

@@ -2,7 +2,7 @@
 
 import { useAuth0 } from "@auth0/auth0-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { safeReturnTo } from "../identity";
 import { observeTask } from "./observe";
 import { answerQuestion, createPlan, listOpenTasks, readReport, readTask, startResearchV4, type ReportView, type ResearchInputV4 } from "./client";
@@ -11,6 +11,7 @@ import {PreferenceProposalCard} from "./proposal-ui";
 import type { TaskView } from "./state";
 import {readComparison, type ComparisonReportView} from "./comparison-client";
 import {ComparisonReport} from "./comparison-ui";
+import {ApplyLongTermPreferences,BottleFeedbackEditor,ReportConclusion,type LongTermPreference} from "../library";
 
 function configured() {
   return Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN && process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID && process.env.NEXT_PUBLIC_AUTH0_AUDIENCE);
@@ -63,6 +64,10 @@ function ResearchStartSession() {
   const [originFeature,setOriginFeature]=useState("");
   const [candidateFeature,setCandidateFeature]=useState("");
   const [budget, setBudget] = useState("");
+  const [savedPreferences,setSavedPreferences]=useState<LongTermPreference[]>([]);
+  const [preferenceConflict,setPreferenceConflict]=useState<string|null>(null);
+  const preferenceToken=useCallback(async()=>requiredToken(await auth.getAccessTokenSilently()),[auth.getAccessTokenSilently]);
+  const selectPreferences=useCallback((values:LongTermPreference[])=>{setSavedPreferences(values);setAttempt(undefined);setPreferenceConflict(null);},[]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState<{planKey:string; startKey:string; threadId:string; runId:string; plan?:{id:string;conditionsRevision:number}}>();
@@ -89,6 +94,14 @@ function ResearchStartSession() {
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (busy || !(entry === "beginner" ? goal.trim() : origin.trim()) || (entry==="expert" && mode==="small_step" && (!keepFeature.trim() || !exploreFeature.trim())) || (entry==="expert" && mode==="contrast" && (!originFeature.trim() || !candidateFeature.trim()))) return;
+    setPreferenceConflict(null);
+    const retained=entry==="expert" && keepFeature.trim() ? savedPreferences.find(value=>value.description===keepFeature.trim()) : undefined;
+    if(retained?.intent==="avoid"){
+      setPreferenceConflict("已選排斥偏好與保留特徵衝突；請取消其中一項後再開始探索。");return;
+    }
+    if(savedPreferences.length+(entry==="expert" && keepFeature.trim() && !retained ? 1 : 0)>64){
+      setPreferenceConflict("一次探索最多 64 項偏好，請減少已選項目。");return;
+    }
     const generation=life.current;
     const current = attempt ?? {planKey:crypto.randomUUID(), startKey:crypto.randomUUID(), threadId:crypto.randomUUID(), runId:crypto.randomUUID()};
     setAttempt(current);
@@ -98,7 +111,12 @@ function ResearchStartSession() {
       try {
         const token = requiredToken(await auth.getAccessTokenSilently());
         if(generation!==life.current) return;
-        const plan = current.plan ?? await createPlan(token, current.planKey, entry === "beginner" ? goal.trim() : `從「${origin.trim()}」探索`, budget ? budget : null, entry==="expert" && keepFeature.trim() ? [{description:keepFeature.trim(),intent:"keep",certainty:"user_stated",strength:"soft"}] : []);
+        const preferences=savedPreferences.map(value=>({description:value.description,intent:value.intent,certainty:"user_stated" as const,strength:value.strength}));
+        if(entry==="expert" && keepFeature.trim()){
+          const existing=preferences.findIndex(value=>value.description===keepFeature.trim());
+          if(existing!==-1)preferences.splice(existing,1);
+        }
+        const plan = current.plan ?? await createPlan(token, current.planKey, entry === "beginner" ? goal.trim() : `從「${origin.trim()}」探索`, budget ? budget : null, [...preferences,...(entry==="expert" && keepFeature.trim() ? [{description:keepFeature.trim(),intent:"keep" as const,certainty:"user_stated" as const,strength:retained?.strength ?? "soft" as const}] : [])]);
         if(generation!==life.current) return;
         current.plan = plan;
         const input:ResearchInputV4={schemaVersion:4,phase:entry === "beginner" ? "proposal" : "research",sourceText:entry === "beginner" ? goal : null,intent:{mode:entry === "beginner" ? "style_options" : mode,origin_query:entry === "expert" ? origin.trim() : null,smoke_comparison:false,explore_feature:entry==="expert" && mode==="small_step" ? exploreFeature.trim() : null,contrast:entry==="expert" && mode==="contrast" ? {axis:"flavor_description",origin_feature:originFeature.trim(),candidate_feature:candidateFeature.trim()} : null}};
@@ -125,9 +143,11 @@ function ResearchStartSession() {
     {mode==="contrast" && <><label>起點風味描述<input required maxLength={1000} value={originFeature} onChange={event=>{setOriginFeature(event.target.value);setAttempt(undefined);}} placeholder="例如：蜂蜜"/></label><label>想對比的風味描述<input required maxLength={1000} value={candidateFeature} onChange={event=>{setCandidateFeature(event.target.value);setAttempt(undefined);}} placeholder="例如：葡萄乾"/></label><p>比較只引用兩端已覆核描述，資料不足時會明示；不推算煙燻強弱。</p></>}
     <p>研究會先請你確認已覆核的版本；未收錄的酒款會明示資料不足。</p></>}
     <label>預算上限（新台幣，可留空）<input type="number" min="1" step="0.01" value={budget} onChange={event => {setBudget(event.target.value); setAttempt(undefined);}} /></label>
+    <ApplyLongTermPreferences token={preferenceToken} onChange={selectPreferences} disabled={busy}/>
     <button type="submit" disabled={busy}>{busy ? "建立委託中…" : "開始探索"}</button>
     </fieldset>
     {error && <p role="alert">委託暫時無法確認；重試會使用同一筆指令。</p>}
+    {preferenceConflict && <p role="alert">{preferenceConflict}</p>}
   </form>{tasksError && <p role="alert">暫時無法讀取未完成的探索。
     <button type="button" onClick={() => setTasksRefresh(value => value + 1)}>重新讀取探索</button>
   </p>}{openTasks.length > 0 && <section><h2>未完成的探索</h2>
@@ -156,6 +176,7 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
   const [refresh, setRefresh] = useState(0);
   const {isAuthenticated, getAccessTokenSilently} = auth;
   const activeRunId = task?.activeRunId;
+  const conclusionToken=useCallback(async()=>requiredToken(await getAccessTokenSilently()),[getAccessTokenSilently]);
 
   useEffect(()=>{
     setProposal(null);setProposalError(false);
@@ -299,7 +320,9 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
         {report.candidates.map(candidate => <section key={candidate.itemId}><h3>{candidate.name}</h3><p>{candidate.reason}</p>
           {candidate.prices.map(price => <p key={price.id}>參考價格：{price.amount ?? "未提供"} {price.currency}／{price.volumeMl ?? "?"} ml，{price.market}，查核日期 {price.checkedOn ?? "未提供"}</p>)}
           {candidate.claims.flatMap(claim => claim.sources).map(source => <p key={source.evidenceId}>來源：<a href={source.url} target="_blank" rel="noopener noreferrer">{source.publisher ?? source.url}</a>（{source.checkedOn}）</p>)}
+          <BottleFeedbackEditor version={candidate.bottleVersionId} name={candidate.name} token={conclusionToken}/>
         </section>)}
+        <ReportConclusion key={`${report.id}:${task.conditionsRevision}`} reportId={report.id} taskId={task.taskId} revision={task.conditionsRevision} candidates={report.candidates.map(candidate=>({versionId:candidate.bottleVersionId,name:candidate.name}))} getToken={conclusionToken}/>
         {Boolean(report.sourceObservations?.length) && <section><h3>本次來源讀取（未覆核）</h3>
           <p>以下是本次讀取的頁面觀察，尚未納入已覆核事實、推薦或預算判定。</p>
           {report.sourceObservations.map(observation => <div key={observation.id}>

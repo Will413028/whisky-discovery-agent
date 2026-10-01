@@ -7,6 +7,16 @@ from whisky.bootstrap.api import create_app
 from whisky.modules.catalog.http import CatalogView
 from whisky.modules.control.http import ControlView
 from whisky.modules.discovery.http import PlanListView, PlanView
+from whisky.modules.library.contracts import (
+    BottleFeedbackListViewV1,
+    BottleFeedbackViewV1,
+    ConclusionContextViewV1,
+    ConclusionListViewV1,
+    ConclusionRevisitViewV1,
+    ConclusionViewV1,
+    LongTermPreferencesViewV1,
+)
+from whisky.modules.library.export_views import AccountExportViewV1
 from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.inputs_v4 import StartCommandV4
 from whisky.modules.research.proposal_view_v4 import PreferenceProposalViewV4
@@ -43,6 +53,7 @@ target.with_name("catalog-view.schema.json").write_text(
     + "\n"
 )
 for name, model in (
+    ("account-export-view", AccountExportViewV1),
     ("plan-view", PlanView),
     ("plan-list-view", PlanListView),
     ("control-view", ControlView),
@@ -50,6 +61,13 @@ for name, model in (
     ("comparison-report-view", ComparisonReportViewV4),
     ("preference-proposal-view", PreferenceProposalViewV4),
     ("restart-context-view", RestartContextViewV4),
+    ("conclusion-view", ConclusionViewV1),
+    ("conclusion-list-view", ConclusionListViewV1),
+    ("conclusion-context-view", ConclusionContextViewV1),
+    ("conclusion-revisit-view", ConclusionRevisitViewV1),
+    ("bottle-feedback-view", BottleFeedbackViewV1),
+    ("bottle-feedback-list-view", BottleFeedbackListViewV1),
+    ("long-term-preferences-view", LongTermPreferencesViewV1),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "observedDateUtc": "2026-10-01",
+  "scope": "Read-only aggregate counts from the existing project database; no personal payloads or credential values read or emitted.",
+  "production": {
+    "migration": "0012_recovery_gate",
+    "plans_total": 5,
+    "tasks_total": 5,
+    "control_rows": 2,
+    "plans_deleted": 0,
+    "plan_schema_versions": [
+      1
+    ],
+    "task_schema_versions": [
+      1
+    ],
+    "condition_change_rows": 1
+  },
+  "applicationChanges": false,
+  "limitations": [
+    "Inventory does not prove migration compatibility or deployed T11 behavior.",
+    "Production remains schema0012; isolated test migrations are not production deployment."
+  ]
+}

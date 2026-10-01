@@ -1,0 +1,2150 @@
+{
+  "$defs": {
+    "AccountExportDataV1": {
+      "additionalProperties": false,
+      "properties": {
+        "agentTurns": {
+          "items": {
+            "$ref": "#/$defs/AgentTurnExportV1"
+          },
+          "title": "Agentturns",
+          "type": "array"
+        },
+        "catalogEvidence": {
+          "items": {
+            "$ref": "#/$defs/CatalogEvidenceExportV1"
+          },
+          "title": "Catalogevidence",
+          "type": "array"
+        },
+        "catalogItems": {
+          "items": {
+            "$ref": "#/$defs/CatalogItemExportV1"
+          },
+          "title": "Catalogitems",
+          "type": "array"
+        },
+        "catalogPrices": {
+          "items": {
+            "$ref": "#/$defs/CatalogPriceExportV1"
+          },
+          "title": "Catalogprices",
+          "type": "array"
+        },
+        "comparisons": {
+          "items": {
+            "$ref": "#/$defs/ComparisonExportV1"
+          },
+          "title": "Comparisons",
+          "type": "array"
+        },
+        "conclusions": {
+          "items": {
+            "$ref": "#/$defs/ConclusionExportV1"
+          },
+          "title": "Conclusions",
+          "type": "array"
+        },
+        "conditionChanges": {
+          "items": {
+            "$ref": "#/$defs/ConditionChangeExportV1"
+          },
+          "title": "Conditionchanges",
+          "type": "array"
+        },
+        "feedback": {
+          "items": {
+            "$ref": "#/$defs/FeedbackExportV1"
+          },
+          "title": "Feedback",
+          "type": "array"
+        },
+        "identities": {
+          "items": {
+            "$ref": "#/$defs/IdentityExportV1"
+          },
+          "title": "Identities",
+          "type": "array"
+        },
+        "libraryHistory": {
+          "items": {
+            "$ref": "#/$defs/LibraryHistoryExportV1"
+          },
+          "title": "Libraryhistory",
+          "type": "array"
+        },
+        "plans": {
+          "items": {
+            "$ref": "#/$defs/PlanExportV1"
+          },
+          "title": "Plans",
+          "type": "array"
+        },
+        "preferenceProposals": {
+          "items": {
+            "$ref": "#/$defs/ProposalExportV1"
+          },
+          "title": "Preferenceproposals",
+          "type": "array"
+        },
+        "preferences": {
+          "items": {
+            "$ref": "#/$defs/PreferencesExportV1"
+          },
+          "title": "Preferences",
+          "type": "array"
+        },
+        "questions": {
+          "items": {
+            "$ref": "#/$defs/QuestionExportV1"
+          },
+          "title": "Questions",
+          "type": "array"
+        },
+        "reportCandidates": {
+          "items": {
+            "$ref": "#/$defs/ReportCandidateExportV1"
+          },
+          "title": "Reportcandidates",
+          "type": "array"
+        },
+        "reportCitations": {
+          "items": {
+            "$ref": "#/$defs/ReportCitationExportV1"
+          },
+          "title": "Reportcitations",
+          "type": "array"
+        },
+        "reportClaims": {
+          "items": {
+            "$ref": "#/$defs/ReportClaimExportV1"
+          },
+          "title": "Reportclaims",
+          "type": "array"
+        },
+        "reportPrices": {
+          "items": {
+            "$ref": "#/$defs/ReportPriceExportV1"
+          },
+          "title": "Reportprices",
+          "type": "array"
+        },
+        "reportSourceObservations": {
+          "items": {
+            "$ref": "#/$defs/ReportSourceObservationExportV1"
+          },
+          "title": "Reportsourceobservations",
+          "type": "array"
+        },
+        "reports": {
+          "items": {
+            "$ref": "#/$defs/ReportExportV1"
+          },
+          "title": "Reports",
+          "type": "array"
+        },
+        "researchInputs": {
+          "items": {
+            "$ref": "#/$defs/ResearchInputExportV1"
+          },
+          "title": "Researchinputs",
+          "type": "array"
+        },
+        "sourceObservations": {
+          "items": {
+            "$ref": "#/$defs/SourceObservationExportV1"
+          },
+          "title": "Sourceobservations",
+          "type": "array"
+        },
+        "tasks": {
+          "items": {
+            "$ref": "#/$defs/TaskExportV1"
+          },
+          "title": "Tasks",
+          "type": "array"
+        }
+      },
+      "required": [
+        "identities",
+        "plans",
+        "tasks",
+        "reports",
+        "questions",
+        "preferenceProposals",
+        "sourceObservations",
+        "researchInputs",
+        "agentTurns",
+        "comparisons",
+        "conclusions",
+        "feedback",
+        "preferences",
+        "reportCandidates",
+        "reportClaims",
+        "reportCitations",
+        "reportPrices",
+        "reportSourceObservations",
+        "catalogItems",
+        "catalogEvidence",
+        "catalogPrices",
+        "libraryHistory",
+        "conditionChanges"
+      ],
+      "title": "AccountExportDataV1",
+      "type": "object"
+    },
+    "AgentTurnExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "outcome": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "run_id": {
+          "format": "uuid",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "thread_id",
+        "run_id",
+        "outcome",
+        "created_at"
+      ],
+      "title": "AgentTurnExportV1",
+      "type": "object"
+    },
+    "BottleFeedbackViewV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottleVersionId": {
+          "format": "uuid",
+          "title": "Bottleversionid",
+          "type": "string"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "title": "Createdat",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "default": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "tasting": {
+          "enum": [
+            "not_tasted",
+            "liked",
+            "disliked"
+          ],
+          "title": "Tasting",
+          "type": "string"
+        },
+        "tastingReason": {
+          "title": "Tastingreason",
+          "type": "string"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "title": "Updatedat",
+          "type": "string"
+        },
+        "wantToExplore": {
+          "title": "Wanttoexplore",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "bottleVersionId",
+        "revision",
+        "wantToExplore",
+        "tasting",
+        "tastingReason",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "BottleFeedbackViewV1",
+      "type": "object"
+    },
+    "CatalogEvidenceExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "captured_at": {
+          "format": "date-time",
+          "title": "Captured At",
+          "type": "string"
+        },
+        "checked_on": {
+          "format": "date",
+          "title": "Checked On",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "publisher": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Publisher"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "source_id": {
+          "format": "uuid",
+          "title": "Source Id",
+          "type": "string"
+        },
+        "url": {
+          "title": "Url",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "id",
+        "source_id",
+        "bottle_version_id",
+        "url",
+        "publisher",
+        "captured_at",
+        "checked_on"
+      ],
+      "title": "CatalogEvidenceExportV1",
+      "type": "object"
+    },
+    "CatalogItemExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "abv": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Abv"
+        },
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "reviewed_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Reviewed On"
+        },
+        "volume_ml": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Volume Ml"
+        }
+      },
+      "required": [
+        "release_id",
+        "id",
+        "bottle_version_id",
+        "name",
+        "abv",
+        "volume_ml",
+        "reviewed_on"
+      ],
+      "title": "CatalogItemExportV1",
+      "type": "object"
+    },
+    "CatalogPriceExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "amount": {
+          "anyOf": [
+            {
+              "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Amount"
+        },
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "checked_on": {
+          "anyOf": [
+            {
+              "format": "date",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Checked On"
+        },
+        "currency": {
+          "title": "Currency",
+          "type": "string"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "market": {
+          "title": "Market",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "unconditional": {
+          "title": "Unconditional",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "release_id",
+        "id",
+        "item_id",
+        "evidence_id",
+        "bottle_version_id",
+        "amount",
+        "checked_on",
+        "market",
+        "currency",
+        "unconditional"
+      ],
+      "title": "CatalogPriceExportV1",
+      "type": "object"
+    },
+    "CatalogReference": {
+      "additionalProperties": false,
+      "properties": {
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "release_id",
+        "item_id"
+      ],
+      "title": "CatalogReference",
+      "type": "object"
+    },
+    "ComparisonExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Content",
+          "type": "object"
+        },
+        "report_id": {
+          "format": "uuid",
+          "title": "Report Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "task_id",
+        "schema_version",
+        "content"
+      ],
+      "title": "ComparisonExportV1",
+      "type": "object"
+    },
+    "ConclusionExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "catalog_release_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Catalog Release Id"
+        },
+        "conditions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Conditions",
+          "type": "object"
+        },
+        "conditions_revision": {
+          "title": "Conditions Revision",
+          "type": "integer"
+        },
+        "content": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Content",
+          "type": "object"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Deleted At"
+        },
+        "evaluated_on": {
+          "format": "date",
+          "title": "Evaluated On",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "plan_id": {
+          "format": "uuid",
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "report_id": {
+          "format": "uuid",
+          "title": "Report Id",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "plan_id",
+        "task_id",
+        "report_id",
+        "conditions_revision",
+        "conditions",
+        "catalog_release_id",
+        "evaluated_on",
+        "revision",
+        "content",
+        "created_at",
+        "updated_at",
+        "deleted_at"
+      ],
+      "title": "ConclusionExportV1",
+      "type": "object"
+    },
+    "ConclusionViewV1": {
+      "additionalProperties": false,
+      "allOf": [
+        {
+          "else": {
+            "properties": {
+              "alternativeVersionIds": {
+                "maxItems": 3
+              },
+              "selectedBottleName": {
+                "type": "null"
+              },
+              "selectedVersionId": {
+                "type": "null"
+              }
+            }
+          },
+          "if": {
+            "properties": {
+              "outcome": {
+                "const": "selected"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "alternativeVersionIds": {
+                "maxItems": 2
+              },
+              "selectedBottleName": {
+                "not": {
+                  "type": "null"
+                }
+              },
+              "selectedVersionId": {
+                "not": {
+                  "type": "null"
+                }
+              }
+            }
+          }
+        }
+      ],
+      "properties": {
+        "alternativeVersionIds": {
+          "items": {
+            "format": "uuid",
+            "type": "string"
+          },
+          "title": "Alternativeversionids",
+          "type": "array",
+          "uniqueItems": true
+        },
+        "catalogReleaseId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Catalogreleaseid"
+        },
+        "conditions": {
+          "$ref": "#/$defs/ResearchConditions"
+        },
+        "conditionsRevision": {
+          "minimum": 1,
+          "title": "Conditionsrevision",
+          "type": "integer"
+        },
+        "createdAt": {
+          "format": "date-time",
+          "title": "Createdat",
+          "type": "string"
+        },
+        "evaluatedOn": {
+          "format": "date",
+          "title": "Evaluatedon",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "outcome": {
+          "enum": [
+            "selected",
+            "no_suitable"
+          ],
+          "title": "Outcome",
+          "type": "string"
+        },
+        "planId": {
+          "format": "uuid",
+          "title": "Planid",
+          "type": "string"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "reportId": {
+          "format": "uuid",
+          "title": "Reportid",
+          "type": "string"
+        },
+        "revision": {
+          "minimum": 1,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "default": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "selectedBottleName": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selectedbottlename"
+        },
+        "selectedVersionId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selectedversionid"
+        },
+        "taskId": {
+          "format": "uuid",
+          "title": "Taskid",
+          "type": "string"
+        },
+        "tradeoff": {
+          "title": "Tradeoff",
+          "type": "string"
+        },
+        "updatedAt": {
+          "format": "date-time",
+          "title": "Updatedat",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "planId",
+        "taskId",
+        "reportId",
+        "conditionsRevision",
+        "conditions",
+        "catalogReleaseId",
+        "evaluatedOn",
+        "revision",
+        "outcome",
+        "selectedVersionId",
+        "selectedBottleName",
+        "alternativeVersionIds",
+        "reason",
+        "tradeoff",
+        "createdAt",
+        "updatedAt"
+      ],
+      "title": "ConclusionViewV1",
+      "type": "object"
+    },
+    "ConditionChangeExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "expected_revision": {
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "new_conditions": {
+          "$ref": "#/$defs/ResearchConditions"
+        },
+        "status": {
+          "enum": [
+            "pending",
+            "intent_confirmed",
+            "effect_applied",
+            "effect_rejected",
+            "completed",
+            "rejected"
+          ],
+          "title": "Status",
+          "type": "string"
+        },
+        "target_id": {
+          "format": "uuid",
+          "title": "Target Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "target_id",
+        "expected_revision",
+        "status",
+        "new_conditions",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "ConditionChangeExportV1",
+      "type": "object"
+    },
+    "FeedbackExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "tasting": {
+          "enum": [
+            "not_tasted",
+            "liked",
+            "disliked"
+          ],
+          "title": "Tasting",
+          "type": "string"
+        },
+        "tasting_reason": {
+          "title": "Tasting Reason",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "want_to_explore": {
+          "title": "Want To Explore",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "bottle_version_id",
+        "revision",
+        "want_to_explore",
+        "tasting",
+        "tasting_reason",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "FeedbackExportV1",
+      "type": "object"
+    },
+    "IdentityExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "issuer": {
+          "title": "Issuer",
+          "type": "string"
+        },
+        "subject": {
+          "title": "Subject",
+          "type": "string"
+        }
+      },
+      "required": [
+        "issuer",
+        "subject"
+      ],
+      "title": "IdentityExportV1",
+      "type": "object"
+    },
+    "JsonValue": {},
+    "LibraryHistoryExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "response": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ConclusionViewV1"
+            },
+            {
+              "$ref": "#/$defs/BottleFeedbackViewV1"
+            },
+            {
+              "$ref": "#/$defs/LongTermPreferencesViewV1"
+            }
+          ],
+          "title": "Response"
+        },
+        "scope": {
+          "enum": [
+            "conclusions.save",
+            "feedback.save",
+            "preferences.save"
+          ],
+          "title": "Scope",
+          "type": "string"
+        },
+        "target_id": {
+          "format": "uuid",
+          "title": "Target Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "scope",
+        "target_id",
+        "response",
+        "created_at"
+      ],
+      "title": "LibraryHistoryExportV1",
+      "type": "object"
+    },
+    "LongTermPreferenceV1": {
+      "additionalProperties": false,
+      "properties": {
+        "certainty": {
+          "const": "user_stated",
+          "default": "user_stated",
+          "title": "Certainty",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "prefer",
+            "avoid"
+          ],
+          "title": "Intent",
+          "type": "string"
+        },
+        "sourceFeedbackId": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcefeedbackid"
+        },
+        "sourceFeedbackRevision": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sourcefeedbackrevision"
+        },
+        "statement": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Statement",
+          "type": "string"
+        },
+        "strength": {
+          "enum": [
+            "soft",
+            "hard"
+          ],
+          "title": "Strength",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "intent",
+        "strength",
+        "statement"
+      ],
+      "title": "LongTermPreferenceV1",
+      "type": "object"
+    },
+    "LongTermPreferencesViewV1": {
+      "additionalProperties": false,
+      "properties": {
+        "preferences": {
+          "items": {
+            "$ref": "#/$defs/LongTermPreferenceV1"
+          },
+          "maxItems": 64,
+          "title": "Preferences",
+          "type": "array"
+        },
+        "revision": {
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schemaVersion": {
+          "const": 1,
+          "default": 1,
+          "title": "Schemaversion",
+          "type": "integer"
+        },
+        "updatedAt": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Updatedat"
+        }
+      },
+      "required": [
+        "revision",
+        "preferences",
+        "updatedAt"
+      ],
+      "title": "LongTermPreferencesViewV1",
+      "type": "object"
+    },
+    "PlanExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "conditions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Conditions",
+          "type": "object"
+        },
+        "conditions_revision": {
+          "title": "Conditions Revision",
+          "type": "integer"
+        },
+        "conditions_schema_version": {
+          "title": "Conditions Schema Version",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "deleted_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Deleted At"
+        },
+        "generation": {
+          "title": "Generation",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "generation",
+        "conditions_revision",
+        "conditions_schema_version",
+        "conditions",
+        "created_at",
+        "updated_at",
+        "deleted_at"
+      ],
+      "title": "PlanExportV1",
+      "type": "object"
+    },
+    "Preference": {
+      "additionalProperties": false,
+      "properties": {
+        "certainty": {
+          "enum": [
+            "user_stated",
+            "inferred",
+            "unknown"
+          ],
+          "title": "Certainty",
+          "type": "string"
+        },
+        "description": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "intent": {
+          "enum": [
+            "prefer",
+            "keep",
+            "change",
+            "avoid"
+          ],
+          "title": "Intent",
+          "type": "string"
+        },
+        "strength": {
+          "enum": [
+            "soft",
+            "hard"
+          ],
+          "title": "Strength",
+          "type": "string"
+        }
+      },
+      "required": [
+        "description",
+        "intent",
+        "certainty",
+        "strength"
+      ],
+      "title": "Preference",
+      "type": "object"
+    },
+    "PreferencesExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "preferences": {
+          "items": {
+            "$ref": "#/$defs/LongTermPreferenceV1"
+          },
+          "title": "Preferences",
+          "type": "array"
+        },
+        "revision": {
+          "title": "Revision",
+          "type": "integer"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "revision",
+        "preferences",
+        "updated_at"
+      ],
+      "title": "PreferencesExportV1",
+      "type": "object"
+    },
+    "ProposalExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "base_conditions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Base Conditions",
+          "type": "object"
+        },
+        "conditions_revision": {
+          "title": "Conditions Revision",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "generation": {
+          "title": "Generation",
+          "type": "integer"
+        },
+        "plan_id": {
+          "format": "uuid",
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "prompt_version": {
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "proposal": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Proposal",
+          "type": "object"
+        },
+        "source_text": {
+          "title": "Source Text",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "plan_id",
+        "generation",
+        "conditions_revision",
+        "base_conditions",
+        "source_text",
+        "proposal",
+        "prompt_version",
+        "created_at"
+      ],
+      "title": "ProposalExportV1",
+      "type": "object"
+    },
+    "QuestionExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "answer": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Answer"
+        },
+        "answered_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Answered At"
+        },
+        "choices": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "conditions_revision": {
+          "title": "Conditions Revision",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "generation": {
+          "title": "Generation",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "prompt": {
+          "title": "Prompt",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "waiting_version": {
+          "title": "Waiting Version",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "generation",
+        "conditions_revision",
+        "waiting_version",
+        "kind",
+        "prompt",
+        "choices",
+        "status",
+        "expires_at",
+        "answer",
+        "created_at",
+        "answered_at"
+      ],
+      "title": "QuestionExportV1",
+      "type": "object"
+    },
+    "ReportCandidateExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "ordinal": {
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "reason": {
+          "title": "Reason",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "report_id": {
+          "format": "uuid",
+          "title": "Report Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "ordinal",
+        "release_id",
+        "item_id",
+        "bottle_version_id",
+        "reason"
+      ],
+      "title": "ReportCandidateExportV1",
+      "type": "object"
+    },
+    "ReportCitationExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "claim_ordinal": {
+          "title": "Claim Ordinal",
+          "type": "integer"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "ordinal": {
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "report_id": {
+          "format": "uuid",
+          "title": "Report Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "ordinal",
+        "claim_ordinal",
+        "release_id",
+        "item_id",
+        "bottle_version_id",
+        "kind",
+        "key",
+        "evidence_id"
+      ],
+      "title": "ReportCitationExportV1",
+      "type": "object"
+    },
+    "ReportClaimExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "claim_ordinal": {
+          "title": "Claim Ordinal",
+          "type": "integer"
+        },
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "key": {
+          "title": "Key",
+          "type": "string"
+        },
+        "kind": {
+          "title": "Kind",
+          "type": "string"
+        },
+        "ordinal": {
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "report_id": {
+          "format": "uuid",
+          "title": "Report Id",
+          "type": "string"
+        },
+        "value": {
+          "title": "Value",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "ordinal",
+        "claim_ordinal",
+        "release_id",
+        "item_id",
+        "bottle_version_id",
+        "kind",
+        "key",
+        "value"
+      ],
+      "title": "ReportClaimExportV1",
+      "type": "object"
+    },
+    "ReportExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "catalog_release_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Catalog Release Id"
+        },
+        "clarification_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Clarification Id"
+        },
+        "conditions_revision": {
+          "title": "Conditions Revision",
+          "type": "integer"
+        },
+        "content": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Content",
+          "type": "object"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "evaluated_on": {
+          "format": "date",
+          "title": "Evaluated On",
+          "type": "string"
+        },
+        "generation": {
+          "title": "Generation",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "model_version": {
+          "title": "Model Version",
+          "type": "string"
+        },
+        "policy_version": {
+          "title": "Policy Version",
+          "type": "string"
+        },
+        "prompt_version": {
+          "title": "Prompt Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "selected_item_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selected Item Id"
+        },
+        "selected_label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selected Label"
+        },
+        "selected_version_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Selected Version Id"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "generation",
+        "conditions_revision",
+        "catalog_release_id",
+        "evaluated_on",
+        "policy_version",
+        "prompt_version",
+        "model_version",
+        "schema_version",
+        "content",
+        "clarification_id",
+        "selected_version_id",
+        "selected_label",
+        "selected_item_id",
+        "created_at"
+      ],
+      "title": "ReportExportV1",
+      "type": "object"
+    },
+    "ReportPriceExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "item_id": {
+          "format": "uuid",
+          "title": "Item Id",
+          "type": "string"
+        },
+        "ordinal": {
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "price_id": {
+          "format": "uuid",
+          "title": "Price Id",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "report_id": {
+          "format": "uuid",
+          "title": "Report Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "ordinal",
+        "release_id",
+        "item_id",
+        "bottle_version_id",
+        "price_id"
+      ],
+      "title": "ReportPriceExportV1",
+      "type": "object"
+    },
+    "ReportSourceObservationExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "observation_id": {
+          "format": "uuid",
+          "title": "Observation Id",
+          "type": "string"
+        },
+        "ordinal": {
+          "title": "Ordinal",
+          "type": "integer"
+        },
+        "report_id": {
+          "format": "uuid",
+          "title": "Report Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "report_id",
+        "ordinal",
+        "observation_id"
+      ],
+      "title": "ReportSourceObservationExportV1",
+      "type": "object"
+    },
+    "ResearchConditions": {
+      "additionalProperties": false,
+      "properties": {
+        "budget_twd": {
+          "anyOf": [
+            {
+              "pattern": "^[0-9]+(?:\\.[0-9]+)?$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Budget Twd"
+        },
+        "entry": {
+          "enum": [
+            "beginner",
+            "existing_bottle"
+          ],
+          "title": "Entry",
+          "type": "string"
+        },
+        "goal": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Goal",
+          "type": "string"
+        },
+        "preferences": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Preference"
+          },
+          "maxItems": 64,
+          "title": "Preferences",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema Version",
+          "type": "integer"
+        },
+        "starting_bottle": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CatalogReference"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "entry",
+        "goal"
+      ],
+      "title": "ResearchConditions",
+      "type": "object"
+    },
+    "ResearchInputExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "input": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Input",
+          "type": "object"
+        },
+        "source_task_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Task Id"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "task_id",
+        "input",
+        "source_task_id"
+      ],
+      "title": "ResearchInputExportV1",
+      "type": "object"
+    },
+    "SourceObservationExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "bottle_version_id": {
+          "format": "uuid",
+          "title": "Bottle Version Id",
+          "type": "string"
+        },
+        "conditions_revision": {
+          "title": "Conditions Revision",
+          "type": "integer"
+        },
+        "content_sha256": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Content Sha256"
+        },
+        "effective_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Effective Url"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Error Code"
+        },
+        "evidence_id": {
+          "format": "uuid",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "generation": {
+          "title": "Generation",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "observed_at": {
+          "format": "date-time",
+          "title": "Observed At",
+          "type": "string"
+        },
+        "release_id": {
+          "format": "uuid",
+          "title": "Release Id",
+          "type": "string"
+        },
+        "review_status": {
+          "title": "Review Status",
+          "type": "string"
+        },
+        "source_checked_on": {
+          "format": "date",
+          "title": "Source Checked On",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "task_id": {
+          "format": "uuid",
+          "title": "Task Id",
+          "type": "string"
+        },
+        "visible_text": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Visible Text"
+        }
+      },
+      "required": [
+        "id",
+        "task_id",
+        "generation",
+        "conditions_revision",
+        "release_id",
+        "bottle_version_id",
+        "evidence_id",
+        "status",
+        "review_status",
+        "error_code",
+        "visible_text",
+        "effective_url",
+        "content_sha256",
+        "source_checked_on",
+        "observed_at"
+      ],
+      "title": "SourceObservationExportV1",
+      "type": "object"
+    },
+    "TaskExportV1": {
+      "additionalProperties": false,
+      "properties": {
+        "conditions": {
+          "additionalProperties": {
+            "$ref": "#/$defs/JsonValue"
+          },
+          "title": "Conditions",
+          "type": "object"
+        },
+        "conditions_revision": {
+          "title": "Conditions Revision",
+          "type": "integer"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "error": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "generation": {
+          "title": "Generation",
+          "type": "integer"
+        },
+        "id": {
+          "format": "uuid",
+          "title": "Id",
+          "type": "string"
+        },
+        "plan_id": {
+          "format": "uuid",
+          "title": "Plan Id",
+          "type": "string"
+        },
+        "question": {
+          "$ref": "#/$defs/JsonValue"
+        },
+        "report_id": {
+          "anyOf": [
+            {
+              "format": "uuid",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Report Id"
+        },
+        "stage": {
+          "title": "Stage",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "thread_id": {
+          "format": "uuid",
+          "title": "Thread Id",
+          "type": "string"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "plan_id",
+        "generation",
+        "conditions_revision",
+        "conditions",
+        "thread_id",
+        "status",
+        "stage",
+        "question",
+        "report_id",
+        "error",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "TaskExportV1",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "$ref": "#/$defs/AccountExportDataV1"
+    },
+    "exportedAt": {
+      "format": "date-time",
+      "title": "Exportedat",
+      "type": "string"
+    },
+    "generation": {
+      "minimum": 1,
+      "title": "Generation",
+      "type": "integer"
+    },
+    "ownerId": {
+      "format": "uuid",
+      "title": "Ownerid",
+      "type": "string"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "ownerId",
+    "generation",
+    "exportedAt",
+    "data"
+  ],
+  "title": "AccountExportViewV1",
+  "type": "object"
+}

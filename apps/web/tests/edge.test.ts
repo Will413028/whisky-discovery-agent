@@ -38,3 +38,23 @@ test("edge failures are safe and never cache private failures",async()=>{
     expect(await response.text()).not.toContain("private VM detail");
   }
 });
+
+test("only account export survives preparation past the ordinary edge deadline",async()=>{
+  vi.useFakeTimers();
+  vi.spyOn(AbortSignal,"timeout").mockImplementation(milliseconds=>{
+    const controller=new AbortController();
+    setTimeout(()=>controller.abort(),milliseconds);
+    return controller.signal;
+  });
+  try {
+    const binding={fetch:(request:Request)=>new Promise<Response>((resolve,reject)=>{
+      request.signal.addEventListener("abort",()=>reject(new Error("synthetic timeout")),{once:true});
+      setTimeout(()=>resolve(new Response("synthetic complete file")),100_000);
+    })};
+    const exportResult=edge.fetch(new Request("https://whisky.example/api/v1/library/export"),{WHISKY_WEB:binding});
+    const ordinaryResult=edge.fetch(new Request("https://whisky.example/api/v1/me"),{WHISKY_WEB:binding});
+    await vi.advanceTimersByTimeAsync(110_000);
+    expect((await exportResult).status).toBe(200);
+    expect((await ordinaryResult).status).toBe(503);
+  } finally {vi.clearAllTimers();vi.restoreAllMocks();vi.useRealTimers();}
+});

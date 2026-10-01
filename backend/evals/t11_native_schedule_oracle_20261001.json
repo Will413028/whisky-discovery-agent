@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "fixture_kind": "synthetic-empty-page-schedule",
+  "scope": "Native Schedule compatibility only; no product DB or model call",
+  "namespace": "whisky-t11-schedule-probe-3255d88147a5487a89c00d5589a71f67",
+  "started_at": "2026-10-01T12:22:20.004273+00:00",
+  "source_archive_sha256": "d5368a9dfa98983e090282941ed849ff1529b3e2d192a453c341b90b09372c1c",
+  "temporal_image": "1.29.7",
+  "passed": true,
+  "checks": {
+    "immediate_trigger_completed": true,
+    "existing_configuration_accepted": true,
+    "second_sweep_completed": true,
+    "paused_schedule_rejected": true,
+    "paused_schedule_not_overwritten": true,
+    "synthetic_schedule_deleted": true,
+    "synthetic_histories_observed_absent": true,
+    "synthetic_namespace_delete_requested": true
+  },
+  "cleanup_errors": [],
+  "page_calls": 2,
+  "observed_run_count": 2,
+  "finished_at": "2026-10-01T12:22:23.510756+00:00"
+}

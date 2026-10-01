@@ -53,21 +53,32 @@ class CatalogStore:
         ).all()
         candidates = []
         for identifier in identifiers:
-            item = CatalogStore._item(connection, release_id, identifier)
-            if item is None:
+            candidate = CatalogStore.candidate_in_release(
+                connection, release_id, identifier, as_of
+            )
+            if candidate is None:
                 continue
-            prices = published_prices(connection, release_id, identifier)
-            qualified = qualified_prices(
-                item.bottle, [price.observation for price in prices], as_of
-            )
-            candidate = CatalogCandidate(
-                release_id,
-                item,
-                tuple(price for price in prices if price.observation in qualified),
-            )
             if fits_budget(candidate.price_upper_bound, budget):
                 candidates.append(candidate)
         return tuple(candidates)
+
+    @staticmethod
+    def candidate_in_release(
+        connection: Connection, release_id: UUID, item_id: UUID, as_of: date
+    ) -> CatalogCandidate | None:
+        """Shared reviewed bottle and qualified-price projection for one item."""
+        item = CatalogStore._item(connection, release_id, item_id)
+        if item is None:
+            return None
+        prices = published_prices(connection, release_id, item_id)
+        qualified = qualified_prices(
+            item.bottle, [price.observation for price in prices], as_of
+        )
+        return CatalogCandidate(
+            release_id,
+            item,
+            tuple(price for price in prices if price.observation in qualified),
+        )
 
     def prices(self, release_id: UUID, item_id: UUID) -> tuple[PublishedPrice, ...]:
         with self.engine.connect() as connection:

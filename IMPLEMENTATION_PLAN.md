@@ -11,7 +11,7 @@
 | 技術入口 | T00–T02 | 已驗收；自動化、真 Auth0／Node／VPC 及隔離／串流 gate 證據見文末及 deploy/t02-node-entry-evidence.json |
 | 持久研究骨架與樣本 | T03–T09 | 已驗收；首次實際 schedule 與正式 control 放行證據見 T09 文末 |
 | 雙入口與探索計畫 | T10 | 進行中；公開 catalog／可靠 patch／plan與history UI／proposal slice 已本機 GREEN；完整雙入口與模型／部署出口仍待完成 |
-| 比較、回訪與資料管理 | T11 | 未開始 |
+| 比較、回訪與資料管理 | T11 | 保存結論／私人回訪的本機增量實作中；T10 未驗收，完整 T11 出口仍待完成 |
 | 展示資料與完整驗收 | T12 | 未開始 |
 
 狀態可為未開始、RED、GREEN、REFACTOR、已驗收、受阻。只有本階段的必要自動化與外部 gate 均通過才標已驗收；blocked 的整合不得用 mock 結果代替。規劃階段已結束，現依 T00 開始實作；下載、登入與部署授權仍依當次工作範圍處理。
@@ -282,6 +282,120 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - RED→GREEN：重開用目前 catalog／價格判資格，歷史理由保持當時快照；偏好與回饋修改有 owner／revision 與重送保障。
 - RED→GREEN：匯出僅包含自己的完整可匯出資料；刪除涵蓋 DB、相關 history、debug traces 與備份保存政策，重跑 T07／T09 對新增資料的防復活案例。
 - 出口：比較→選擇→收藏／喝過→重開→匯出／刪除旅程及跨帳號負例通過；不拿匯出檔代替備份。
+
+### T11 保存結論與私人回訪增量（2026-10-01，未驗收）
+
+- 前提：T10 尚未通過真模型／人工 rubric／正式部署出口；本增量於獨立 `feat/t11-library` worktree 接續 `230dd12`，不將提前實作稱為依賴已驗收。唯讀核對 Oracle：schema `0012_recovery_gate`、5 plans／5 tasks／3 reports，沒有 library tables；正式資料與 runtime 未變更。
+- 有效 RED：選擇 domain 8／取捨上限 1；結論 view 關聯 5；真 DB 保存與 receipt 7、刪除後 receipt 隱藏 1、重讀／移除可見性 2、分頁 1；signed JWT HTTP 2／分頁 query 5／報告 parent context 1。DDL JSON literal 被 SQLAlchemy 誤認 bind parameter 的 fixture error 不算 RED。交易故障回滾與 generation 變更負例是既有保障的回歸，沒有假稱 RED。
+- `0018_library_conclusions` 增 library 自有結論與一般 CRUD receipt。identity→plan 鎖定後，交易內驗 owner／generation、目前 plan revision、completed report／task 關係及選中版本資格；結論與 receipt 原子保存。重送先重驗可見性，再回原結果；已刪除或舊 generation 不藉 receipt 重新暴露。無適合保留當輪替代版本；選擇、理由、取捨不暗推收藏、喜歡或長期偏好。
+- 私人 POST／GET 結論、plan-scoped cursor 列表與 report conclusion-context 都接入 configured API／固定 Node proxy。context 由後端解析 plan，不以 URL 推測關聯；它只是 UI 提示，POST 仍交易重驗。原 `TaskView`、V1 conditions／control codec 與 workflow 未修改。
+- Web client／proxy／保存表單／回訪／context／頁面接線依次取得 7／3／1／1／3／2／2／1 有效 RED。保存「無適合」是明確選擇；未知結果保留同 key／body 重送，已知 401／404／409／422 拒絕保留 code 並提供恢復出口。條件已變更的歷史報告不露出保存表單；切換 subject 立即卸載舊私人清單。既有 browser 合成研究旅程增加保存→關頁→再登入找回理由，不代替真 Auth0 驗收。
+- 最後核對發現選中歷史結論缺酒名：真 DB／UI 各 1 RED→由 research 經 catalog public 解析原 sealed release／item／version，將選中名稱保存於結論與 receipt 快照。client 不可提交名稱；歷史頁明示「當時選擇」，不宣稱符合目前價格。
+- fresh backend／Web design-review 各發現 1 項：plan-scoped 索引缺 `plan_id`、已知拒絕被混成結果不明。兩項皆改；累積 ledger fixed 2／open 0，追加 context 與歷史名稱複查均 `NO DESIGN FINDINGS`。拒絕分類與恢復出口另取得 3 RED→library 23 GREEN；補酒名後 library 24 GREEN。fresh correctness／security review 無 findings，既有 owner／generation／revision／rollback／subject 負例屬 already protected。指令檔現行路徑與規則對帳 0 處修改。
+- 最終本機：backend **649 passed／345.61 秒**（`/tmp/whisky-t11-backend-release.log`）；installed wheel **4 passed／12.07 秒**、head0018（`/tmp/whisky-t11-wheel-release.log`）；ruff check／format、mypy95 source files、Python／Web boundaries、scripts unittest11、private startup gate 通過。Web **225 passed**（`/tmp/whisky-t11-web-release.log`）、typecheck、原生 Next build 通過；Node／workerd Playwright **13 passed／10.3 秒**（`/tmp/whisky-t11-browser-release.log`），包括明示合成的保存／關頁／再登入回訪。契約重生 hash 無 drift，frozen TaskView／V1 conditions／control codec 無 diff，whitespace 檢查通過。獨立空測試 DB 的 `EXPLAIN` 使用新增索引，Index Cond 含 owner／generation／plan（`/tmp/whisky-t11-query-plan.log`）；這不是實際負載效能驗收。
+- 尚未完成：收藏／喝過／偏好修改、完整私人匯出、DB／Temporal history／trace／備份清除與防復活；T11 完整旅程及正式跨瀏覽器 gate 未驗收。下面的回訪價格增量尚未部署。
+
+### T11 目前 catalog／價格回訪增量（2026-10-01，未驗收）
+
+- 真 DB 回訪先取得 2 RED，獨立 current view 解析保存的選中／替代版本，依保存當時的 budget 與目前 sealed release／30 日政策重算價格資格；不覆寫歷史理由或條件，也不稱為新的完整推薦。新 release 移除版本、owner／刪除隔離與過期價格負例是回歸保障。測試合成 budget seed 的 900 上限不足以讓所有酒款超價、移除 release 未同步剔除價格引用，兩項 fixture 設定錯誤已修，不計 RED。
+- signed JWT HTTP 的新回訪 GET 先 1 RED→GREEN，匿名 401／跨帳號 404／no-store 通過；日期由 server Asia/Taipei 計算，不接受 client 指定。client／固定 Node proxy 7 RED→GREEN；UI 超價／無法解析／暫時失敗重查 3 RED→GREEN，保存清單接線 1 RED→GREEN（另一測試因前例失敗留下 mock queue 的串連失敗不另計）。browser 合成旅程因缺回訪 fixture endpoint 得到 1 RED，再加入明示空候選 current view→13 GREEN。
+- design-review 發現沿用研究 snapshot 載入全库與不用的來源（A1）。指定版本 public query 取得 1 RED，改為最多三個版本的公開解析，共用 CatalogStore 單酒款價格資格核心；回訪與研究不複製政策、不加 include_sources 旗標。39 項 library／catalog／研究 snapshot 回歸通過，複查 fixed 1／open 0、無新增設計 findings。
+- Web 開啟歷史結論即重新查詢；價格區分未篩選／符合當時預算／超价／資料不足，展示查核日、TW／TWD／容量／來源。未解析版本保留歷史並給重新選方向與目前 catalog 出口；讀取失敗不把未知當符合，subject 切換或卸載 abort 並忽略晚到結果。新增生成 schema／TypeScript／AJV，原 TaskView／V1 codec 不變。
+- 完整本機：backend **657 passed／349.04 秒**（`/tmp/whisky-t11-revisit-backend-release.log`）、installed wheel **4／12.99 秒**（`/tmp/whisky-t11-revisit-wheel-release.log`）；ruff／format、mypy95、Python／Web boundaries、scripts11、private startup gate 通過。Web **235**（`/tmp/whisky-t11-revisit-web-release.log`）、typecheck、原生 build、Node／workerd browser **13／10.0 秒**（`/tmp/whisky-t11-revisit-browser-green.log`）通過。重生前後 contracts SHA256 相同、無 drift；原 TaskView／V1 codec 無 diff，最終 diff／whitespace 已檢查。最初 scripts 檢查用了錯誤檔名／缺 root 或 unittest top-level，屬命令錯誤，改依 README／CI 正式命令通過，不計 RED。這是本機增量，尚未用正式 Auth0／Oracle 驗收，不關閉 T11。
+
+### T11 收藏與品飲回饋增量（2026-10-01，未驗收）
+
+- `0019_bottle_feedback` 保存 owner／generation／明確版本 ID、獨立收藏旗標、喝過喜歡／不喜歡與原因；每個版本有 revision，初次 expectedRevision=0。只保存酒款 ID 與使用者資料，不推導長期偏好。首次保存經 catalog public 檢查目前已覆核版本；已有回饋可在版本移除後修改，保留退出途徑。
+- 普通同步 CRUD，actor 鎖內驗 generation／CAS，與 `library_commands` 的 `feedback.save` receipt 原子提交。相同 key／body 回原收據，不同 body 拒絕；舊 generation 不藉 receipt 回讀。account-scoped keyset 列表用 owner／generation／updated_at／id 索引，排除取消收藏且未品飲的空狀態，但保留 revision 與收據。
+- 有效 RED：domain 3、真 DB 初次／修改／資格 5、owner-scoped 讀取 1、分頁 1、signed JWT HTTP 1／無效 query 4；payload 去重、CAS 並行、交易 rollback 是已受保護的回歸。unit／integration test 同 basename 引發 collection error，改唯一檔名後才取得 RED，不把環境錯誤計為行為 RED。
+- Web client／固定 proxy 10 RED、editor 3 RED、研究候選接線 1 RED、列表移除出口／切換帳號 2 RED；token 晚到不得送舊 session 寫入另 1 RED。只收到合法 receipt 才顯示已保存；unknown 結果凍結 key／body，已知拒絕先重讀。`/library` 重新解析目前 catalog，回饋獨立於歷史結論與預算，未解析版本可取消收藏或重選。
+- fresh design-review 0 findings。獨立 correctness review 找到首頁更新失敗重試舊 next cursor：1 RED→記住失敗請求位置，複查 fixed1／open0。空白正規化假說由既有 `str_strip_whitespace=True` 保護，撤回，沒有多加補丁。指令檔現行規則對帳無需改動。
+- backend **675／597.44 秒**（`/tmp/whisky-t11-feedback-backend-release.log`）、wheel **4／15.42 秒**、ruff／format、mypy96、Python／Web boundaries、scripts11、private startup gate 通過。Web review 後 **254**（`/tmp/whisky-t11-feedback-web-reviewed.log`）、typecheck、原生 build 通過。新增 browser 合成收藏保存→丟失回覆→同命令重送→關頁登入重開→未品飲／移除版本出口，缺 fixture 接線先 1 RED，修正後全部 **14／24.5 秒**（`/tmp/whisky-t11-feedback-browser-final.log`）；其後僅修列表首頁 retry，對應回歸已 GREEN。生成物 SHA256 重生前後一致；frozen TaskView／V1 codec 不改，最終 diff／whitespace 已檢查。
+- 此增量未部署，不代替真 Auth0／Oracle／跨瀏覽器驗收。T11 長期明確偏好、完整匯出、實際清除及防復活仍待完成。
+
+### T11 長期明確偏好增量（2026-10-01，未驗收）
+
+- `0020_long_term_preferences` 保存 owner／generation 下的一份有界明確偏好集合，revision／CAS 與 `preferences.save` receipt 在 actor 鎖內原子提交。只接受 user_stated、明確陳述與喜歡／排斥、軟／硬限制；拒絕預算及 inferred 欄位。可連結自己的當代品飲回饋 ID／revision，但不由酒款全部標籤推論偏好。
+- 有效 RED：domain 5、真 DB 保存／收據／空狀態／隔離 5、signed JWT HTTP 3；修改／清空、並行 CAS、交易 rollback、来源 ownership／revision 與 generation 負例是回歸保障，domain＋store 合計 15 GREEN。新 profile schema 與 standalone validator 由契約生成，CI 檢查 drift。
+- Web client 3／proxy 2／editor 3／選擇套用 2／收藏列表接線 1／開始探索接線 1 RED。長期偏好預設不套用，本次預算獨立；熟手保留同特徵須保留原 hard 強度，與 avoid 衝突須先解決，兩項反例 RED→GREEN。
+- fresh design-review 無 findings；獨立 correctness review 找到 ACTOR_DISABLED 的 403 被誤判 unknown，新增 1 RED 後改為已知拒絕。同類搜尋 `rg -n '\[401.*404|ACTOR_DISABLED' apps/web/src/features/library` 確認結論及回饋保存也有同一分類缺漏，另 2 RED 後修正。拒絕後重讀，不盲目重送。指令檔現行規則无需改動。
+- Web **271 passed**（`/tmp/whisky-t11-library-disabled-green.log`）；此前原生 Next build／typecheck、Node／workerd browser **15／21.8 秒**（`/tmp/whisky-t11-preferences-browser-final.log`）、wheel **4／13.18 秒**、ruff／format、mypy98、Python／Web boundaries、scripts11 通過。browser 新案例是合成 API 的保存→重開→明確勾選套用，不取代真 Auth0。舊 saved 測試文字查詢會與非同步失敗訊息撞字、clearAllMocks 不清尚未消耗的 once queue，已改語意 heading 查詢及獨立清理；這是測試穩定性修正，不算新產品 RED。
+- 完整 backend **694／403.22 秒**（`/tmp/whisky-t11-preferences-backend-release.log`）通過。最後 403 client 修正後 typecheck、原生 build 與 browser **15／12.1 秒**（`/tmp/whisky-t11-preferences-browser-reviewed.log`）再次通過。生成 contracts SHA256 前後相同、無 drift，frozen TaskView／V1 conditions／control codec 無 diff；最終 diff／whitespace 已檢查。此增量未部署，T11 完整匯出、實際清除、防復活與正式旅程仍未完成。
+
+### T11 私人 JSON 匯出增量（2026-10-01，未驗收）
+
+- 固定 `GET /api/v1/library/export` 經 Bearer／no-store／同帳號 generation gate，單一 REPEATABLE READ 快照匯出自己的身份對應、可見計畫、研究／報告及其引用、結論、獨立回饋、明確偏好與仍保存的使用者修改歷史。模組各自提供 public export 契約，不由 library 直接讀其他模組的表。參考 catalog 僅攜帶這些私人資料實際引用的已封存版本、價格與證據。
+- HTTP endpoint 缺失、報告 claims 遺漏、身份對應遺漏、歷史偏好與條件修改遺漏各有可解釋 RED→GREEN。刪除計畫仍出現在匯出檔的反例已重現並修正；由可見 plan IDs 篩選研究、所有報告子資料、結論、結論 receipts 與條件修改。獨立酒款回饋／偏好仍可匯出。READ COMMITTED 降級 mutation 會使後段讀到新回饋，快照回歸測試捕捉此差異。
+- 獨立覆核 B1：DB projection 不應自行成為下載 wire schema，已改 closed Export V1 DTO、生成 OpenAPI／TypeScript／standalone validator 與 CI drift gate。P2：只匯出目前偏好會漏掉 receipts 仍保存的原文，已納入 typed libraryHistory／conditionChanges；覆核確認兩項與 deleted-plan 修正 fixed，無新增 findings。
+- Web 先核對 `/me` actor，再驗完整匯出契約與 owner；身份切換／unmount 中止請求，晚到 token 不觸發舊帳號匯出。固定檔名下載，不使用上游任意 filename。8 MiB 資源界線超過時明示失敗，不產生截斷檔案；更大帳戶的完整匯出出口仍需在 T11 驗收前處理。
+- targeted backend **28／43.59 秒**（`/tmp/whisky-t11-export-history-green.log`）、Web **277**（`/tmp/whisky-t11-export-web-full.log`）、mypy105、ruff／format、typecheck、原生 build、Python／Web boundaries、scripts11、installed wheel **4／21.39 秒** 通過。Node／workerd Playwright **16／33.7 秒**（`/tmp/whisky-t11-export-browser.log`）含合成帳號實際 JSON 下載；不代替正式 Auth0。完整 backend **705／567.20 秒**（`/tmp/whisky-t11-export-backend-release.log`）通過；未部署；T11 實際清除、防復活及真實帳號旅程仍未驗收。
+
+### T11 library 原文清除與還原防復活增量（2026-10-01，未驗收）
+
+- plan／actor delete 在原控制交易內先建立 parent fence，再透過 library public 契約刪除結論與 receipts；actor 同時清除自己的回饋／偏好。plan 刪除保留獨立回饋／偏好，新 generation 與其他帳號不受影響。完成研究也關閉 write_allowed，但保留原 completed 狀態與報告。
+- 實體原文清除 2 RED、完成研究 write fence 2 RED、還原原文防復活 2 RED、舊 completed write flag 還原 2 RED 均取得 GREEN。交易失敗回滾、跨帳號、新 generation、未刪 parent 禁止直接清除與外部 effect 不一致仍拒絕對帳是回歸保障。fixture 缺失、SQL bind 型別衝突與錯誤函式參數不計 RED。
+- 獨立 design review B1 指出 receipt 清除依賴 response.planId；以改變 wire JSON／移除結論的真 DB 反例取得 RED，改為 `0021_library_receipt_scope` typed plan_id、owner composite FK、scope CHECK 與 purge index。0020 舊 receipts 升級測試 1／8.10 秒通過，response 保持原值；複核無新增 design findings，另一次有界 correctness review 無確認缺陷。
+- 最終 purge／migration 定向 **16／23.04 秒**，較大 control 子集 **42／40.59 秒**；ruff／format、mypy106、Python boundaries、installed wheel **4／19.52 秒**（head0021）通過。完整 backend **720 passed、1 Temporal dev server 啟動逾時／766.92 秒**（`/tmp/whisky-t11-library-purge-backend-release.log`）；未改測試或產品後原樣重跑該項 **1 passed／10.63 秒**（`/tmp/whisky-t11-library-purge-temporal-startup-rerun.log`），不冒充同次 721 全綠。
+- 唯讀盤點正式 VM 仍是 schema0012，尚無 library_commands；未部署此增量。這只清除 library 原文並驗真 DB 邏輯還原，研究 DB 原文、Temporal history、traces、備份／控制紀錄保存政策與正式 PITR 仍待完整 T11 驗收。上一匯出提交 `78fba7c` 的 PR run36805217086／push run36805213561 各 backend／web jobs 均 success。
+
+### T11 大型完整匯出增量（2026-10-01，未驗收）
+
+- 取代 HTTP 的 8 MiB 總量拒絕：同一 owner／generation 與 REPEATABLE READ 快照逐筆驗 closed Export V1 DTO，先完成匿名暫存檔，再以 64 KiB chunks 回傳；記憶體 buffer 1 MiB。小型 `read` 相容介面仍保留界線。Web 下載原始 Blob，核對 owner／generation／schema／decoded bytes；小檔另驗完整 schema，避免大型資料重建 JS JSON 陣列。固定檔名與 Bearer／no-store 維持。
+- 大帳號 HTTP 超過 8 MiB 仍應完整回傳、下載 Blob 實際 bytes、edge 在 100 秒仍應等待匯出、準備超時、零列查詢後超時、最後 finish 超時各有可解釋 RED→GREEN。先前 Blob deep-equality 沒有捕捉缺陷，不計 RED；fixture typing／mypy 型別錯誤也不計 RED。
+- DB 查詢透過各模組 public owner-scoped SQL relation 篩選引用，不把所有 plan／catalog IDs 收集成 Python set；移除舊 ANY predicate 翻譯。準備期限 110 秒涵蓋連線取得與最後寫檔，逐查詢 statement timeout 最多 5 秒；API pool／connect／預設 statement timeout 各 5 秒。Web export 120 秒、edge 僅固定 GET export 130 秒；其他路由期限不變。超時／錯誤／下載中斷會關閉檔案，不回傳成功的截斷 JSON。
+- Compose API 專用 export-scratch volume、非 root 0700 目錄，未改 root read-only 或一般 /tmp 16 MiB；唯讀 Oracle 盤點 root 剩 100 GiB、可用 RAM 約 18 GiB，這不是新匯出的 VM 負載驗收。
+- 獨立 final review ledger：A1／B1／edge P2／deadline P3 均 fixed、open 0，NO NEW CONFIRMED DEFECTS；覆核唯讀、不代替測試或正式容量 gate。
+- 最後 backend 定向 **34／60.27 秒**（`/tmp/whisky-t11-export-finish-green.log`）、ruff／format、mypy107 通過。完整 backend **728 passed、1 BootstrapProbe workflow 超時／1255.87 秒**（`/tmp/whisky-t11-large-export-backend-release.log`）；該項未修改重跑 **1／4.14 秒**通過，超時根因未確定，不宣稱同次全綠。完整測試在最後 finish guard 之前；guard 之後由上述定向測試驗證。
+- Web **284**、typecheck、原生 Next build、Python／Web boundaries、scripts11、edge dry-run、最終 installed wheel **4／15.03 秒**通過；Node／workerd Playwright **17／21.6 秒**含小檔與 9 MiB 真下載（`/tmp/whisky-t11-large-export-browser.log`）。生成契約無 drift。尚未部署，不代替正式 Auth0、大帳號 Oracle 負載或 T11 完整資料清除驗收。
+
+### T11 清除前的每日用量保護（2026-10-01，未驗收）
+
+- 已結束 attempts 被實體清除後，同帳號第二次 reservation 繞過 daily cap 的真 DB 反例先 RED。新增 `0022_owner_daily_usage` owner／UTC day／reserved neurons 彙總，回填全部 model attempts（包含 unknown 與 overage），不保存 task／原文／provider response；不與 task cascade 綁定。reserve 與 provider overage 在原交易內同時更新 global／owner counters，重送／finish 冪等維持。
+- quota **12／15.47 秒** GREEN；真0021→0022 migration 與 quota **13／83.42 秒**通過（`/tmp/whisky-t11-purge-quota-migration.log`）。補驗 model saved-rate overage 後 quota **12／31.49 秒**通過。ruff／format、mypy107、Python boundary、wheel **4／32.11 秒**通過。獨立 correctness/security review NO CONFIRMED DEFECTS；不宣稱已完成研究原文清除或彙總到期政策。
+
+### T11 研究 DB 原文清除增量（2026-10-01，未驗收）
+
+- plan／actor delete 與還原對帳在同一交易中，先鎖定 parent fence、清除 library，再透過 research public 契約清除報告與子列、來源觀察、Agent turns、補答、命令、偏好草稿與 V4 inputs；task 保留 opaque fence／workflow ID，條件、問題、錯誤與報告指標清空，狀態 cancelled。conditions-change 不清除歷史報告。
+- 已結束 usage attempts 清除；active attempts 保留到 provider finish，以免實際 overage 漏記。每日 owner／global 彙總保持，不能藉刪除重新取得當日額度。
+- 真 DB 原文與還原反例先取得 **4 RED／10.55 秒**，最小實作 **4 GREEN／9.38 秒**。控制／library／還原定向 **47／44.92 秒**；跨帳號、新 generation、未刪 parent、交易回滾與 active usage 回歸 **10／17.68 秒**，後加回歸不冒充初始 RED。
+- 完整 backend **742 passed／1081.28 秒**（`/tmp/whisky-t11-research-purge-full.log`）；ruff／format、mypy108、Python boundary、installed wheel **4／15.47 秒**通過。獨立 design 與 correctness review 無確認缺陷。上一每日用量提交 `f912360` 的 PR run36832309444／push run36832302807，各 backend／web jobs 均 success。
+- 未部署。此增量只清除研究 DB 原文；plan／control 原文、Temporal history、traces、備份與控制紀錄到期及正式 PITR／帳號旅程仍待驗收，不宣稱完整資料刪除。
+
+### T11 history 清除前的 dispatch 防線（2026-10-01，未驗收）
+
+- namespace／history 清除後 `REJECT_DUPLICATE` 不再是永久防重保障。刪除 plan／actor 後 executor lookup 仍成功的兩項真 DB 反例先 **2 RED／7.11 秒**，現透過 identity／discovery public 契約驗 parent 與 generation，拒絕不可寫的非 completed task；有效 completed retry 保留。最初缺少 fixture 屬準備錯誤，不算 RED。
+- dispatch／start／acceptance **16／17.88 秒**通過；獨立設計與 correctness 覆核無確認缺陷。這只保護 pre-start lookup，不宣稱封閉跨 DB／Temporal start race；post-check、持久掃描、全 run 分頁清除與非同步刪除完成核對仍待實作。
+- ruff／format、mypy108、Python boundary、installed wheel **4／18.27 秒**通過；未部署。
+- 研究 DB 清除提交 `9366213` 的 PR run36836507020／push run36836474692，各 backend／web jobs 均 success。
+
+### T11 原生 history 清除與 scope 掃描基礎（2026-10-01，未驗收）
+
+- 真 Temporal 的同一 Workflow ID 兩個 runs 仍可讀 history，先取得 **1 RED／2.07 秒**；原生 DeleteWorkflowExecution adapter 列舉完整分頁後逐 run 提出刪除，再確認已知 history、visibility 與 latest 均觀察不到，**1 GREEN／27.04 秒**。RPC 成功不當作刪除完成；非 NOT_FOUND 錯誤不吞掉。
+- 執行中 workflow、重複清除與非法 ID 回歸加入後 **4／33.05 秒**；列舉 page size 改正式預設100、測試1，最後 **4／30.17 秒**。只接受 canonical `whisky-research-{task UUID}`，其他 workflow 保留。這是當次不存在的觀察，不承諾未來沒有晚到 starter。
+- 只掃描 cancelled／不可寫／已 scrubbed task，透過 parent public 契約再驗 deleted plan 或已撤銷 actor generation；UUID keyset 每頁最多100。deleted parent targets 兩項 **2 RED／8.35 秒→2 GREEN／6.21 秒**。每輪必須從頭重掃，不能永久停留在尾端 cursor。
+- ruff／format、mypy110、installed wheel **4／13.10 秒**與獨立設計／correctness review 通過。真測試 server 為 SDK local1.32.0，正式1.29.7仍待驗證。adapter／scan 尚未接入 Schedule 或 worker，不宣稱持久清除已可用；全 run／原生非同步刪除依據見 [Temporal 官方 API](https://github.com/temporalio/api/blob/main/temporal/api/workflowservice/v1/service.proto)。
+
+### T11 持久 history 掃描與晚到 starter 防線（2026-10-01，未驗收）
+
+- worker 註冊獨立 maintenance workflow／activities；Temporal Schedule 每分鐘、SKIP overlap、每輪從頭掃描。既有 Schedule 必須核對 queue／workflow／interval／啟用狀態，不默默覆寫。每個 target 清除前再驗 DB scope；單一 pending 或 RPC 故障只作有限嘗試後向後推進，下輪重掃保留的 tombstones，不把 sweep 完成稱為所有 history 已清除。
+- workflow／fresh scope／Schedule 分別取得 **1 RED／8.69 秒、2 RED／6.37 秒、1 RED／2.00 秒**；接線與 bootstrap **7 GREEN／14.56 秒**。独立覆核發現單一 pending 阻塞 SKIP sweep，反例 **1 RED／11.81 秒**，修正後 **3 GREEN／20.80 秒**；失敗重試、Schedule 設定衝突與 scope 回歸 **9／12.96 秒**通過。
+- start lookup 後才刪 parent 的真 DB 反例 **1 RED／8.40 秒**；Temporal start 後重驗，確認 ResearchConflict 才取消剛啟動的 exact run，其他 DB 故障不授權取消。相關 **9／103.61 秒**通過；另驗 native CancelRequested event，dispatch **6／13.27 秒**通過。
+- 首次完整 suite **4 failed／756 passed／752.52 秒**（`/tmp/whisky-t11-history-final-full.log`）：Temporal adapter 引用 store exception 導致 sandbox 載入 SQL／HTTP 相依。把相同 exception 移到純 domain，store 保留公開 alias，不放寬 sandbox；受影響 start／acceptance／dispatch **17／35.57 秒**通過。此 import regression 不計行為 RED；修正後完整 suite 結果見下方 Oracle ARM 驗證。
+- Oracle Temporal **1.29.7** 實测 missing history 的預設 archival fallback 回 `INVALID_ARGUMENT`；不能因此視為不存在。新增 namespace history／visibility archival 皆 disabled 且無 URI 的 gate，才允許 `skip_archival=True`；五項拒絕反例 **5 RED／0.44 秒**，native／Schedule／gate **12 GREEN／41.98 秒**。ruff／format 與 mypy114 通過。
+- 真 Oracle standalone native adapter 驗證：同 ID 兩個合成 BootstrapProbe runs 均 `NOT_FOUND`，另一個 workflow 保持完整，所有本次 fixture 已清除。成功與失敗證據保留於 `backend/evals/t11_native_history_oracle_20261001.json`，成功 adapter SHA256 `f747894cdbb89e8936b0b9710c9f87cb76f9da7795b352d55f44af833a707787`。這只驗證正式 server 上的 adapter，不是新版 worker／Schedule 部署或正式帳號刪除出口。
+- installed wheel **4／61.02 秒**、Python boundary 與 final diff whitespace 通過；獨立設計複查 `NO DESIGN FINDINGS`，前輪公平性與 exact-run cancel 未回退，指令檔對帳無需修改。修正後完整 suite 出現 failure／setup error，為取得診斷提前中止，exit143（`/tmp/whisky-t11-history-final-fixed-full.log`），不能宣稱完整 GREEN。首個失敗的 `test_configured_agent` 錯誤終態案例原樣單項重跑 **1 passed／89.20 秒**；未取得原 traceback，根因尚未確認，後續完整 suite 仍必須通過。
+- configured-control setup error 原樣單項 **1／49.78 秒**通過。遇首個 failure 即停止的本機完整重跑仍極慢，未修改期限／程式／測試。Oracle 盤點4 CPUs、17.8GiB available、load<1後，用無 secrets 的 immutable archive 建獨立 ARM runner（2 CPUs／4GiB）＋loopback-only PostgreSQL（0.5 CPU／512MiB），不掛正式 volume／credentials、不打真模型。全部 **765 passed／834.08 秒**、ARM installed wheel **4／14.55 秒**，exit均0；257個 source／test／migration／dependency 檔 SHA256 與 worktree 相同。image `sha256:c32ee5d25efd7188da27c192f1c061725c31b07ddca827c6fff53bdb60e757ab`，證據 `backend/evals/t11_history_validation_20261001.json`。其後停止本機重複 suite（exit143，非本機完整GREEN），兩端隔離 DB 已停止；runner 都是 `--rm`。
+- 正式 Temporal1.29.7 的獨立合成 namespace Schedule 驗證通過：實際 cleanup Workflow＋空 fixture page 立即觸發、第二輪完成、既有配置接受、paused配置拒絕且不覆寫；合成 Schedule 刪除、兩個 run history／visibility 觀察不存在，namespace另記 delete requested，不混為已清除完成。結果 `backend/evals/t11_native_schedule_oracle_20261001.json`。這不是正式研究 DB／帳號刪除／worker crash 的部署驗收。
+- OpenAPI／TypeScript 重生無 drift，frozen ControlWorkflowV1／V1 codec 無修改，最終 whitespace 通過。新版 worker／Schedule 尚未部署。
+- 備份唯讀 inventory `backend/evals/t11_backup_inventory_20261001.json`：6份full，最近 `20260930-192434F`；既有 service Result=success、timer active。合法私人還原 floor仍以T09已驗的 `20260929-190627F` 為依據，不把較早 preliminary full當合法點。清單不證明WAL連續性、當前還原或到期清除；沒有執行expire／restore／正式設定變更。
+
+### T11 plan 原文清除與有限期恢復資料（2026-10-01，未驗收）
+
+- 真 DB 三項 **3 RED／346.83 秒**：plan／actor 刪除仍保留原條件，以及建立命令重送仍回傳已刪原文。修正後由 discovery public 契約在原 fenced control transaction 清空 plan conditions；建立收據只保留 generation／初始 revision，typed target／key／hash 維持去重。已刪 target 重送回404，未刪收據仍回原建立結果。
+- scope gate、其他帳號、rollback 與 surviving-parent-fence 邏輯還原重清納入定向驗證。第一輪 **42 passed／1 failed／47.57 秒** 是舊 PITR fixture 只還原 deleted_at，未還原現在會清除的 conditions；失敗在對帳前 read 斷言。改為一致還原刪除前條件，保留對帳前可讀／後不可讀與外部故障不套 effect 的斷言，**81／86.39 秒**通過；不放寬 domain 驗證。
+- 相同258個 source／test／migration／dependency hashes 的 Oracle ARM 全套 **773 passed／846.86 秒**，installed wheel **4／14.62 秒**；ruff／format、mypy114、Python boundary、OpenAPI／TypeScript無 drift、whitespace 通過。獨立 design `NO DESIGN FINDINGS`、correctness `NO CONFIRMED DEFECTS`；frozen ControlWorkflowV1／V1 codec 未改。成功與失敗保留 `backend/evals/t11_plan_originals_validation_20261001.json`。
+- 正式唯讀前提 `backend/evals/t11_deploy_premises_20261001.json`：schema0012、5 plans／5 tasks／2 control rows，其中1項 condition change；只輸出 aggregate counts，沒有讀取原文或變更正式資料。此增量未部署，隔離 ARM migration 不代表正式 migration 已通過。
+- 使用者選有限期恢復資料，維持精確 PITR；ARCH／PRODUCT_SPEC 明列條件修改新輸入的恢復例外、final result起至少30日及 effect 前可還原窗口失效＋緩衝後清除，pending 不按年齡過期。pgBackRest time7 不是實體最大年齡，須核對 inventory／合法 floor。尚未執行 control expiry／backup expire，V1 reader 的 result／intent 完整性與合法清除、history／traces、正式 PITR 仍待完整出口；不能宣稱所有副本已清除。
 
 ## T12 — 真實資料覆蓋與展示驗收
 

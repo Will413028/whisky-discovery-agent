@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "scope": "Plan originals and creation receipt erasure beneath deletion fences; not production acceptance.",
+  "baseRevision": "5ae5f4715ab09a04dcccab955086c1e2222ac861",
+  "tdd": {
+    "red": {
+      "testsFailed": 3,
+      "seconds": 346.83,
+      "log": "/tmp/whisky-t11-plan-originals-red.log",
+      "behaviors": [
+        "plan.delete must erase original conditions",
+        "actor.delete must erase original conditions",
+        "replaying creation of a deleted plan must reject instead of returning originals"
+      ]
+    }
+  },
+  "attempts": [
+    {
+      "testsPassed": 42,
+      "testsFailed": 1,
+      "seconds": 47.57,
+      "log": "/tmp/whisky-t11-plan-originals-oracle-green.log",
+      "reason": "Existing PITR fixture restored only deleted_at, retaining the now-erased conditions. Failure was in the pre-reconciliation PlanStore.read assertion; not an effect failure. Fixed fixture restores the original conditions and preserves all visibility assertions."
+    },
+    {
+      "testsPassed": 81,
+      "testsFailed": 0,
+      "seconds": 86.39,
+      "log": "/tmp/whisky-t11-plan-originals-oracle-fixed.log"
+    }
+  ],
+  "oracle": {
+    "architecture": "linux/arm64",
+    "baseImageSha256": "c32ee5d25efd7188da27c192f1c061725c31b07ddca827c6fff53bdb60e757ab",
+    "sourceLayerSha256": "63c19414dabb7a43f2d9ad1db9bb7d6a4e80ef532b4c6a22390717f385d69f07",
+    "imageSha256": "7dcca4ef1a25c08cd001234a6edf6a734dcab07cd602f4dce99464bf287c982d",
+    "verifiedSourceTestMigrationDependencyFiles": 258,
+    "manifestMismatches": [],
+    "fullSuite": {
+      "testsPassed": 773,
+      "testsFailed": 0,
+      "warnings": 2,
+      "seconds": 846.86,
+      "exitCode": 0,
+      "log": "/tmp/whisky-t11-plan-originals-oracle-full.log"
+    },
+    "installedWheel": {
+      "testsPassed": 4,
+      "seconds": 14.62,
+      "exitCode": 0,
+      "log": "/tmp/whisky-t11-plan-originals-oracle-wheel.log"
+    },
+    "resources": "Dedicated synthetic loopback PostgreSQL and bounded --rm runner containers; no production volumes, credentials or model calls."
+  },
+  "static": [
+    "ruff check and format",
+    "mypy 114 source files",
+    "Python boundary",
+    "OpenAPI/TypeScript no drift",
+    "frozen ControlWorkflowV1 and codec unchanged",
+    "git diff whitespace"
+  ],
+  "review": [
+    "NO DESIGN FINDINGS",
+    "NO CONFIRMED DEFECTS"
+  ],
+  "limitations": [
+    "Production remains schema0012; new source is not deployed.",
+    "Control condition-change inputs use the accepted finite recovery retention policy; expiry, backup/WAL, history/traces and formal PITR still require acceptance."
+  ]
+}

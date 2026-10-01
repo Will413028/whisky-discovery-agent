@@ -1,6 +1,236 @@
 {
   "components": {
     "schemas": {
+      "AccountExportDataV1": {
+        "additionalProperties": false,
+        "properties": {
+          "agentTurns": {
+            "items": {
+              "$ref": "#/components/schemas/AgentTurnExportV1"
+            },
+            "title": "Agentturns",
+            "type": "array"
+          },
+          "catalogEvidence": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogEvidenceExportV1"
+            },
+            "title": "Catalogevidence",
+            "type": "array"
+          },
+          "catalogItems": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogItemExportV1"
+            },
+            "title": "Catalogitems",
+            "type": "array"
+          },
+          "catalogPrices": {
+            "items": {
+              "$ref": "#/components/schemas/CatalogPriceExportV1"
+            },
+            "title": "Catalogprices",
+            "type": "array"
+          },
+          "comparisons": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonExportV1"
+            },
+            "title": "Comparisons",
+            "type": "array"
+          },
+          "conclusions": {
+            "items": {
+              "$ref": "#/components/schemas/ConclusionExportV1"
+            },
+            "title": "Conclusions",
+            "type": "array"
+          },
+          "conditionChanges": {
+            "items": {
+              "$ref": "#/components/schemas/ConditionChangeExportV1"
+            },
+            "title": "Conditionchanges",
+            "type": "array"
+          },
+          "feedback": {
+            "items": {
+              "$ref": "#/components/schemas/FeedbackExportV1"
+            },
+            "title": "Feedback",
+            "type": "array"
+          },
+          "identities": {
+            "items": {
+              "$ref": "#/components/schemas/IdentityExportV1"
+            },
+            "title": "Identities",
+            "type": "array"
+          },
+          "libraryHistory": {
+            "items": {
+              "$ref": "#/components/schemas/LibraryHistoryExportV1"
+            },
+            "title": "Libraryhistory",
+            "type": "array"
+          },
+          "plans": {
+            "items": {
+              "$ref": "#/components/schemas/PlanExportV1"
+            },
+            "title": "Plans",
+            "type": "array"
+          },
+          "preferenceProposals": {
+            "items": {
+              "$ref": "#/components/schemas/ProposalExportV1"
+            },
+            "title": "Preferenceproposals",
+            "type": "array"
+          },
+          "preferences": {
+            "items": {
+              "$ref": "#/components/schemas/PreferencesExportV1"
+            },
+            "title": "Preferences",
+            "type": "array"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionExportV1"
+            },
+            "title": "Questions",
+            "type": "array"
+          },
+          "reportCandidates": {
+            "items": {
+              "$ref": "#/components/schemas/ReportCandidateExportV1"
+            },
+            "title": "Reportcandidates",
+            "type": "array"
+          },
+          "reportCitations": {
+            "items": {
+              "$ref": "#/components/schemas/ReportCitationExportV1"
+            },
+            "title": "Reportcitations",
+            "type": "array"
+          },
+          "reportClaims": {
+            "items": {
+              "$ref": "#/components/schemas/ReportClaimExportV1"
+            },
+            "title": "Reportclaims",
+            "type": "array"
+          },
+          "reportPrices": {
+            "items": {
+              "$ref": "#/components/schemas/ReportPriceExportV1"
+            },
+            "title": "Reportprices",
+            "type": "array"
+          },
+          "reportSourceObservations": {
+            "items": {
+              "$ref": "#/components/schemas/ReportSourceObservationExportV1"
+            },
+            "title": "Reportsourceobservations",
+            "type": "array"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/ReportExportV1"
+            },
+            "title": "Reports",
+            "type": "array"
+          },
+          "researchInputs": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchInputExportV1"
+            },
+            "title": "Researchinputs",
+            "type": "array"
+          },
+          "sourceObservations": {
+            "items": {
+              "$ref": "#/components/schemas/SourceObservationExportV1"
+            },
+            "title": "Sourceobservations",
+            "type": "array"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskExportV1"
+            },
+            "title": "Tasks",
+            "type": "array"
+          }
+        },
+        "required": [
+          "identities",
+          "plans",
+          "tasks",
+          "reports",
+          "questions",
+          "preferenceProposals",
+          "sourceObservations",
+          "researchInputs",
+          "agentTurns",
+          "comparisons",
+          "conclusions",
+          "feedback",
+          "preferences",
+          "reportCandidates",
+          "reportClaims",
+          "reportCitations",
+          "reportPrices",
+          "reportSourceObservations",
+          "catalogItems",
+          "catalogEvidence",
+          "catalogPrices",
+          "libraryHistory",
+          "conditionChanges"
+        ],
+        "title": "AccountExportDataV1",
+        "type": "object"
+      },
+      "AccountExportViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/AccountExportDataV1"
+          },
+          "exportedAt": {
+            "format": "date-time",
+            "title": "Exportedat",
+            "type": "string"
+          },
+          "generation": {
+            "minimum": 1.0,
+            "title": "Generation",
+            "type": "integer"
+          },
+          "ownerId": {
+            "format": "uuid",
+            "title": "Ownerid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "ownerId",
+          "generation",
+          "exportedAt",
+          "data"
+        ],
+        "title": "AccountExportViewV1",
+        "type": "object"
+      },
       "ActivityMessage": {
         "additionalProperties": true,
         "description": "An activity progress message emitted between chat messages.",
@@ -69,6 +299,43 @@
           "id"
         ],
         "title": "ActorView",
+        "type": "object"
+      },
+      "AgentTurnExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "thread_id": {
+            "format": "uuid",
+            "title": "Thread Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "thread_id",
+          "run_id",
+          "outcome",
+          "created_at"
+        ],
+        "title": "AgentTurnExportV1",
         "type": "object"
       },
       "AnswerRequest": {
@@ -306,6 +573,106 @@
         "title": "BinaryInputContent",
         "type": "object"
       },
+      "BottleFeedbackListViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BottleFeedbackViewV1"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "BottleFeedbackListViewV1",
+        "type": "object"
+      },
+      "BottleFeedbackViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "tasting": {
+            "enum": [
+              "not_tasted",
+              "liked",
+              "disliked"
+            ],
+            "title": "Tasting",
+            "type": "string"
+          },
+          "tastingReason": {
+            "title": "Tastingreason",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "wantToExplore": {
+            "title": "Wanttoexplore",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "bottleVersionId",
+          "revision",
+          "wantToExplore",
+          "tasting",
+          "tastingReason",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "BottleFeedbackViewV1",
+        "type": "object"
+      },
       "BudgetSuggestion": {
         "additionalProperties": false,
         "properties": {
@@ -477,6 +844,68 @@
         "title": "CatalogClaimView",
         "type": "object"
       },
+      "CatalogEvidenceExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "captured_at": {
+            "format": "date-time",
+            "title": "Captured At",
+            "type": "string"
+          },
+          "checked_on": {
+            "format": "date",
+            "title": "Checked On",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "publisher": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publisher"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "source_id": {
+            "format": "uuid",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "release_id",
+          "id",
+          "source_id",
+          "bottle_version_id",
+          "url",
+          "publisher",
+          "captured_at",
+          "checked_on"
+        ],
+        "title": "CatalogEvidenceExportV1",
+        "type": "object"
+      },
       "CatalogFlavorView": {
         "properties": {
           "evidenceIds": {
@@ -521,6 +950,76 @@
           "methodVersion"
         ],
         "title": "CatalogFlavorView",
+        "type": "object"
+      },
+      "CatalogItemExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "abv": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Abv"
+          },
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "reviewed_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reviewed On"
+          },
+          "volume_ml": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volume Ml"
+          }
+        },
+        "required": [
+          "release_id",
+          "id",
+          "bottle_version_id",
+          "name",
+          "abv",
+          "volume_ml",
+          "reviewed_on"
+        ],
+        "title": "CatalogItemExportV1",
         "type": "object"
       },
       "CatalogItemView": {
@@ -622,6 +1121,86 @@
           "priceQualification"
         ],
         "title": "CatalogItemView",
+        "type": "object"
+      },
+      "CatalogPriceExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "checked_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked On"
+          },
+          "currency": {
+            "title": "Currency",
+            "type": "string"
+          },
+          "evidence_id": {
+            "format": "uuid",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "market": {
+            "title": "Market",
+            "type": "string"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "unconditional": {
+            "title": "Unconditional",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "release_id",
+          "id",
+          "item_id",
+          "evidence_id",
+          "bottle_version_id",
+          "amount",
+          "checked_on",
+          "market",
+          "currency",
+          "unconditional"
+        ],
+        "title": "CatalogPriceExportV1",
         "type": "object"
       },
       "CatalogPriceView": {
@@ -901,6 +1480,40 @@
         "title": "ComparisonArtifactV4",
         "type": "object"
       },
+      "ComparisonExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Content",
+            "type": "object"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "task_id",
+          "schema_version",
+          "content"
+        ],
+        "title": "ComparisonExportV1",
+        "type": "object"
+      },
       "ComparisonItemEvidenceV4": {
         "additionalProperties": false,
         "properties": {
@@ -988,6 +1601,511 @@
           "items"
         ],
         "title": "ComparisonReportViewV4",
+        "type": "object"
+      },
+      "ConclusionContextViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "conditionsRevision": {
+            "minimum": 1.0,
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "currentConditionsRevision": {
+            "minimum": 1.0,
+            "title": "Currentconditionsrevision",
+            "type": "integer"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "reportId": {
+            "format": "uuid",
+            "title": "Reportid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "planId",
+          "taskId",
+          "reportId",
+          "conditionsRevision",
+          "currentConditionsRevision"
+        ],
+        "title": "ConclusionContextViewV1",
+        "type": "object"
+      },
+      "ConclusionExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog_release_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Release Id"
+          },
+          "conditions": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Conditions",
+            "type": "object"
+          },
+          "conditions_revision": {
+            "title": "Conditions Revision",
+            "type": "integer"
+          },
+          "content": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Content",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At"
+          },
+          "evaluated_on": {
+            "format": "date",
+            "title": "Evaluated On",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "plan_id": {
+            "format": "uuid",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plan_id",
+          "task_id",
+          "report_id",
+          "conditions_revision",
+          "conditions",
+          "catalog_release_id",
+          "evaluated_on",
+          "revision",
+          "content",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ],
+        "title": "ConclusionExportV1",
+        "type": "object"
+      },
+      "ConclusionListViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConclusionViewV1"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "planId",
+          "items",
+          "nextCursor"
+        ],
+        "title": "ConclusionListViewV1",
+        "type": "object"
+      },
+      "ConclusionRevisitViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "budgetTwd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Budgettwd"
+          },
+          "catalogReleaseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalogreleaseid"
+          },
+          "conclusionId": {
+            "format": "uuid",
+            "title": "Conclusionid",
+            "type": "string"
+          },
+          "conditionsRevision": {
+            "minimum": 1.0,
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "evaluatedOn": {
+            "format": "date",
+            "title": "Evaluatedon",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RevisitedVersionV1"
+            },
+            "maxItems": 3,
+            "title": "Items",
+            "type": "array"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "pricePolicyVersion": {
+            "title": "Pricepolicyversion",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "conclusionId",
+          "planId",
+          "conditionsRevision",
+          "evaluatedOn",
+          "catalogReleaseId",
+          "pricePolicyVersion",
+          "budgetTwd",
+          "items"
+        ],
+        "title": "ConclusionRevisitViewV1",
+        "type": "object"
+      },
+      "ConclusionViewV1": {
+        "additionalProperties": false,
+        "allOf": [
+          {
+            "else": {
+              "properties": {
+                "alternativeVersionIds": {
+                  "maxItems": 3
+                },
+                "selectedBottleName": {
+                  "type": "null"
+                },
+                "selectedVersionId": {
+                  "type": "null"
+                }
+              }
+            },
+            "if": {
+              "properties": {
+                "outcome": {
+                  "const": "selected"
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "alternativeVersionIds": {
+                  "maxItems": 2
+                },
+                "selectedBottleName": {
+                  "not": {
+                    "type": "null"
+                  }
+                },
+                "selectedVersionId": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "alternativeVersionIds": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Alternativeversionids",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "catalogReleaseId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalogreleaseid"
+          },
+          "conditions": {
+            "$ref": "#/components/schemas/ResearchConditions-Output"
+          },
+          "conditionsRevision": {
+            "minimum": 1.0,
+            "title": "Conditionsrevision",
+            "type": "integer"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "evaluatedOn": {
+            "format": "date",
+            "title": "Evaluatedon",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "outcome": {
+            "enum": [
+              "selected",
+              "no_suitable"
+            ],
+            "title": "Outcome",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "reportId": {
+            "format": "uuid",
+            "title": "Reportid",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "selectedBottleName": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedbottlename"
+          },
+          "selectedVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedversionid"
+          },
+          "taskId": {
+            "format": "uuid",
+            "title": "Taskid",
+            "type": "string"
+          },
+          "tradeoff": {
+            "title": "Tradeoff",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "planId",
+          "taskId",
+          "reportId",
+          "conditionsRevision",
+          "conditions",
+          "catalogReleaseId",
+          "evaluatedOn",
+          "revision",
+          "outcome",
+          "selectedVersionId",
+          "selectedBottleName",
+          "alternativeVersionIds",
+          "reason",
+          "tradeoff",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "ConclusionViewV1",
+        "type": "object"
+      },
+      "ConditionChangeExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "new_conditions": {
+            "$ref": "#/components/schemas/ResearchConditions-Output"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "intent_confirmed",
+              "effect_applied",
+              "effect_rejected",
+              "completed",
+              "rejected"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "target_id": {
+            "format": "uuid",
+            "title": "Target Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "target_id",
+          "expected_revision",
+          "status",
+          "new_conditions",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ConditionChangeExportV1",
         "type": "object"
       },
       "ConditionPatch": {
@@ -1472,6 +2590,64 @@
         "title": "ExplorationIntent",
         "type": "object"
       },
+      "FeedbackExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "tasting": {
+            "enum": [
+              "not_tasted",
+              "liked",
+              "disliked"
+            ],
+            "title": "Tasting",
+            "type": "string"
+          },
+          "tasting_reason": {
+            "title": "Tasting Reason",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "want_to_explore": {
+            "title": "Want To Explore",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "bottle_version_id",
+          "revision",
+          "want_to_explore",
+          "tasting",
+          "tasting_reason",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "FeedbackExportV1",
+        "type": "object"
+      },
       "FlavorContrast": {
         "additionalProperties": false,
         "properties": {
@@ -1548,6 +2724,25 @@
           "arguments"
         ],
         "title": "FunctionCall",
+        "type": "object"
+      },
+      "IdentityExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "issuer": {
+            "title": "Issuer",
+            "type": "string"
+          },
+          "subject": {
+            "title": "Subject",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issuer",
+          "subject"
+        ],
+        "title": "IdentityExportV1",
         "type": "object"
       },
       "ImageInputContent": {
@@ -1652,6 +2847,7 @@
         "title": "InputContentUrlSource",
         "type": "object"
       },
+      "JsonValue": {},
       "KeyRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1665,6 +2861,172 @@
           "key"
         ],
         "title": "KeyRequest",
+        "type": "object"
+      },
+      "LibraryHistoryExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "response": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ConclusionViewV1"
+              },
+              {
+                "$ref": "#/components/schemas/BottleFeedbackViewV1"
+              },
+              {
+                "$ref": "#/components/schemas/LongTermPreferencesViewV1"
+              }
+            ],
+            "title": "Response"
+          },
+          "scope": {
+            "enum": [
+              "conclusions.save",
+              "feedback.save",
+              "preferences.save"
+            ],
+            "title": "Scope",
+            "type": "string"
+          },
+          "target_id": {
+            "format": "uuid",
+            "title": "Target Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "scope",
+          "target_id",
+          "response",
+          "created_at"
+        ],
+        "title": "LibraryHistoryExportV1",
+        "type": "object"
+      },
+      "LongTermPreferenceV1": {
+        "additionalProperties": false,
+        "properties": {
+          "certainty": {
+            "const": "user_stated",
+            "default": "user_stated",
+            "title": "Certainty",
+            "type": "string"
+          },
+          "description": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Description",
+            "type": "string"
+          },
+          "intent": {
+            "enum": [
+              "prefer",
+              "avoid"
+            ],
+            "title": "Intent",
+            "type": "string"
+          },
+          "sourceFeedbackId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcefeedbackid"
+          },
+          "sourceFeedbackRevision": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sourcefeedbackrevision"
+          },
+          "statement": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Statement",
+            "type": "string"
+          },
+          "strength": {
+            "enum": [
+              "soft",
+              "hard"
+            ],
+            "title": "Strength",
+            "type": "string"
+          }
+        },
+        "required": [
+          "description",
+          "intent",
+          "strength",
+          "statement"
+        ],
+        "title": "LongTermPreferenceV1",
+        "type": "object"
+      },
+      "LongTermPreferencesViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "preferences": {
+            "items": {
+              "$ref": "#/components/schemas/LongTermPreferenceV1"
+            },
+            "maxItems": 64,
+            "title": "Preferences",
+            "type": "array"
+          },
+          "revision": {
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updatedat"
+          }
+        },
+        "required": [
+          "revision",
+          "preferences",
+          "updatedAt"
+        ],
+        "title": "LongTermPreferencesViewV1",
         "type": "object"
       },
       "ObserveInput": {
@@ -1721,6 +3083,69 @@
           "patch"
         ],
         "title": "PatchConditionsRequest",
+        "type": "object"
+      },
+      "PlanExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "conditions": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Conditions",
+            "type": "object"
+          },
+          "conditions_revision": {
+            "title": "Conditions Revision",
+            "type": "integer"
+          },
+          "conditions_schema_version": {
+            "title": "Conditions Schema Version",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "deleted_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deleted At"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "generation",
+          "conditions_revision",
+          "conditions_schema_version",
+          "conditions",
+          "created_at",
+          "updated_at",
+          "deleted_at"
+        ],
+        "title": "PlanExportV1",
         "type": "object"
       },
       "PlanListView": {
@@ -1977,6 +3402,97 @@
         "title": "PreferenceSuggestion",
         "type": "object"
       },
+      "PreferencesExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "preferences": {
+            "items": {
+              "$ref": "#/components/schemas/LongTermPreferenceV1"
+            },
+            "title": "Preferences",
+            "type": "array"
+          },
+          "revision": {
+            "title": "Revision",
+            "type": "integer"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision",
+          "preferences",
+          "updated_at"
+        ],
+        "title": "PreferencesExportV1",
+        "type": "object"
+      },
+      "ProposalExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "base_conditions": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Base Conditions",
+            "type": "object"
+          },
+          "conditions_revision": {
+            "title": "Conditions Revision",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "plan_id": {
+            "format": "uuid",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "proposal": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Proposal",
+            "type": "object"
+          },
+          "source_text": {
+            "title": "Source Text",
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "plan_id",
+          "generation",
+          "conditions_revision",
+          "base_conditions",
+          "source_text",
+          "proposal",
+          "prompt_version",
+          "created_at"
+        ],
+        "title": "ProposalExportV1",
+        "type": "object"
+      },
       "QuestionChoiceView": {
         "additionalProperties": false,
         "properties": {
@@ -1997,6 +3513,98 @@
           "label"
         ],
         "title": "QuestionChoiceView",
+        "type": "object"
+      },
+      "QuestionExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "answered_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered At"
+          },
+          "choices": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "conditions_revision": {
+            "title": "Conditions Revision",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "prompt": {
+            "title": "Prompt",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "waiting_version": {
+            "title": "Waiting Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "task_id",
+          "generation",
+          "conditions_revision",
+          "waiting_version",
+          "kind",
+          "prompt",
+          "choices",
+          "status",
+          "expires_at",
+          "answer",
+          "created_at",
+          "answered_at"
+        ],
+        "title": "QuestionExportV1",
         "type": "object"
       },
       "QuestionView": {
@@ -2101,6 +3709,49 @@
         "title": "ReasoningMessage",
         "type": "object"
       },
+      "ReportCandidateExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "ordinal",
+          "release_id",
+          "item_id",
+          "bottle_version_id",
+          "reason"
+        ],
+        "title": "ReportCandidateExportV1",
+        "type": "object"
+      },
       "ReportCandidateView": {
         "additionalProperties": false,
         "properties": {
@@ -2154,6 +3805,65 @@
         "title": "ReportCandidateView",
         "type": "object"
       },
+      "ReportCitationExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "claim_ordinal": {
+            "title": "Claim Ordinal",
+            "type": "integer"
+          },
+          "evidence_id": {
+            "format": "uuid",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "ordinal",
+          "claim_ordinal",
+          "release_id",
+          "item_id",
+          "bottle_version_id",
+          "kind",
+          "key",
+          "evidence_id"
+        ],
+        "title": "ReportCitationExportV1",
+        "type": "object"
+      },
       "ReportClaim": {
         "properties": {
           "evidenceIds": {
@@ -2184,6 +3894,64 @@
           "evidenceIds"
         ],
         "title": "ReportClaim",
+        "type": "object"
+      },
+      "ReportClaimExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "claim_ordinal": {
+            "title": "Claim Ordinal",
+            "type": "integer"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          },
+          "value": {
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "ordinal",
+          "claim_ordinal",
+          "release_id",
+          "item_id",
+          "bottle_version_id",
+          "kind",
+          "key",
+          "value"
+        ],
+        "title": "ReportClaimExportV1",
         "type": "object"
       },
       "ReportClaimView": {
@@ -2220,6 +3988,185 @@
           "sources"
         ],
         "title": "ReportClaimView",
+        "type": "object"
+      },
+      "ReportExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "catalog_release_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Release Id"
+          },
+          "clarification_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clarification Id"
+          },
+          "conditions_revision": {
+            "title": "Conditions Revision",
+            "type": "integer"
+          },
+          "content": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Content",
+            "type": "object"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluated_on": {
+            "format": "date",
+            "title": "Evaluated On",
+            "type": "string"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "policy_version": {
+            "title": "Policy Version",
+            "type": "string"
+          },
+          "prompt_version": {
+            "title": "Prompt Version",
+            "type": "string"
+          },
+          "schema_version": {
+            "title": "Schema Version",
+            "type": "integer"
+          },
+          "selected_item_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Item Id"
+          },
+          "selected_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Label"
+          },
+          "selected_version_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Version Id"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "task_id",
+          "generation",
+          "conditions_revision",
+          "catalog_release_id",
+          "evaluated_on",
+          "policy_version",
+          "prompt_version",
+          "model_version",
+          "schema_version",
+          "content",
+          "clarification_id",
+          "selected_version_id",
+          "selected_label",
+          "selected_item_id",
+          "created_at"
+        ],
+        "title": "ReportExportV1",
+        "type": "object"
+      },
+      "ReportPriceExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "item_id": {
+            "format": "uuid",
+            "title": "Item Id",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "price_id": {
+            "format": "uuid",
+            "title": "Price Id",
+            "type": "string"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "ordinal",
+          "release_id",
+          "item_id",
+          "bottle_version_id",
+          "price_id"
+        ],
+        "title": "ReportPriceExportV1",
         "type": "object"
       },
       "ReportPriceView": {
@@ -2287,6 +4234,32 @@
           "source"
         ],
         "title": "ReportPriceView",
+        "type": "object"
+      },
+      "ReportSourceObservationExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "observation_id": {
+            "format": "uuid",
+            "title": "Observation Id",
+            "type": "string"
+          },
+          "ordinal": {
+            "title": "Ordinal",
+            "type": "integer"
+          },
+          "report_id": {
+            "format": "uuid",
+            "title": "Report Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "ordinal",
+          "observation_id"
+        ],
+        "title": "ReportSourceObservationExportV1",
         "type": "object"
       },
       "ReportSourceObservationView": {
@@ -2699,6 +4672,42 @@
         "title": "ResearchConditions",
         "type": "object"
       },
+      "ResearchInputExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "input": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Input",
+            "type": "object"
+          },
+          "source_task_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Task Id"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "input",
+          "source_task_id"
+        ],
+        "title": "ResearchInputExportV1",
+        "type": "object"
+      },
       "ResearchInputV4": {
         "additionalProperties": false,
         "properties": {
@@ -2899,6 +4908,134 @@
         "title": "ReviewedFlavorMapping",
         "type": "object"
       },
+      "RevisitPriceV1": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "checkedOn": {
+            "format": "date",
+            "title": "Checkedon",
+            "type": "string"
+          },
+          "currency": {
+            "const": "TWD",
+            "default": "TWD",
+            "title": "Currency",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "market": {
+            "const": "TW",
+            "default": "TW",
+            "title": "Market",
+            "type": "string"
+          },
+          "sourceUrl": {
+            "pattern": "^https?://",
+            "title": "Sourceurl",
+            "type": "string"
+          },
+          "volumeMl": {
+            "exclusiveMinimum": 0.0,
+            "title": "Volumeml",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "amount",
+          "volumeMl",
+          "checkedOn",
+          "sourceUrl"
+        ],
+        "title": "RevisitPriceV1",
+        "type": "object"
+      },
+      "RevisitedVersionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "availability": {
+            "enum": [
+              "resolved",
+              "unresolved"
+            ],
+            "title": "Availability",
+            "type": "string"
+          },
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "budgetQualification": {
+            "enum": [
+              "within_budget",
+              "over_budget",
+              "unknown",
+              "not_filtered"
+            ],
+            "title": "Budgetqualification",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "priceQualification": {
+            "enum": [
+              "qualified",
+              "unqualified"
+            ],
+            "title": "Pricequalification",
+            "type": "string"
+          },
+          "priceUpperBoundTwd": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priceupperboundtwd"
+          },
+          "prices": {
+            "items": {
+              "$ref": "#/components/schemas/RevisitPriceV1"
+            },
+            "title": "Prices",
+            "type": "array"
+          }
+        },
+        "required": [
+          "bottleVersionId",
+          "availability",
+          "name",
+          "priceUpperBoundTwd",
+          "priceQualification",
+          "budgetQualification",
+          "prices"
+        ],
+        "title": "RevisitedVersionV1",
+        "type": "object"
+      },
       "RunAgentInput": {
         "additionalProperties": true,
         "description": "Input for running an agent.",
@@ -3007,6 +5144,282 @@
           "forwardedProps"
         ],
         "title": "RunAgentInput",
+        "type": "object"
+      },
+      "SaveBottleFeedbackV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "expectedRevision": {
+            "minimum": 0.0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "tasting": {
+            "enum": [
+              "not_tasted",
+              "liked",
+              "disliked"
+            ],
+            "title": "Tasting",
+            "type": "string"
+          },
+          "tastingReason": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Tastingreason",
+            "type": "string"
+          },
+          "wantToExplore": {
+            "title": "Wanttoexplore",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "bottleVersionId",
+          "expectedRevision",
+          "wantToExplore",
+          "tasting"
+        ],
+        "title": "SaveBottleFeedbackV1",
+        "type": "object"
+      },
+      "SaveConclusionV1": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedConditionsRevision": {
+            "minimum": 1.0,
+            "title": "Expectedconditionsrevision",
+            "type": "integer"
+          },
+          "key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "planId": {
+            "format": "uuid",
+            "title": "Planid",
+            "type": "string"
+          },
+          "reason": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason",
+            "type": "string"
+          },
+          "reportId": {
+            "format": "uuid",
+            "title": "Reportid",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "selectedVersionId": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selectedversionid"
+          },
+          "tradeoff": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Tradeoff",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "planId",
+          "reportId",
+          "expectedConditionsRevision",
+          "reason"
+        ],
+        "title": "SaveConclusionV1",
+        "type": "object"
+      },
+      "SaveLongTermPreferencesV1": {
+        "additionalProperties": false,
+        "properties": {
+          "expectedRevision": {
+            "minimum": 0.0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "preferences": {
+            "items": {
+              "$ref": "#/components/schemas/LongTermPreferenceV1"
+            },
+            "maxItems": 64,
+            "title": "Preferences",
+            "type": "array"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "expectedRevision",
+          "preferences"
+        ],
+        "title": "SaveLongTermPreferencesV1",
+        "type": "object"
+      },
+      "SourceObservationExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottle_version_id": {
+            "format": "uuid",
+            "title": "Bottle Version Id",
+            "type": "string"
+          },
+          "conditions_revision": {
+            "title": "Conditions Revision",
+            "type": "integer"
+          },
+          "content_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Sha256"
+          },
+          "effective_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Url"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "evidence_id": {
+            "format": "uuid",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "release_id": {
+            "format": "uuid",
+            "title": "Release Id",
+            "type": "string"
+          },
+          "review_status": {
+            "title": "Review Status",
+            "type": "string"
+          },
+          "source_checked_on": {
+            "format": "date",
+            "title": "Source Checked On",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "task_id": {
+            "format": "uuid",
+            "title": "Task Id",
+            "type": "string"
+          },
+          "visible_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Visible Text"
+          }
+        },
+        "required": [
+          "id",
+          "task_id",
+          "generation",
+          "conditions_revision",
+          "release_id",
+          "bottle_version_id",
+          "evidence_id",
+          "status",
+          "review_status",
+          "error_code",
+          "visible_text",
+          "effective_url",
+          "content_sha256",
+          "source_checked_on",
+          "observed_at"
+        ],
+        "title": "SourceObservationExportV1",
         "type": "object"
       },
       "StartCommandV4": {
@@ -3157,6 +5570,94 @@
           "retryable"
         ],
         "title": "TaskError",
+        "type": "object"
+      },
+      "TaskExportV1": {
+        "additionalProperties": false,
+        "properties": {
+          "conditions": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Conditions",
+            "type": "object"
+          },
+          "conditions_revision": {
+            "title": "Conditions Revision",
+            "type": "integer"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "generation": {
+            "title": "Generation",
+            "type": "integer"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "plan_id": {
+            "format": "uuid",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "question": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "report_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Report Id"
+          },
+          "stage": {
+            "title": "Stage",
+            "type": "string"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "thread_id": {
+            "format": "uuid",
+            "title": "Thread Id",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "plan_id",
+          "generation",
+          "conditions_revision",
+          "conditions",
+          "thread_id",
+          "status",
+          "stage",
+          "question",
+          "report_id",
+          "error",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskExportV1",
         "type": "object"
       },
       "TaskHistoryItem": {
@@ -4335,6 +6836,1175 @@
           }
         ],
         "summary": "Read Control"
+      }
+    },
+    "/api/v1/library/conclusions": {
+      "get": {
+        "operationId": "list_conclusions_api_v1_library_conclusions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Planid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusionListViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Conclusions"
+      },
+      "post": {
+        "operationId": "save_conclusion_api_v1_library_conclusions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveConclusionV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusionViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Conclusion"
+      }
+    },
+    "/api/v1/library/conclusions/{conclusion_id}": {
+      "get": {
+        "operationId": "read_conclusion_api_v1_library_conclusions__conclusion_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conclusion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conclusion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusionViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Conclusion"
+      }
+    },
+    "/api/v1/library/conclusions/{conclusion_id}/revisit": {
+      "get": {
+        "operationId": "revisit_conclusion_api_v1_library_conclusions__conclusion_id__revisit_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "conclusion_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Conclusion Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusionRevisitViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Revisit Conclusion"
+      }
+    },
+    "/api/v1/library/export": {
+      "get": {
+        "operationId": "export_account_api_v1_library_export_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountExportViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Export Account"
+      }
+    },
+    "/api/v1/library/feedback": {
+      "get": {
+        "operationId": "list_feedback_api_v1_library_feedback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BottleFeedbackListViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Feedback"
+      },
+      "post": {
+        "operationId": "save_feedback_api_v1_library_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBottleFeedbackV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BottleFeedbackViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Feedback"
+      }
+    },
+    "/api/v1/library/feedback/{version}": {
+      "get": {
+        "operationId": "read_feedback_api_v1_library_feedback__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BottleFeedbackViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Feedback"
+      }
+    },
+    "/api/v1/library/preferences": {
+      "get": {
+        "operationId": "read_preferences_api_v1_library_preferences_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LongTermPreferencesViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Preferences"
+      },
+      "post": {
+        "operationId": "save_preferences_api_v1_library_preferences_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLongTermPreferencesV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LongTermPreferencesViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Preferences"
+      }
+    },
+    "/api/v1/library/reports/{report_id}/conclusion-context": {
+      "get": {
+        "operationId": "conclusion_context_api_v1_library_reports__report_id__conclusion_context_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "report_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Report Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConclusionContextViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Conclusion Context"
       }
     },
     "/api/v1/me": {

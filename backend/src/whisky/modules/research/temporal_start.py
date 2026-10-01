@@ -2,15 +2,17 @@
 
 import asyncio
 from collections.abc import Callable
+from datetime import timedelta
 from typing import Literal
 from uuid import UUID
 
 from temporalio.client import Client
 from temporalio.common import WorkflowIDConflictPolicy, WorkflowIDReusePolicy
 from temporalio.exceptions import WorkflowAlreadyStartedError
+from temporalio.service import RPCError, RPCStatusCode
 
 from whisky.modules.research.contracts import AnswerReceipt, AnswerResult
-from whisky.modules.research.domain import workflow_id_for
+from whisky.modules.research.domain import ResearchConflict, workflow_id_for
 
 
 class ConnectingTemporalResearchStarter:
@@ -36,9 +38,21 @@ class ConnectingTemporalResearchStarter:
     async def start(self, task_id: UUID) -> str:
         workflow_type = await asyncio.to_thread(self.workflow_type_for_task, task_id)
         client = await self._get_client()
-        return await TemporalResearchStarter(
+        run_id = await TemporalResearchStarter(
             client, self.task_queue, workflow_type=workflow_type
         ).start(task_id)
+        try:
+            await asyncio.to_thread(self.workflow_type_for_task, task_id)
+        except ResearchConflict:
+            try:
+                await client.get_workflow_handle(
+                    workflow_id_for(task_id), run_id=run_id
+                ).cancel(rpc_timeout=timedelta(seconds=5))
+            except RPCError as error:
+                if error.status != RPCStatusCode.NOT_FOUND:
+                    raise
+            raise
+        return run_id
 
     async def answer(self, receipt: AnswerReceipt) -> AnswerResult:
         client = await self._get_client()

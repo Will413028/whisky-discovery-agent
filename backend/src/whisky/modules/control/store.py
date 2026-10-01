@@ -15,16 +15,21 @@ from whisky.modules.discovery.public import (
     delete_actor_plans,
     delete_plan,
     locked_plan,
+    purge_actor_plan_originals,
+    purge_plan_originals,
 )
 from whisky.modules.identity.public import (
     control_actor_state,
     disable_actor,
 )
+from whisky.modules.library.public import purge_actor_library, purge_plan_library
 from whisky.modules.research.public import (
     cancel_task,
     close_actor_tasks,
     close_plan_tasks,
     controlled_workflow_ids,
+    purge_actor_research,
+    purge_plan_research,
     task_plan,
 )
 from whisky.platform.domain_errors import DomainRejection
@@ -337,6 +342,9 @@ class ControlStore:
                 # This follows child writes, so a failed final step must roll
                 # the whole transaction back instead of recording a rejection.
                 raise RuntimeError("identity changed during actor deletion") from error
+            purge_actor_library(connection, owner, generation)
+            purge_actor_research(connection, owner, generation)
+            purge_actor_plan_originals(connection, owner, generation)
             return
         if kind == "task.cancel":
             plan_id = task_plan(connection, target, owner)
@@ -368,6 +376,9 @@ class ControlStore:
         if kind == "plan.delete":
             close_plan_tasks(connection, owner, target, status="cancelled")
             delete_plan(connection, target, owner)
+            purge_plan_library(connection, owner, generation, target)
+            purge_plan_research(connection, owner, generation, target)
+            purge_plan_originals(connection, owner, generation, target)
             return
         raise RuntimeError("Unknown persisted control kind")
 

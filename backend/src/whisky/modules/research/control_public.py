@@ -88,6 +88,17 @@ def close_plan_tasks(
             stage="研究條件已更新" if status == "superseded" else "研究已取消",
         ),
     )
+    connection.execute(
+        text(
+            """
+            UPDATE research_tasks SET write_allowed=false,
+                view_version=view_version+1,updated_at=now()
+            WHERE owner_id=:owner AND plan_id=:plan AND write_allowed
+            """
+            + revision_clause
+        ),
+        parameters,
+    )
     condition = "plan_id=:plan AND status=:status"
     if newer_revision is not None:
         condition += " AND conditions_revision < :revision"
@@ -109,6 +120,14 @@ def close_actor_tasks(connection: Connection, owner: UUID, generation: int) -> N
             view_version=view_version+1, updated_at=now()
         WHERE owner_id=:owner AND generation<=:generation AND write_allowed
           AND status IN ('acceptance_pending','queued','researching','needs_input')
+        """),
+        dict(owner=owner, generation=generation),
+    )
+    connection.execute(
+        text("""
+            UPDATE research_tasks SET write_allowed=false,
+                view_version=view_version+1,updated_at=now()
+            WHERE owner_id=:owner AND generation<=:generation AND write_allowed
         """),
         dict(owner=owner, generation=generation),
     )

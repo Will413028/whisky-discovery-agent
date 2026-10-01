@@ -7,7 +7,8 @@ export function privateFailure(status: number, code: string): Response {
 }
 
 /** Transport only: the feature adapter must validate path, method and query first. */
-export async function forwardPrivate(request: Request, upstream?: PrivateAPI): Promise<Response> {
+export async function forwardPrivate(request: Request, upstream?: PrivateAPI,
+  options:{timeoutMilliseconds?:number;responseHeaders?:readonly string[]}={}): Promise<Response> {
   if (!upstream) return privateFailure(503, "PROXY_UNAVAILABLE");
   const headers = new Headers();
   for (const name of ["authorization", "content-type"]) {
@@ -16,7 +17,7 @@ export async function forwardPrivate(request: Request, upstream?: PrivateAPI): P
   }
   const init: RequestInit & {duplex: "half"} = {
     method: request.method, headers, body: request.body, duplex: "half", redirect: "manual",
-    signal: AbortSignal.any([request.signal, AbortSignal.timeout(10_000)]),
+    signal: AbortSignal.any([request.signal, AbortSignal.timeout(options.timeoutMilliseconds ?? 10_000)]),
   };
   try {
     const url = new URL(request.url);
@@ -28,7 +29,7 @@ export async function forwardPrivate(request: Request, upstream?: PrivateAPI): P
       return privateFailure(502, "UPSTREAM_REJECTED");
     }
     const safe = new Headers({"Cache-Control": "no-store"});
-    for (const name of ["content-type", "www-authenticate"]) {
+    for (const name of ["content-type", "www-authenticate",...(options.responseHeaders ?? [])]) {
       const value = result.headers.get(name);
       if (value) safe.set(name, value);
     }

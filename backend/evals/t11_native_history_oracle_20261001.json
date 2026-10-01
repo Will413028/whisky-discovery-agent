@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "scope": "Synthetic BootstrapProbe workflows; native adapter verification only, not deployed maintenance Schedule or account deletion.",
+  "attempts": {
+    "initial": {
+      "schema_version": 1,
+      "environment": "oracle",
+      "fixture_kind": "synthetic-native-erasure",
+      "namespace": "whisky",
+      "temporal_image": "1.29.7",
+      "sdk_version": "1.33.0",
+      "adapter_sha256": "60c9e49e491ad426236f9a57338824cc6472a56b6884681af4899508537032b2",
+      "started_at": "2026-10-01T10:46:50.515054+00:00",
+      "checks": {
+        "synthetic_cleanup_observed_absent": false
+      },
+      "passed": false,
+      "error_class": "AssertionError",
+      "finished_at": "2026-10-01T10:47:16.795347+00:00"
+    },
+    "diagnostic": {
+      "schema_version": 1,
+      "environment": "oracle",
+      "fixture_kind": "synthetic-native-erasure",
+      "namespace": "whisky",
+      "temporal_image": "1.29.7",
+      "sdk_version": "1.33.0",
+      "adapter_sha256": "60c9e49e491ad426236f9a57338824cc6472a56b6884681af4899508537032b2",
+      "started_at": "2026-10-01T10:58:38.733981+00:00",
+      "checks": {
+        "01a0f71d-c610-7779-86e2-489e7c55f749": "INVALID_ARGUMENT",
+        "synthetic_cleanup_observed_absent": true
+      },
+      "passed": false,
+      "workflow_ids": [
+        "whisky-research-8ad2dc3e-6987-4793-9b73-d1933b264f60",
+        "whisky-research-94706c5d-0756-4998-8cd0-620f81662b68"
+      ],
+      "phase": "known-run-history-verification",
+      "cleanup_errors": [],
+      "bootstrap_result": "ok",
+      "observed_run_ids": [
+        "01a0f71d-c610-7779-86e2-489e7c55f749",
+        "01a0f71d-c637-7774-8b56-e987c11711e0"
+      ],
+      "error_class": "AssertionError",
+      "error_message": "",
+      "finished_at": "2026-10-01T10:59:05.897909+00:00"
+    },
+    "verified": {
+      "schema_version": 1,
+      "environment": "oracle",
+      "fixture_kind": "synthetic-native-erasure",
+      "namespace": "whisky",
+      "temporal_image": "1.29.7",
+      "sdk_version": "1.33.0",
+      "adapter_sha256": "f747894cdbb89e8936b0b9710c9f87cb76f9da7795b352d55f44af833a707787",
+      "started_at": "2026-10-01T11:10:37.100928+00:00",
+      "checks": {
+        "namespace_archival_disabled_without_uri": true,
+        "01a0f728-bc30-7dc5-bddc-7d1bf3da655c": "NOT_FOUND",
+        "01a0f728-bc57-7d9b-b506-24e153bd3477": "NOT_FOUND",
+        "both_runs_absent": true,
+        "other_workflow_preserved": true,
+        "synthetic_cleanup_observed_absent": true
+      },
+      "passed": true,
+      "workflow_ids": [
+        "whisky-research-143e4b66-08a4-468e-acde-c130e8a67bf7",
+        "whisky-research-7497d725-8af4-45f6-979d-4e9a1d12cd48"
+      ],
+      "phase": "foreign-verification",
+      "cleanup_errors": [],
+      "bootstrap_result": "ok",
+      "observed_run_ids": [
+        "01a0f728-bc30-7dc5-bddc-7d1bf3da655c",
+        "01a0f728-bc57-7d9b-b506-24e153bd3477"
+      ],
+      "finished_at": "2026-10-01T11:10:46.593352+00:00"
+    }
+  }
+}
