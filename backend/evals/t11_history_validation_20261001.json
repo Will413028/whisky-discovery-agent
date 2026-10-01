@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "environment": "oracle-isolated-validation",
+  "platform": "linux/arm64",
+  "source_archive_sha256": "d5368a9dfa98983e090282941ed849ff1529b3e2d192a453c341b90b09372c1c",
+  "image_digest": "sha256:c32ee5d25efd7188da27c192f1c061725c31b07ddca827c6fff53bdb60e757ab",
+  "source_test_migration_dependency_files_verified": 257,
+  "resource_limits": {
+    "runner_cpus": 2,
+    "runner_memory": "4g",
+    "isolated_postgres_cpus": 0.5,
+    "isolated_postgres_memory": "512m"
+  },
+  "full_backend": {
+    "passed": 765,
+    "warnings": 2,
+    "duration_seconds": 834.08,
+    "exit_code": 0,
+    "command": "uv run --no-sync --project backend pytest backend/tests -x -q --tb=short",
+    "log": "/tmp/whisky-t11-oracle-history-full.log"
+  },
+  "installed_wheel": {
+    "passed": 4,
+    "duration_seconds": 14.55,
+    "exit_code": 0,
+    "command": "python scripts/test_wheel.py",
+    "log": "/tmp/whisky-t11-oracle-history-wheel.log"
+  },
+  "scope": "Disposable runner and loopback-only PostgreSQL; no production database, volumes, credentials or model calls. Existing public deployment unchanged.",
+  "local_attempts": [
+    {
+      "log": "/tmp/whisky-t11-history-final-full.log",
+      "status": "failed",
+      "passed": 756,
+      "failed": 4,
+      "cause": "Sandbox transitive DB/HTTP import; moved ResearchConflict to pure domain."
+    },
+    {
+      "log": "/tmp/whisky-t11-history-final-fixed-full.log",
+      "status": "interrupted",
+      "exit_code": 143,
+      "notes": "Failure and setup error; exact original traceback unavailable. Both cases passed unchanged individually."
+    },
+    {
+      "log": "/tmp/whisky-t11-history-final-full-failfast.log",
+      "status": "interrupted",
+      "exit_code": 143,
+      "notes": "Slow duplicate run stopped after identical-source Oracle full suite passed; not counted as local full success."
+    }
+  ]
+}
