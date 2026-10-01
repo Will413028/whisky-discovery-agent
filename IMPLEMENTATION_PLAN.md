@@ -368,6 +368,13 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - ruff／format、mypy108、Python boundary、installed wheel **4／18.27 秒**通過；未部署。
 - 研究 DB 清除提交 `9366213` 的 PR run36836507020／push run36836474692，各 backend／web jobs 均 success。
 
+### T11 原生 history 清除與 scope 掃描基礎（2026-10-01，未驗收）
+
+- 真 Temporal 的同一 Workflow ID 兩個 runs 仍可讀 history，先取得 **1 RED／2.07 秒**；原生 DeleteWorkflowExecution adapter 列舉完整分頁後逐 run 提出刪除，再確認已知 history、visibility 與 latest 均觀察不到，**1 GREEN／27.04 秒**。RPC 成功不當作刪除完成；非 NOT_FOUND 錯誤不吞掉。
+- 執行中 workflow、重複清除與非法 ID 回歸加入後 **4／33.05 秒**；列舉 page size 改正式預設100、測試1，最後 **4／30.17 秒**。只接受 canonical `whisky-research-{task UUID}`，其他 workflow 保留。這是當次不存在的觀察，不承諾未來沒有晚到 starter。
+- 只掃描 cancelled／不可寫／已 scrubbed task，透過 parent public 契約再驗 deleted plan 或已撤銷 actor generation；UUID keyset 每頁最多100。deleted parent targets 兩項 **2 RED／8.35 秒→2 GREEN／6.21 秒**。每輪必須從頭重掃，不能永久停留在尾端 cursor。
+- ruff／format、mypy110、installed wheel **4／13.10 秒**與獨立設計／correctness review 通過。真測試 server 為 SDK local1.32.0，正式1.29.7仍待驗證。adapter／scan 尚未接入 Schedule 或 worker，不宣稱持久清除已可用；全 run／原生非同步刪除依據見 [Temporal 官方 API](https://github.com/temporalio/api/blob/main/temporal/api/workflowservice/v1/service.proto)。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。
