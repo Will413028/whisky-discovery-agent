@@ -2,6 +2,16 @@ import {afterEach,expect,test,vi} from "vitest";
 import {GET,POST} from "../../app/api/[...path]/route";
 const id="00000000-0000-4000-8000-000000000001";
 afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
+test.each(["save","read","list"])("feedback %s keeps fixed private transport",async mode=>{
+  vi.stubEnv("WHISKY_API_ORIGIN","http://127.0.0.1:9000");
+  const upstream=vi.fn(async(_request:Request)=>Response.json({schemaVersion:1}));vi.stubGlobal("fetch",upstream);
+  const path=mode==="read" ? `/api/v1/library/feedback/${id}` : `/api/v1/library/feedback${mode==="list" ? "?limit=2" : ""}`;
+  const request=new Request(`https://web.example${path}`,{method:mode==="save" ? "POST" : "GET",headers:{Authorization:"Bearer fixture"},...(mode==="save" ? {body:"{}"}: {})});
+  const result=await(mode==="save" ? POST(request):GET(request));
+  expect(result.status).toBe(200);
+  expect(result.headers.get("Cache-Control")).toBe("no-store");
+  expect((upstream.mock.calls[0]?.[0] as Request|undefined)?.url).toBe(`http://127.0.0.1:9000${path}`);
+});
 test.each(["save","list","read","context","revisit"])("library %s uses the fixed private upstream",async mode=>{
   vi.stubEnv("WHISKY_API_ORIGIN","http://127.0.0.1:9000");
   const upstream=vi.fn(async(_request:Request)=>Response.json({schemaVersion:1}));vi.stubGlobal("fetch",upstream);

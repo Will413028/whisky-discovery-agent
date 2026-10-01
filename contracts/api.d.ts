@@ -158,6 +158,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/library/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Feedback */
+        get: operations["list_feedback_api_v1_library_feedback_get"];
+        put?: never;
+        /** Save Feedback */
+        post: operations["save_feedback_api_v1_library_feedback_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/library/feedback/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Feedback */
+        get: operations["read_feedback_api_v1_library_feedback__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/library/reports/{report_id}/conclusion-context": {
         parameters: {
             query?: never;
@@ -586,6 +621,59 @@ export interface components {
             url?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** BottleFeedbackListViewV1 */
+        BottleFeedbackListViewV1: {
+            /** Items */
+            items: components["schemas"]["BottleFeedbackViewV1"][];
+            /** Nextcursor */
+            nextCursor: string | null;
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
+        };
+        /** BottleFeedbackViewV1 */
+        BottleFeedbackViewV1: {
+            /**
+             * Bottleversionid
+             * Format: uuid
+             */
+            bottleVersionId: string;
+            /**
+             * Createdat
+             * Format: date-time
+             */
+            createdAt: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
+            /**
+             * Tasting
+             * @enum {string}
+             */
+            tasting: "not_tasted" | "liked" | "disliked";
+            /** Tastingreason */
+            tastingReason: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+            /** Wanttoexplore */
+            wantToExplore: boolean;
         };
         /** BudgetSuggestion */
         BudgetSuggestion: {
@@ -1876,6 +1964,36 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** SaveBottleFeedbackV1 */
+        SaveBottleFeedbackV1: {
+            /**
+             * Bottleversionid
+             * Format: uuid
+             */
+            bottleVersionId: string;
+            /** Expectedrevision */
+            expectedRevision: number;
+            /** Key */
+            key: string;
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
+            /**
+             * Tasting
+             * @enum {string}
+             */
+            tasting: "not_tasted" | "liked" | "disliked";
+            /**
+             * Tastingreason
+             * @default
+             */
+            tastingReason: string;
+            /** Wanttoexplore */
+            wantToExplore: boolean;
+        };
         /** SaveConclusionV1 */
         SaveConclusionV1: {
             /** Expectedconditionsrevision */
@@ -2950,6 +3068,264 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConclusionRevisitViewV1"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    list_feedback_api_v1_library_feedback_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BottleFeedbackListViewV1"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    save_feedback_api_v1_library_feedback_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SaveBottleFeedbackV1"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BottleFeedbackViewV1"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    read_feedback_api_v1_library_feedback__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BottleFeedbackViewV1"];
                 };
             };
             /** @description Unauthorized */

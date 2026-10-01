@@ -10,6 +10,7 @@ from pydantic.alias_generators import to_camel
 
 from whisky.modules.discovery.public import ResearchConditionsV1
 from whisky.modules.library.domain import exploration_choice
+from whisky.modules.library.feedback import bottle_feedback
 
 
 def conclusion_schema(schema: dict[str, Any]) -> None:
@@ -145,3 +146,36 @@ class ConclusionRevisitViewV1(LibraryModel):
     price_policy_version: str
     budget_twd: Decimal | None
     items: tuple[RevisitedVersionV1, ...] = Field(max_length=3)
+
+
+class SaveBottleFeedbackV1(LibraryModel):
+    schema_version: Literal[1] = 1
+    key: str = Field(min_length=1, max_length=128)
+    bottle_version_id: UUID
+    expected_revision: int = Field(ge=0)
+    want_to_explore: bool
+    tasting: Literal["not_tasted", "liked", "disliked"]
+    tasting_reason: str = Field(default="", max_length=2000)
+
+    @model_validator(mode="after")
+    def consistent_tasting(self) -> Self:
+        bottle_feedback(self.want_to_explore, self.tasting, self.tasting_reason)
+        return self
+
+
+class BottleFeedbackViewV1(LibraryModel):
+    schema_version: Literal[1] = 1
+    id: UUID
+    bottle_version_id: UUID
+    revision: int = Field(ge=1)
+    want_to_explore: bool
+    tasting: Literal["not_tasted", "liked", "disliked"]
+    tasting_reason: str
+    created_at: AwareDatetime
+    updated_at: AwareDatetime
+
+
+class BottleFeedbackListViewV1(LibraryModel):
+    schema_version: Literal[1] = 1
+    items: tuple[BottleFeedbackViewV1, ...]
+    next_cursor: str | None

@@ -289,6 +289,16 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - Web 開啟歷史結論即重新查詢；價格區分未篩選／符合當時預算／超价／資料不足，展示查核日、TW／TWD／容量／來源。未解析版本保留歷史並給重新選方向與目前 catalog 出口；讀取失敗不把未知當符合，subject 切換或卸載 abort 並忽略晚到結果。新增生成 schema／TypeScript／AJV，原 TaskView／V1 codec 不變。
 - 完整本機：backend **657 passed／349.04 秒**（`/tmp/whisky-t11-revisit-backend-release.log`）、installed wheel **4／12.99 秒**（`/tmp/whisky-t11-revisit-wheel-release.log`）；ruff／format、mypy95、Python／Web boundaries、scripts11、private startup gate 通過。Web **235**（`/tmp/whisky-t11-revisit-web-release.log`）、typecheck、原生 build、Node／workerd browser **13／10.0 秒**（`/tmp/whisky-t11-revisit-browser-green.log`）通過。重生前後 contracts SHA256 相同、無 drift；原 TaskView／V1 codec 無 diff，最終 diff／whitespace 已檢查。最初 scripts 檢查用了錯誤檔名／缺 root 或 unittest top-level，屬命令錯誤，改依 README／CI 正式命令通過，不計 RED。這是本機增量，尚未用正式 Auth0／Oracle 驗收，不關閉 T11。
 
+### T11 收藏與品飲回饋增量（2026-10-01，未驗收）
+
+- `0019_bottle_feedback` 保存 owner／generation／明確版本 ID、獨立收藏旗標、喝過喜歡／不喜歡與原因；每個版本有 revision，初次 expectedRevision=0。只保存酒款 ID 與使用者資料，不推導長期偏好。首次保存經 catalog public 檢查目前已覆核版本；已有回饋可在版本移除後修改，保留退出途徑。
+- 普通同步 CRUD，actor 鎖內驗 generation／CAS，與 `library_commands` 的 `feedback.save` receipt 原子提交。相同 key／body 回原收據，不同 body 拒絕；舊 generation 不藉 receipt 回讀。account-scoped keyset 列表用 owner／generation／updated_at／id 索引，排除取消收藏且未品飲的空狀態，但保留 revision 與收據。
+- 有效 RED：domain 3、真 DB 初次／修改／資格 5、owner-scoped 讀取 1、分頁 1、signed JWT HTTP 1／無效 query 4；payload 去重、CAS 並行、交易 rollback 是已受保護的回歸。unit／integration test 同 basename 引發 collection error，改唯一檔名後才取得 RED，不把環境錯誤計為行為 RED。
+- Web client／固定 proxy 10 RED、editor 3 RED、研究候選接線 1 RED、列表移除出口／切換帳號 2 RED；token 晚到不得送舊 session 寫入另 1 RED。只收到合法 receipt 才顯示已保存；unknown 結果凍結 key／body，已知拒絕先重讀。`/library` 重新解析目前 catalog，回饋獨立於歷史結論與預算，未解析版本可取消收藏或重選。
+- fresh design-review 0 findings。獨立 correctness review 找到首頁更新失敗重試舊 next cursor：1 RED→記住失敗請求位置，複查 fixed1／open0。空白正規化假說由既有 `str_strip_whitespace=True` 保護，撤回，沒有多加補丁。指令檔現行規則對帳無需改動。
+- backend **675／597.44 秒**（`/tmp/whisky-t11-feedback-backend-release.log`）、wheel **4／15.42 秒**、ruff／format、mypy96、Python／Web boundaries、scripts11、private startup gate 通過。Web review 後 **254**（`/tmp/whisky-t11-feedback-web-reviewed.log`）、typecheck、原生 build 通過。新增 browser 合成收藏保存→丟失回覆→同命令重送→關頁登入重開→未品飲／移除版本出口，缺 fixture 接線先 1 RED，修正後全部 **14／24.5 秒**（`/tmp/whisky-t11-feedback-browser-final.log`）；其後僅修列表首頁 retry，對應回歸已 GREEN。生成物 SHA256 重生前後一致；frozen TaskView／V1 codec 不改，最終 diff／whitespace 已檢查。
+- 此增量未部署，不代替真 Auth0／Oracle／跨瀏覽器驗收。T11 長期明確偏好、完整匯出、實際清除及防復活仍待完成。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。

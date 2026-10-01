@@ -1,0 +1,65 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "bottleVersionId": {
+      "format": "uuid",
+      "title": "Bottleversionid",
+      "type": "string"
+    },
+    "createdAt": {
+      "format": "date-time",
+      "title": "Createdat",
+      "type": "string"
+    },
+    "id": {
+      "format": "uuid",
+      "title": "Id",
+      "type": "string"
+    },
+    "revision": {
+      "minimum": 1,
+      "title": "Revision",
+      "type": "integer"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "default": 1,
+      "title": "Schemaversion",
+      "type": "integer"
+    },
+    "tasting": {
+      "enum": [
+        "not_tasted",
+        "liked",
+        "disliked"
+      ],
+      "title": "Tasting",
+      "type": "string"
+    },
+    "tastingReason": {
+      "title": "Tastingreason",
+      "type": "string"
+    },
+    "updatedAt": {
+      "format": "date-time",
+      "title": "Updatedat",
+      "type": "string"
+    },
+    "wantToExplore": {
+      "title": "Wanttoexplore",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "id",
+    "bottleVersionId",
+    "revision",
+    "wantToExplore",
+    "tasting",
+    "tastingReason",
+    "createdAt",
+    "updatedAt"
+  ],
+  "title": "BottleFeedbackViewV1",
+  "type": "object"
+}

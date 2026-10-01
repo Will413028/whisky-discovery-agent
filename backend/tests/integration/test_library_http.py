@@ -12,6 +12,48 @@ from whisky.modules.library.store import LibraryStore
 pytestmark = pytest.mark.integration
 
 
+@pytest.mark.parametrize(
+    "suffix", ["?limit=0", "?cursor=bad", "?limit=2&limit=3", "?planId=unexpected"]
+)
+async def test_feedback_query_rejects_invalid_or_duplicate_inputs(library_api, suffix):
+    client, sign, _, _ = library_api
+    response = await client.get(
+        "/api/v1/library/feedback" + suffix,
+        headers={"Authorization": f"Bearer {sign()}"},
+    )
+    assert response.status_code == 422
+
+
+async def test_feedback_http_saves_reopens_and_lists_only_own_tasting(library_api):
+    client, sign, choice, _ = library_api
+    headers = {"Authorization": f"Bearer {sign()}"}
+    body = dict(
+        schemaVersion=1,
+        key="favorite-http",
+        bottleVersionId=str(choice.selected_version_id),
+        expectedRevision=0,
+        wantToExplore=True,
+        tasting="not_tasted",
+        tastingReason="",
+    )
+    response = await client.post("/api/v1/library/feedback", headers=headers, json=body)
+    assert response.status_code == 201, (
+        "private feedback requires a typed durable HTTP entry"
+    )
+    path = f"/api/v1/library/feedback/{choice.selected_version_id}"
+    read = await client.get(path, headers=headers)
+    assert read.status_code == 200 and read.json() == response.json()
+    assert read.headers["cache-control"] == "no-store"
+    page = await client.get("/api/v1/library/feedback", headers=headers)
+    assert page.status_code == 200 and page.json()["items"] == [response.json()]
+    assert (await client.get(path)).status_code == 401
+    foreign = {"Authorization": f"Bearer {sign(sub='auth0|other')}"}
+    assert (await client.get(path, headers=foreign)).status_code == 404
+    assert (await client.get("/api/v1/library/feedback", headers=foreign)).json()[
+        "items"
+    ] == []
+
+
 async def test_revisit_returns_current_price_basis_without_exposing_foreign_history(
     library_api,
 ):

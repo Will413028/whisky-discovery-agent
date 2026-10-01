@@ -37,6 +37,20 @@ test("a completed report exposes explicit saving using the server-owned plan con
   expect(screen.getByLabelText("這次沒有適合的")).toBeTruthy();
 });
 
+test("completed candidates expose independent favorite and tasting feedback",async()=>{
+  const completed={...waiting,status:"completed",question:null,reportId,stage:"完成"};
+  vi.stubGlobal("fetch",vi.fn(async input=>{
+    const path=String(input);
+    if(path.includes("/library/feedback/"))return Response.json({code:"NOT_FOUND"},{status:404});
+    if(path.endsWith("/conclusion-context"))return Response.json({schemaVersion:1,planId:id,taskId:id,reportId,conditionsRevision:1,currentConditionsRevision:1});
+    if(path.endsWith("/comparison"))return new Response(null,{status:404});
+    return path.includes(`/tasks/${id}`) ? Response.json(completed) : Response.json({id:reportId,taskId:id,summary:"完成",candidates:[{itemId:id,bottleVersionId:selectedVersionId,name:"合成候選",reason:"來源理由",prices:[],claims:[]}]});
+  }));
+  render(<ResearchTask taskId={id}/>);
+  expect(await screen.findByLabelText("想探索（收藏）")).toBeTruthy();
+  expect(screen.getByLabelText("品飲感受")).toBeTruthy();
+});
+
 test("reopening a proposal question restores original clues and unconfirmed taste mapping",async()=>{
   vi.stubGlobal("fetch",vi.fn(async input=>{
     if(String(input).endsWith("/preference-proposal")) return Response.json({schemaVersion:4,taskId:id,planId:id,questionId,conditionsRevision:1,waitingVersion:1,sourceText:"我喜歡水果甜點",proposal:{summary:"原文只是線索",intent:{mode:"style_options",smoke_comparison:false},preferences:[{description:"可能喜歡果香",intent:"prefer",source_quote:"喜歡水果甜點",source_kind:"food_clue",certainty:"inferred",strength:"soft",mapping:{feature_key:"果香",reference:{release_id:id,item_id:id},evidence_ids:[id]}}],budget:null}});

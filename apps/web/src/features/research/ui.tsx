@@ -11,7 +11,7 @@ import {PreferenceProposalCard} from "./proposal-ui";
 import type { TaskView } from "./state";
 import {readComparison, type ComparisonReportView} from "./comparison-client";
 import {ComparisonReport} from "./comparison-ui";
-import {ReportConclusion} from "../library";
+import {BottleFeedbackEditor,ReportConclusion} from "../library";
 
 function configured() {
   return Boolean(process.env.NEXT_PUBLIC_AUTH0_DOMAIN && process.env.NEXT_PUBLIC_AUTH0_CLIENT_ID && process.env.NEXT_PUBLIC_AUTH0_AUDIENCE);
@@ -301,6 +301,7 @@ function ResearchTaskSession({taskId}: {taskId:string}) {
         {report.candidates.map(candidate => <section key={candidate.itemId}><h3>{candidate.name}</h3><p>{candidate.reason}</p>
           {candidate.prices.map(price => <p key={price.id}>參考價格：{price.amount ?? "未提供"} {price.currency}／{price.volumeMl ?? "?"} ml，{price.market}，查核日期 {price.checkedOn ?? "未提供"}</p>)}
           {candidate.claims.flatMap(claim => claim.sources).map(source => <p key={source.evidenceId}>來源：<a href={source.url} target="_blank" rel="noopener noreferrer">{source.publisher ?? source.url}</a>（{source.checkedOn}）</p>)}
+          <BottleFeedbackEditor version={candidate.bottleVersionId} name={candidate.name} token={conclusionToken}/>
         </section>)}
         <ReportConclusion key={`${report.id}:${task.conditionsRevision}`} reportId={report.id} taskId={task.taskId} revision={task.conditionsRevision} candidates={report.candidates.map(candidate=>({versionId:candidate.bottleVersionId,name:candidate.name}))} getToken={conclusionToken}/>
         {Boolean(report.sourceObservations?.length) && <section><h3>本次來源讀取（未覆核）</h3>

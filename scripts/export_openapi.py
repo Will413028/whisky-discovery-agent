@@ -8,6 +8,8 @@ from whisky.modules.catalog.http import CatalogView
 from whisky.modules.control.http import ControlView
 from whisky.modules.discovery.http import PlanListView, PlanView
 from whisky.modules.library.contracts import (
+    BottleFeedbackListViewV1,
+    BottleFeedbackViewV1,
     ConclusionContextViewV1,
     ConclusionListViewV1,
     ConclusionRevisitViewV1,
@@ -60,6 +62,8 @@ for name, model in (
     ("conclusion-list-view", ConclusionListViewV1),
     ("conclusion-context-view", ConclusionContextViewV1),
     ("conclusion-revisit-view", ConclusionRevisitViewV1),
+    ("bottle-feedback-view", BottleFeedbackViewV1),
+    ("bottle-feedback-list-view", BottleFeedbackListViewV1),
 ):
     target.with_name(f"{name}.schema.json").write_text(
         json.dumps(

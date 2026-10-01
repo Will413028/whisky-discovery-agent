@@ -12,11 +12,13 @@ from whisky.modules.catalog import public as catalog
 from whisky.modules.discovery.public import locked_plan, owned_plan
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.library.contracts import (
+    BottleFeedbackViewV1,
     ConclusionContextViewV1,
     ConclusionRevisitViewV1,
     ConclusionViewV1,
     RevisitedVersionV1,
     RevisitPriceV1,
+    SaveBottleFeedbackV1,
     SaveConclusionV1,
 )
 from whisky.modules.library.domain import exploration_choice
@@ -39,9 +41,206 @@ class ConclusionPage:
     next_cursor: ConclusionCursor | None
 
 
+@dataclass(frozen=True)
+class FeedbackPage:
+    items: tuple[BottleFeedbackViewV1, ...]
+    next_cursor: ConclusionCursor | None
+
+
 class LibraryStore:
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
+
+    def page_bottle_feedback(
+        self, owner: UUID, limit: int = 20, cursor: ConclusionCursor | None = None
+    ) -> FeedbackPage:
+        if not 1 <= limit <= 50:
+            raise ValueError("INVALID_PAGE_LIMIT")
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            if generation is None:
+                return FeedbackPage((), None)
+            after = "AND (updated_at,id)<(:at,:id)" if cursor is not None else ""
+            parameters = dict(owner=owner, generation=generation, count=limit + 1)
+            if cursor is not None:
+                parameters.update(at=cursor.updated_at, id=cursor.id)
+            rows = (
+                connection.execute(
+                    text(f"""
+                SELECT * FROM library_bottle_feedback
+                WHERE owner_id=:owner AND generation=:generation
+                    AND (want_to_explore OR tasting<>'not_tasted') {after}
+                ORDER BY updated_at DESC,id DESC LIMIT :count
+            """),
+                    parameters,
+                )
+                .mappings()
+                .all()
+            )
+            visible = rows[:limit]
+            return FeedbackPage(
+                tuple(self._feedback_view(row) for row in visible),
+                ConclusionCursor(visible[-1]["updated_at"], visible[-1]["id"])
+                if len(rows) > limit
+                else None,
+            )
+
+    def read_bottle_feedback(
+        self, owner: UUID, version: UUID
+    ) -> BottleFeedbackViewV1 | None:
+        with self.engine.connect() as connection:
+            generation = actor_generation(connection, owner)
+            if generation is None:
+                return None
+            row = (
+                connection.execute(
+                    text("""
+                SELECT * FROM library_bottle_feedback
+                WHERE owner_id=:owner AND generation=:generation
+                    AND bottle_version_id=:version
+            """),
+                    dict(owner=owner, generation=generation, version=version),
+                )
+                .mappings()
+                .first()
+            )
+            return self._feedback_view(row) if row is not None else None
+
+    def save_bottle_feedback(
+        self, owner: UUID, generation: int, command: SaveBottleFeedbackV1
+    ) -> BottleFeedbackViewV1:
+        digest = sha256(
+            json.dumps(
+                command.model_dump(mode="json", by_alias=True),
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest()
+        with self.engine.begin() as connection:
+            if actor_generation(connection, owner, lock=True) != generation:
+                raise LibraryConflict("IDENTITY_CHANGED")
+            prior = connection.execute(
+                text("""
+                SELECT payload_hash,target_id,response FROM library_commands
+                WHERE owner_id=:owner AND generation=:generation
+                    AND scope='feedback.save' AND key=:key
+            """),
+                dict(owner=owner, generation=generation, key=command.key),
+            ).first()
+            if prior is not None:
+                if prior.payload_hash != digest:
+                    raise LibraryConflict("IDEMPOTENCY_CONFLICT")
+                visible = connection.scalar(
+                    text("""
+                    SELECT id FROM library_bottle_feedback
+                    WHERE id=:id AND owner_id=:owner AND generation=:generation
+                """),
+                    dict(id=prior.target_id, owner=owner, generation=generation),
+                )
+                if visible is None:
+                    raise LibraryConflict("NOT_FOUND")
+                return BottleFeedbackViewV1.model_validate(prior.response)
+            existing = (
+                connection.execute(
+                    text("""
+                SELECT * FROM library_bottle_feedback
+                WHERE owner_id=:owner AND generation=:generation
+                    AND bottle_version_id=:version
+            """),
+                    dict(
+                        owner=owner,
+                        generation=generation,
+                        version=command.bottle_version_id,
+                    ),
+                )
+                .mappings()
+                .first()
+            )
+            if command.expected_revision != (existing["revision"] if existing else 0):
+                raise LibraryConflict("REVISION_CONFLICT")
+            if existing is None:
+                release_id = catalog.current_release_id(connection)
+                if (
+                    release_id is None
+                    or catalog.reviewed_version_in_release(
+                        connection, release_id, command.bottle_version_id
+                    )
+                    is None
+                ):
+                    raise LibraryConflict("UNKNOWN_BOTTLE_VERSION")
+                row = (
+                    connection.execute(
+                        text("""
+                    INSERT INTO library_bottle_feedback
+                        (id,owner_id,generation,bottle_version_id,revision,
+                         want_to_explore,tasting,tasting_reason)
+                    VALUES (:id,:owner,:generation,:version,1,:want,:tasting,:reason)
+                    RETURNING *
+                """),
+                        dict(
+                            id=uuid4(),
+                            owner=owner,
+                            generation=generation,
+                            version=command.bottle_version_id,
+                            want=command.want_to_explore,
+                            tasting=command.tasting,
+                            reason=command.tasting_reason,
+                        ),
+                    )
+                    .mappings()
+                    .one()
+                )
+            else:
+                row = (
+                    connection.execute(
+                        text("""
+                    UPDATE library_bottle_feedback
+                    SET revision=revision+1,want_to_explore=:want,tasting=:tasting,
+                        tasting_reason=:reason,updated_at=now()
+                    WHERE id=:id RETURNING *
+                """),
+                        dict(
+                            id=existing["id"],
+                            want=command.want_to_explore,
+                            tasting=command.tasting,
+                            reason=command.tasting_reason,
+                        ),
+                    )
+                    .mappings()
+                    .one()
+                )
+            saved = self._feedback_view(row)
+            connection.execute(
+                text("""
+                INSERT INTO library_commands
+                    (id,owner_id,generation,scope,key,payload_hash,target_id,response)
+                VALUES (:id,:owner,:generation,'feedback.save',:key,:hash,
+                    :target,CAST(:response AS jsonb))
+            """),
+                dict(
+                    id=uuid4(),
+                    owner=owner,
+                    generation=generation,
+                    key=command.key,
+                    hash=digest,
+                    target=saved.id,
+                    response=saved.model_dump_json(by_alias=True),
+                ),
+            )
+            return saved
+
+    @staticmethod
+    def _feedback_view(row: RowMapping) -> BottleFeedbackViewV1:
+        return BottleFeedbackViewV1(
+            id=row["id"],
+            bottle_version_id=row["bottle_version_id"],
+            revision=row["revision"],
+            want_to_explore=row["want_to_explore"],
+            tasting=row["tasting"],
+            tasting_reason=row["tasting_reason"],
+            created_at=row["created_at"],
+            updated_at=row["updated_at"],
+        )
 
     def revisit_conclusion(
         self, owner: UUID, identifier: UUID, as_of: date

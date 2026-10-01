@@ -306,6 +306,106 @@
         "title": "BinaryInputContent",
         "type": "object"
       },
+      "BottleFeedbackListViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BottleFeedbackViewV1"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "title": "BottleFeedbackListViewV1",
+        "type": "object"
+      },
+      "BottleFeedbackViewV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "title": "Createdat",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 1.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "tasting": {
+            "enum": [
+              "not_tasted",
+              "liked",
+              "disliked"
+            ],
+            "title": "Tasting",
+            "type": "string"
+          },
+          "tastingReason": {
+            "title": "Tastingreason",
+            "type": "string"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "title": "Updatedat",
+            "type": "string"
+          },
+          "wantToExplore": {
+            "title": "Wanttoexplore",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "bottleVersionId",
+          "revision",
+          "wantToExplore",
+          "tasting",
+          "tastingReason",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "BottleFeedbackViewV1",
+        "type": "object"
+      },
       "BudgetSuggestion": {
         "additionalProperties": false,
         "properties": {
@@ -3484,6 +3584,61 @@
         "title": "RunAgentInput",
         "type": "object"
       },
+      "SaveBottleFeedbackV1": {
+        "additionalProperties": false,
+        "properties": {
+          "bottleVersionId": {
+            "format": "uuid",
+            "title": "Bottleversionid",
+            "type": "string"
+          },
+          "expectedRevision": {
+            "minimum": 0.0,
+            "title": "Expectedrevision",
+            "type": "integer"
+          },
+          "key": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Key",
+            "type": "string"
+          },
+          "schemaVersion": {
+            "const": 1,
+            "default": 1,
+            "title": "Schemaversion",
+            "type": "integer"
+          },
+          "tasting": {
+            "enum": [
+              "not_tasted",
+              "liked",
+              "disliked"
+            ],
+            "title": "Tasting",
+            "type": "string"
+          },
+          "tastingReason": {
+            "default": "",
+            "maxLength": 2000,
+            "title": "Tastingreason",
+            "type": "string"
+          },
+          "wantToExplore": {
+            "title": "Wanttoexplore",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "key",
+          "bottleVersionId",
+          "expectedRevision",
+          "wantToExplore",
+          "tasting"
+        ],
+        "title": "SaveBottleFeedbackV1",
+        "type": "object"
+      },
       "SaveConclusionV1": {
         "additionalProperties": false,
         "properties": {
@@ -5321,6 +5476,337 @@
           }
         ],
         "summary": "Revisit Conclusion"
+      }
+    },
+    "/api/v1/library/feedback": {
+      "get": {
+        "operationId": "list_feedback_api_v1_library_feedback_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 50,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BottleFeedbackListViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "List Feedback"
+      },
+      "post": {
+        "operationId": "save_feedback_api_v1_library_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveBottleFeedbackV1"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BottleFeedbackViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Save Feedback"
+      }
+    },
+    "/api/v1/library/feedback/{version}": {
+      "get": {
+        "operationId": "read_feedback_api_v1_library_feedback__version__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Version",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BottleFeedbackViewV1"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Forbidden"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Unprocessable Content"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Too Many Requests"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorView"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Read Feedback"
       }
     },
     "/api/v1/library/reports/{report_id}/conclusion-context": {
