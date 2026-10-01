@@ -1,4 +1,24 @@
 import {expect,test,type Page} from "@playwright/test";
+import {readFile} from "node:fs/promises";
+
+test("synthetic account export downloads a validated private JSON file",async({page})=>{
+  const owner="00000000-0000-4000-8000-000000000001";
+  const sections=["libraryHistory","conditionChanges","identities","plans","tasks","reports","questions","preferenceProposals","sourceObservations","researchInputs","agentTurns","comparisons","conclusions","feedback","preferences","reportCandidates","reportClaims","reportCitations","reportPrices","reportSourceObservations","catalogItems","catalogEvidence","catalogPrices"];
+  const value={schemaVersion:1,ownerId:owner,generation:1,exportedAt:"2026-10-01T00:00:00Z",data:Object.fromEntries(sections.map(key=>[key,[]]))};
+  await page.route("**/api/v1/me",route=>route.fulfill({json:{id:owner}}));
+  await page.route("**/api/v1/library/export",route=>route.fulfill({json:value}));
+  await page.route("**/api/v1/library/preferences",route=>route.fulfill({json:{schemaVersion:1,revision:0,preferences:[],updatedAt:null}}));
+  await page.route("**/api/v1/library/feedback",route=>route.fulfill({json:{schemaVersion:1,items:[],nextCursor:null}}));
+  await page.route("**/api/v1/catalog",route=>route.fulfill({json:{releaseId:null,evaluatedOn:"2026-10-01",pricePolicyVersion:"synthetic",items:[]}}));
+  await page.goto("http://127.0.0.1:8419/research?library=1");
+  await page.getByRole("button",{name:"登入查看收藏與品飲回饋"}).click();
+  const downloaded=page.waitForEvent("download");
+  await page.getByRole("button",{name:"匯出我的資料",exact:true}).click();
+  const file=await downloaded;
+  expect(file.suggestedFilename()).toBe("whisky-account.json");
+  const path=await file.path();expect(path).not.toBeNull();
+  expect(JSON.parse(await readFile(path!,"utf8"))).toEqual(value);
+});
 
 test("synthetic favorite retries one command and reopens without becoming a tasting preference",async({browser})=>{
   const context=await browser.newContext();

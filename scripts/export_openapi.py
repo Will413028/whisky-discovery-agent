@@ -16,6 +16,7 @@ from whisky.modules.library.contracts import (
     ConclusionViewV1,
     LongTermPreferencesViewV1,
 )
+from whisky.modules.library.export_views import AccountExportViewV1
 from whisky.modules.research.comparison_views_v4 import ComparisonReportViewV4
 from whisky.modules.research.inputs_v4 import StartCommandV4
 from whisky.modules.research.proposal_view_v4 import PreferenceProposalViewV4
@@ -52,6 +53,7 @@ target.with_name("catalog-view.schema.json").write_text(
     + "\n"
 )
 for name, model in (
+    ("account-export-view", AccountExportViewV1),
     ("plan-view", PlanView),
     ("plan-list-view", PlanListView),
     ("control-view", ControlView),

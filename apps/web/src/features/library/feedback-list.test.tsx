@@ -13,6 +13,7 @@ test("the private library provides an explicit long-term preference editor",asyn
   vi.stubGlobal("fetch",vi.fn(async input=>String(input).endsWith("/preferences") ? Response.json({schemaVersion:1,revision:0,preferences:[],updatedAt:null}) : Response.json({releaseId:null,evaluatedOn:"2026-10-01",pricePolicyVersion:"fixture",items:[]})));
   render(<BottleFeedbackLibrary/>);
   expect(await screen.findByLabelText("我的明確陳述")).toBeTruthy();
+  expect(screen.getByRole("button",{name:"匯出我的資料"})).toBeTruthy();
 });
 test("reopening a removed favorite preserves its identity and provides editing and catalog exits",async()=>{
   vi.mocked(listBottleFeedback).mockResolvedValue({schemaVersion:1,items:[feedback],nextCursor:null});

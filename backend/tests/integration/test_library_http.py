@@ -12,6 +12,43 @@ from whisky.modules.library.store import LibraryStore
 pytestmark = pytest.mark.integration
 
 
+async def test_export_download_contains_own_saved_products_and_report(library_api):
+    client, sign, choice, report = library_api
+    headers = {"Authorization": f"Bearer {sign()}"}
+    saved = await client.post(
+        "/api/v1/library/conclusions",
+        headers=headers,
+        json=choice.model_dump(mode="json", by_alias=True),
+    )
+    assert saved.status_code == 201
+    response = await client.get("/api/v1/library/export", headers=headers)
+    assert response.status_code == 200
+    assert response.headers["cache-control"] == "no-store"
+    assert "attachment" in response.headers["content-disposition"]
+    value = response.json()
+    assert value["schemaVersion"] == 1
+    assert value["data"]["conclusions"][0]["content"]["reason"] == choice.reason
+    assert value["data"]["plans"][0]["id"] == str(choice.plan_id)
+    assert value["data"]["reports"][0]["id"] == str(report.id)
+    assert value["data"]["tasks"][0]["id"] == str(report.task_id)
+    assert value["data"]["reportClaims"]
+    assert value["data"]["reportCitations"]
+    assert value["data"]["catalogEvidence"][0]["url"].startswith("https://")
+    assert "auth0|fixture" in {row["subject"] for row in value["data"]["identities"]}
+    assert (await client.get("/api/v1/library/export")).status_code == 401
+    foreign = await client.get(
+        "/api/v1/library/export",
+        headers={"Authorization": f"Bearer {sign(sub='auth0|other')}"},
+    )
+    assert foreign.status_code == 200
+    assert foreign.json()["data"]["conclusions"] == []
+    assert foreign.json()["data"]["plans"] == []
+    assert foreign.json()["data"]["reports"] == []
+    assert {row["subject"] for row in foreign.json()["data"]["identities"]} == {
+        "auth0|other"
+    }
+
+
 async def test_account_preferences_are_explicit_private_and_budget_free(library_api):
     client, sign, _, _ = library_api
     headers = {"Authorization": f"Bearer {sign()}"}

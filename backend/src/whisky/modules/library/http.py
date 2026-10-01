@@ -9,6 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import AwareDatetime, Field
+from starlette.responses import JSONResponse, Response
 
 from whisky.modules.catalog.public import taiwan_date
 from whisky.modules.identity.public import AccessSession, IdentityAccess
@@ -25,6 +26,8 @@ from whisky.modules.library.contracts import (
     SaveConclusionV1,
     SaveLongTermPreferencesV1,
 )
+from whisky.modules.library.export_store import AccountExportStore, ExportUnavailable
+from whisky.modules.library.export_views import AccountExportViewV1
 from whisky.modules.library.preference_store import PreferenceStore
 from whisky.modules.library.store import ConclusionCursor, LibraryConflict, LibraryStore
 from whisky.platform.http_errors import PublicAPIError
@@ -74,6 +77,34 @@ def library_router(identity: IdentityAccess, store: LibraryStore | None) -> APIR
         credentials: HTTPAuthorizationCredentials | None = Depends(bearer),
     ) -> AccessSession:
         return identity.authenticate(credentials.credentials if credentials else None)
+
+    @routes.get(
+        "/export", response_class=JSONResponse, response_model=AccountExportViewV1
+    )
+    def export_account(
+        request: Request, session: AccessSession = Depends(authenticate)
+    ) -> Response:
+        if request.query_params:
+            raise PublicAPIError(422, "INVALID_REQUEST")
+        if store is None:
+            raise PublicAPIError(503, "LIBRARY_UNAVAILABLE")
+        try:
+            content = AccountExportStore(store.engine).read(
+                session.actor_id, session.generation
+            )
+        except ExportUnavailable as error:
+            code = str(error)
+            raise PublicAPIError(
+                409 if code == "IDENTITY_CHANGED" else 422, code
+            ) from None
+        return Response(
+            content,
+            media_type="application/json",
+            headers={
+                "Content-Disposition": 'attachment; filename="whisky-account.json"',
+                "X-Content-Type-Options": "nosniff",
+            },
+        )
 
     @routes.get("/preferences", response_model=LongTermPreferencesViewV1)
     def read_preferences(

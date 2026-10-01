@@ -158,6 +158,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/library/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Account */
+        get: operations["export_account_api_v1_library_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/library/feedback": {
         parameters: {
             query?: never;
@@ -525,6 +542,77 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AccountExportDataV1 */
+        AccountExportDataV1: {
+            /** Agentturns */
+            agentTurns: components["schemas"]["AgentTurnExportV1"][];
+            /** Catalogevidence */
+            catalogEvidence: components["schemas"]["CatalogEvidenceExportV1"][];
+            /** Catalogitems */
+            catalogItems: components["schemas"]["CatalogItemExportV1"][];
+            /** Catalogprices */
+            catalogPrices: components["schemas"]["CatalogPriceExportV1"][];
+            /** Comparisons */
+            comparisons: components["schemas"]["ComparisonExportV1"][];
+            /** Conclusions */
+            conclusions: components["schemas"]["ConclusionExportV1"][];
+            /** Conditionchanges */
+            conditionChanges: components["schemas"]["ConditionChangeExportV1"][];
+            /** Feedback */
+            feedback: components["schemas"]["FeedbackExportV1"][];
+            /** Identities */
+            identities: components["schemas"]["IdentityExportV1"][];
+            /** Libraryhistory */
+            libraryHistory: components["schemas"]["LibraryHistoryExportV1"][];
+            /** Plans */
+            plans: components["schemas"]["PlanExportV1"][];
+            /** Preferenceproposals */
+            preferenceProposals: components["schemas"]["ProposalExportV1"][];
+            /** Preferences */
+            preferences: components["schemas"]["PreferencesExportV1"][];
+            /** Questions */
+            questions: components["schemas"]["QuestionExportV1"][];
+            /** Reportcandidates */
+            reportCandidates: components["schemas"]["ReportCandidateExportV1"][];
+            /** Reportcitations */
+            reportCitations: components["schemas"]["ReportCitationExportV1"][];
+            /** Reportclaims */
+            reportClaims: components["schemas"]["ReportClaimExportV1"][];
+            /** Reportprices */
+            reportPrices: components["schemas"]["ReportPriceExportV1"][];
+            /** Reportsourceobservations */
+            reportSourceObservations: components["schemas"]["ReportSourceObservationExportV1"][];
+            /** Reports */
+            reports: components["schemas"]["ReportExportV1"][];
+            /** Researchinputs */
+            researchInputs: components["schemas"]["ResearchInputExportV1"][];
+            /** Sourceobservations */
+            sourceObservations: components["schemas"]["SourceObservationExportV1"][];
+            /** Tasks */
+            tasks: components["schemas"]["TaskExportV1"][];
+        };
+        /** AccountExportViewV1 */
+        AccountExportViewV1: {
+            data: components["schemas"]["AccountExportDataV1"];
+            /**
+             * Exportedat
+             * Format: date-time
+             */
+            exportedAt: string;
+            /** Generation */
+            generation: number;
+            /**
+             * Ownerid
+             * Format: uuid
+             */
+            ownerId: string;
+            /**
+             * Schemaversion
+             * @default 1
+             * @constant
+             */
+            schemaVersion: 1;
+        };
         /**
          * ActivityMessage
          * @description An activity progress message emitted between chat messages.
@@ -559,6 +647,30 @@ export interface components {
              * Format: uuid
              */
             id: string;
+        };
+        /** AgentTurnExportV1 */
+        AgentTurnExportV1: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            outcome: components["schemas"]["JsonValue"];
+            /**
+             * Run Id
+             * Format: uuid
+             */
+            run_id: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /**
+             * Thread Id
+             * Format: uuid
+             */
+            thread_id: string;
         };
         /** AnswerRequest */
         AnswerRequest: {
@@ -740,6 +852,43 @@ export interface components {
             /** Value */
             value: string;
         };
+        /** CatalogEvidenceExportV1 */
+        CatalogEvidenceExportV1: {
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /**
+             * Captured At
+             * Format: date-time
+             */
+            captured_at: string;
+            /**
+             * Checked On
+             * Format: date
+             */
+            checked_on: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Publisher */
+            publisher: string | null;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /**
+             * Source Id
+             * Format: uuid
+             */
+            source_id: string;
+            /** Url */
+            url: string;
+        };
         /** CatalogFlavorView */
         CatalogFlavorView: {
             /** Evidenceids */
@@ -750,6 +899,32 @@ export interface components {
             method: string | null;
             /** Methodversion */
             methodVersion: string | null;
+        };
+        /** CatalogItemExportV1 */
+        CatalogItemExportV1: {
+            /** Abv */
+            abv: string | null;
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /** Reviewed On */
+            reviewed_on: string | null;
+            /** Volume Ml */
+            volume_ml: number | null;
         };
         /** CatalogItemView */
         CatalogItemView: {
@@ -784,6 +959,44 @@ export interface components {
             versionLabel: string;
             /** Volumeml */
             volumeMl: number | null;
+        };
+        /** CatalogPriceExportV1 */
+        CatalogPriceExportV1: {
+            /** Amount */
+            amount: string | null;
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /** Checked On */
+            checked_on: string | null;
+            /** Currency */
+            currency: string;
+            /**
+             * Evidence Id
+             * Format: uuid
+             */
+            evidence_id: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Market */
+            market: string;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /** Unconditional */
+            unconditional: boolean;
         };
         /** CatalogPriceView */
         CatalogPriceView: {
@@ -896,6 +1109,25 @@ export interface components {
             /** Unresolved */
             unresolved: string[];
         };
+        /** ComparisonExportV1 */
+        ComparisonExportV1: {
+            /** Content */
+            content: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+            /** Schema Version */
+            schema_version: number;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+        };
         /** ComparisonItemEvidenceV4 */
         ComparisonItemEvidenceV4: {
             /** Name */
@@ -962,6 +1194,60 @@ export interface components {
              * Format: uuid
              */
             taskId: string;
+        };
+        /** ConclusionExportV1 */
+        ConclusionExportV1: {
+            /** Catalog Release Id */
+            catalog_release_id: string | null;
+            /** Conditions */
+            conditions: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Conditions Revision */
+            conditions_revision: number;
+            /** Content */
+            content: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at: string | null;
+            /**
+             * Evaluated On
+             * Format: date
+             */
+            evaluated_on: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** ConclusionListViewV1 */
         ConclusionListViewV1: {
@@ -1081,6 +1367,37 @@ export interface components {
              */
             updatedAt: string;
         } & unknown;
+        /** ConditionChangeExportV1 */
+        ConditionChangeExportV1: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Expected Revision */
+            expected_revision: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            new_conditions: components["schemas"]["ResearchConditions-Output"];
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "pending" | "intent_confirmed" | "effect_applied" | "effect_rejected" | "completed" | "rejected";
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
         /** ConditionPatch */
         ConditionPatch: {
             /** Budget Twd */
@@ -1265,6 +1582,40 @@ export interface components {
              */
             smoke_comparison: boolean;
         };
+        /** FeedbackExportV1 */
+        FeedbackExportV1: {
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Revision */
+            revision: number;
+            /**
+             * Tasting
+             * @enum {string}
+             */
+            tasting: "not_tasted" | "liked" | "disliked";
+            /** Tasting Reason */
+            tasting_reason: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+            /** Want To Explore */
+            want_to_explore: boolean;
+        };
         /** FlavorContrast */
         FlavorContrast: {
             /**
@@ -1302,6 +1653,13 @@ export interface components {
             name: string;
         } & {
             [key: string]: unknown;
+        };
+        /** IdentityExportV1 */
+        IdentityExportV1: {
+            /** Issuer */
+            issuer: string;
+            /** Subject */
+            subject: string;
         };
         /**
          * ImageInputContent
@@ -1354,6 +1712,7 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        JsonValue: unknown;
         /** KeyRequest */
         KeyRequest: {
             /**
@@ -1361,6 +1720,31 @@ export interface components {
              * Format: uuid
              */
             key: string;
+        };
+        /** LibraryHistoryExportV1 */
+        LibraryHistoryExportV1: {
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Response */
+            response: components["schemas"]["ConclusionViewV1"] | components["schemas"]["BottleFeedbackViewV1"] | components["schemas"]["LongTermPreferencesViewV1"];
+            /**
+             * Scope
+             * @enum {string}
+             */
+            scope: "conclusions.save" | "feedback.save" | "preferences.save";
+            /**
+             * Target Id
+             * Format: uuid
+             */
+            target_id: string;
         };
         /** LongTermPreferenceV1 */
         LongTermPreferenceV1: {
@@ -1430,6 +1814,36 @@ export interface components {
              */
             key: string;
             patch: components["schemas"]["ConditionPatch"];
+        };
+        /** PlanExportV1 */
+        PlanExportV1: {
+            /** Conditions */
+            conditions: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Conditions Revision */
+            conditions_revision: number;
+            /** Conditions Schema Version */
+            conditions_schema_version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Deleted At */
+            deleted_at: string | null;
+            /** Generation */
+            generation: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** PlanListView */
         PlanListView: {
@@ -1542,6 +1956,52 @@ export interface components {
              */
             strength: "soft";
         };
+        /** PreferencesExportV1 */
+        PreferencesExportV1: {
+            /** Preferences */
+            preferences: components["schemas"]["LongTermPreferenceV1"][];
+            /** Revision */
+            revision: number;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /** ProposalExportV1 */
+        ProposalExportV1: {
+            /** Base Conditions */
+            base_conditions: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Conditions Revision */
+            conditions_revision: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Generation */
+            generation: number;
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Proposal */
+            proposal: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Source Text */
+            source_text: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+        };
         /** QuestionChoiceView */
         QuestionChoiceView: {
             /**
@@ -1551,6 +2011,46 @@ export interface components {
             id: string;
             /** Label */
             label: string;
+        };
+        /** QuestionExportV1 */
+        QuestionExportV1: {
+            /** Answer */
+            answer: string | null;
+            /** Answered At */
+            answered_at: string | null;
+            choices: components["schemas"]["JsonValue"];
+            /** Conditions Revision */
+            conditions_revision: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Expires At
+             * Format: date-time
+             */
+            expires_at: string;
+            /** Generation */
+            generation: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Kind */
+            kind: string;
+            /** Prompt */
+            prompt: string;
+            /** Status */
+            status: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Waiting Version */
+            waiting_version: number;
         };
         /** QuestionView */
         QuestionView: {
@@ -1599,6 +2099,33 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ReportCandidateExportV1 */
+        ReportCandidateExportV1: {
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ordinal */
+            ordinal: number;
+            /** Reason */
+            reason: string;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+        };
         /** ReportCandidateView */
         ReportCandidateView: {
             /**
@@ -1625,6 +2152,42 @@ export interface components {
              */
             releaseId: string;
         };
+        /** ReportCitationExportV1 */
+        ReportCitationExportV1: {
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /** Claim Ordinal */
+            claim_ordinal: number;
+            /**
+             * Evidence Id
+             * Format: uuid
+             */
+            evidence_id: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string;
+            /** Ordinal */
+            ordinal: number;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
+        };
         /** ReportClaim */
         ReportClaim: {
             /** Evidenceids */
@@ -1633,6 +2196,39 @@ export interface components {
             key: string;
             /** Kind */
             kind: string;
+            /** Value */
+            value: string;
+        };
+        /** ReportClaimExportV1 */
+        ReportClaimExportV1: {
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /** Claim Ordinal */
+            claim_ordinal: number;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string;
+            /** Ordinal */
+            ordinal: number;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
             /** Value */
             value: string;
         };
@@ -1649,6 +2245,85 @@ export interface components {
             sources: components["schemas"]["ReportSourceView"][];
             /** Value */
             value: string;
+        };
+        /** ReportExportV1 */
+        ReportExportV1: {
+            /** Catalog Release Id */
+            catalog_release_id: string | null;
+            /** Clarification Id */
+            clarification_id: string | null;
+            /** Conditions Revision */
+            conditions_revision: number;
+            /** Content */
+            content: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /**
+             * Evaluated On
+             * Format: date
+             */
+            evaluated_on: string;
+            /** Generation */
+            generation: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /** Model Version */
+            model_version: string;
+            /** Policy Version */
+            policy_version: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Schema Version */
+            schema_version: number;
+            /** Selected Item Id */
+            selected_item_id: string | null;
+            /** Selected Label */
+            selected_label: string | null;
+            /** Selected Version Id */
+            selected_version_id: string | null;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+        };
+        /** ReportPriceExportV1 */
+        ReportPriceExportV1: {
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /**
+             * Item Id
+             * Format: uuid
+             */
+            item_id: string;
+            /** Ordinal */
+            ordinal: number;
+            /**
+             * Price Id
+             * Format: uuid
+             */
+            price_id: string;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
         };
         /** ReportPriceView */
         ReportPriceView: {
@@ -1668,6 +2343,21 @@ export interface components {
             source: components["schemas"]["ReportSourceView"];
             /** Volumeml */
             volumeMl: number | null;
+        };
+        /** ReportSourceObservationExportV1 */
+        ReportSourceObservationExportV1: {
+            /**
+             * Observation Id
+             * Format: uuid
+             */
+            observation_id: string;
+            /** Ordinal */
+            ordinal: number;
+            /**
+             * Report Id
+             * Format: uuid
+             */
+            report_id: string;
         };
         /** ReportSourceObservationView */
         ReportSourceObservationView: {
@@ -1842,6 +2532,20 @@ export interface components {
              */
             schema_version: 1;
             starting_bottle?: components["schemas"]["CatalogReference"] | null;
+        };
+        /** ResearchInputExportV1 */
+        ResearchInputExportV1: {
+            /** Input */
+            input: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Source Task Id */
+            source_task_id: string | null;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
         };
         /** ResearchInputV4 */
         ResearchInputV4: {
@@ -2101,6 +2805,60 @@ export interface components {
              */
             schemaVersion: 1;
         };
+        /** SourceObservationExportV1 */
+        SourceObservationExportV1: {
+            /**
+             * Bottle Version Id
+             * Format: uuid
+             */
+            bottle_version_id: string;
+            /** Conditions Revision */
+            conditions_revision: number;
+            /** Content Sha256 */
+            content_sha256: string | null;
+            /** Effective Url */
+            effective_url: string | null;
+            /** Error Code */
+            error_code: string | null;
+            /**
+             * Evidence Id
+             * Format: uuid
+             */
+            evidence_id: string;
+            /** Generation */
+            generation: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Observed At
+             * Format: date-time
+             */
+            observed_at: string;
+            /**
+             * Release Id
+             * Format: uuid
+             */
+            release_id: string;
+            /** Review Status */
+            review_status: string;
+            /**
+             * Source Checked On
+             * Format: date
+             */
+            source_checked_on: string;
+            /** Status */
+            status: string;
+            /**
+             * Task Id
+             * Format: uuid
+             */
+            task_id: string;
+            /** Visible Text */
+            visible_text: string | null;
+        };
         /** StartCommandV4 */
         StartCommandV4: {
             /** Conditionsrevision */
@@ -2159,6 +2917,50 @@ export interface components {
             message: string;
             /** Retryable */
             retryable: boolean;
+        };
+        /** TaskExportV1 */
+        TaskExportV1: {
+            /** Conditions */
+            conditions: {
+                [key: string]: components["schemas"]["JsonValue"];
+            };
+            /** Conditions Revision */
+            conditions_revision: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            error: components["schemas"]["JsonValue"];
+            /** Generation */
+            generation: number;
+            /**
+             * Id
+             * Format: uuid
+             */
+            id: string;
+            /**
+             * Plan Id
+             * Format: uuid
+             */
+            plan_id: string;
+            question: components["schemas"]["JsonValue"];
+            /** Report Id */
+            report_id: string | null;
+            /** Stage */
+            stage: string;
+            /** Status */
+            status: string;
+            /**
+             * Thread Id
+             * Format: uuid
+             */
+            thread_id: string;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
         };
         /** TaskHistoryItem */
         TaskHistoryItem: {
@@ -3143,6 +3945,89 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConclusionRevisitViewV1"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Conflict */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Unprocessable Content */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorView"];
+                };
+            };
+        };
+    };
+    export_account_api_v1_library_export_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountExportViewV1"];
                 };
             };
             /** @description Unauthorized */

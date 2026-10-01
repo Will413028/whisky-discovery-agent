@@ -316,6 +316,14 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - Web **271 passed**（`/tmp/whisky-t11-library-disabled-green.log`）；此前原生 Next build／typecheck、Node／workerd browser **15／21.8 秒**（`/tmp/whisky-t11-preferences-browser-final.log`）、wheel **4／13.18 秒**、ruff／format、mypy98、Python／Web boundaries、scripts11 通過。browser 新案例是合成 API 的保存→重開→明確勾選套用，不取代真 Auth0。舊 saved 測試文字查詢會與非同步失敗訊息撞字、clearAllMocks 不清尚未消耗的 once queue，已改語意 heading 查詢及獨立清理；這是測試穩定性修正，不算新產品 RED。
 - 完整 backend **694／403.22 秒**（`/tmp/whisky-t11-preferences-backend-release.log`）通過。最後 403 client 修正後 typecheck、原生 build 與 browser **15／12.1 秒**（`/tmp/whisky-t11-preferences-browser-reviewed.log`）再次通過。生成 contracts SHA256 前後相同、無 drift，frozen TaskView／V1 conditions／control codec 無 diff；最終 diff／whitespace 已檢查。此增量未部署，T11 完整匯出、實際清除、防復活與正式旅程仍未完成。
 
+### T11 私人 JSON 匯出增量（2026-10-01，未驗收）
+
+- 固定 `GET /api/v1/library/export` 經 Bearer／no-store／同帳號 generation gate，單一 REPEATABLE READ 快照匯出自己的身份對應、可見計畫、研究／報告及其引用、結論、獨立回饋、明確偏好與仍保存的使用者修改歷史。模組各自提供 public export 契約，不由 library 直接讀其他模組的表。參考 catalog 僅攜帶這些私人資料實際引用的已封存版本、價格與證據。
+- HTTP endpoint 缺失、報告 claims 遺漏、身份對應遺漏、歷史偏好與條件修改遺漏各有可解釋 RED→GREEN。刪除計畫仍出現在匯出檔的反例已重現並修正；由可見 plan IDs 篩選研究、所有報告子資料、結論、結論 receipts 與條件修改。獨立酒款回饋／偏好仍可匯出。READ COMMITTED 降級 mutation 會使後段讀到新回饋，快照回歸測試捕捉此差異。
+- 獨立覆核 B1：DB projection 不應自行成為下載 wire schema，已改 closed Export V1 DTO、生成 OpenAPI／TypeScript／standalone validator 與 CI drift gate。P2：只匯出目前偏好會漏掉 receipts 仍保存的原文，已納入 typed libraryHistory／conditionChanges；覆核確認兩項與 deleted-plan 修正 fixed，無新增 findings。
+- Web 先核對 `/me` actor，再驗完整匯出契約與 owner；身份切換／unmount 中止請求，晚到 token 不觸發舊帳號匯出。固定檔名下載，不使用上游任意 filename。8 MiB 資源界線超過時明示失敗，不產生截斷檔案；更大帳戶的完整匯出出口仍需在 T11 驗收前處理。
+- targeted backend **28／43.59 秒**（`/tmp/whisky-t11-export-history-green.log`）、Web **277**（`/tmp/whisky-t11-export-web-full.log`）、mypy105、ruff／format、typecheck、原生 build、Python／Web boundaries、scripts11、installed wheel **4／21.39 秒** 通過。Node／workerd Playwright **16／33.7 秒**（`/tmp/whisky-t11-export-browser.log`）含合成帳號實際 JSON 下載；不代替正式 Auth0。完整 backend **705／567.20 秒**（`/tmp/whisky-t11-export-backend-release.log`）通過；未部署；T11 實際清除、防復活及真實帳號旅程仍未驗收。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。

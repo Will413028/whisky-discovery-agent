@@ -6,6 +6,7 @@ import validCatalog from "../../../../../contracts/catalog-view.validator.js";
 import {listBottleFeedback,type BottleFeedback} from "./feedback-client";
 import {BottleFeedbackEditor} from "./feedback-editor";
 import {LongTermPreferencesEditor,type FeedbackPreferenceSource} from "./preferences-editor";
+import {AccountExportButton} from "./export-ui";
 import {safeReturnTo} from "../identity";
 type CatalogView=components["schemas"]["CatalogView"];
 export function BottleFeedbackLibrary(){
@@ -67,6 +68,7 @@ function FeedbackSession(){
     })}
     {cursor && !error && <button disabled={busy} onClick={()=>void load(cursor,epoch.current)}>讀取更多回饋</button>}
     <LongTermPreferencesEditor token={token} source={preferenceSource}/>
+    <AccountExportButton token={token}/>
     <button disabled={busy} onClick={()=>setRefresh(value=>value+1)}>更新列表與目前酒款</button>{" "}<a href="/catalog">查看目前已覆核酒款</a>{" "}<a href="/plans">重新選擇探索方向</a>
   </section>;
 }

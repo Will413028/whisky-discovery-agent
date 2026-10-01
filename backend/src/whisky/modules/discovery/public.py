@@ -14,6 +14,8 @@ from whisky.modules.discovery.conditions import ResearchConditions as ResearchCo
 from whisky.modules.discovery.conditions_v1 import (
     ResearchConditionsV1 as ResearchConditionsV1,
 )
+from whisky.modules.discovery.export_public import PlanExportV1 as PlanExportV1
+from whisky.modules.discovery.export_public import export_plans as export_plans
 from whisky.modules.discovery.intent import ExplorationIntent as ExplorationIntent
 from whisky.modules.discovery.intent import ExplorationMode as ExplorationMode
 from whisky.modules.discovery.intent import FlavorContrast as FlavorContrast

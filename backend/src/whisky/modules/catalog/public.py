@@ -21,6 +21,16 @@ from whisky.modules.catalog.domain import (
 from whisky.modules.catalog.domain import (
     taiwan_date as taiwan_date,
 )
+from whisky.modules.catalog.export_public import (
+    CatalogEvidenceExportV1 as CatalogEvidenceExportV1,
+)
+from whisky.modules.catalog.export_public import (
+    CatalogItemExportV1 as CatalogItemExportV1,
+)
+from whisky.modules.catalog.export_public import (
+    CatalogPriceExportV1 as CatalogPriceExportV1,
+)
+from whisky.modules.catalog.export_public import export_references as export_references
 
 
 def search_reviewed_candidates(

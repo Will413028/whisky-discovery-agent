@@ -8,8 +8,25 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict
 from sqlalchemy import Connection, Engine, select
 
-from whisky.modules.identity.store import IdentityStore, users
+from whisky.modules.identity.store import IdentityStore, identities, users
 from whisky.modules.identity.tokens import InvalidToken, TokenVerifier
+from whisky.platform.export_contracts import ExportRecord
+
+
+class IdentityExportV1(ExportRecord):
+    issuer: str
+    subject: str
+
+
+def export_identities(
+    connection: Connection, actor_id: UUID
+) -> tuple[IdentityExportV1, ...]:
+    rows = connection.execute(
+        select(identities.c.issuer, identities.c.subject)
+        .where(identities.c.user_id == actor_id)
+        .order_by(identities.c.issuer, identities.c.subject)
+    ).mappings()
+    return tuple(IdentityExportV1.model_validate(dict(row)) for row in rows)
 
 
 class ActorView(BaseModel):

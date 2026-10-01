@@ -32,3 +32,11 @@ test.each(["save","list","read","context","revisit"])("library %s uses the fixed
   expect(forwarded?.headers.get("Authorization")).toBe("Bearer fixture");
   expect(forwarded?.headers.get("Cookie")).toBeNull();
 });
+test("export allows only the fixed private GET download",async()=>{
+  vi.stubEnv("WHISKY_API_ORIGIN","http://127.0.0.1:9000");
+  const fetch=vi.fn(async()=>Response.json({fixture:"export"}));vi.stubGlobal("fetch",fetch);
+  const response=await GET(new Request("https://fixture.example/api/v1/library/export",{headers:{Authorization:"Bearer fixture"}}));
+  expect(response.status).toBe(200);
+  expect((await GET(new Request("https://fixture.example/api/v1/library/export?owner=other"))).status).toBe(404);
+  expect((await POST(new Request("https://fixture.example/api/v1/library/export",{method:"POST"}))).status).toBe(405);
+});
