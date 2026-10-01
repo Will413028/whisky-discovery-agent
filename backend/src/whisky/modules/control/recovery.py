@@ -32,6 +32,8 @@ from whisky.modules.research.public import (
     close_actor_tasks,
     close_plan_tasks,
     plan_tasks_closed,
+    purge_actor_research,
+    purge_plan_research,
     task_control_effect_present,
 )
 from whisky.platform.domain_errors import DomainRejection
@@ -250,6 +252,7 @@ def _purge_beneath_completed_delete(
         ) and actor_plans_closed(connection, owner, generation):
             close_actor_tasks(connection, owner, generation)
             purge_actor_library(connection, owner, generation)
+            purge_actor_research(connection, owner, generation)
     elif command.kind == "plan.delete" and plan_control_effect_present(
         connection,
         target,
@@ -261,6 +264,7 @@ def _purge_beneath_completed_delete(
     ):
         close_plan_tasks(connection, owner, target, status="cancelled")
         purge_plan_library(connection, owner, generation, target)
+        purge_plan_research(connection, owner, generation, target)
 
 
 def _restore_one(
