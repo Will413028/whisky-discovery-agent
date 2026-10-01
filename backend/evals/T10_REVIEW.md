@@ -28,3 +28,11 @@ Workers Free 前提由使用者確認。固定 corpus v1 與 controls v1 不變�
 - 各後續隔離 ledger 的 allowance 僅為總6,000 cap扣掉先前完整 retained reservation 的剩餘值（1,948→1,246→965→763），不因換 DB 重置預算；全日累計保守保留 **5,639 Neurons**，未從 unknown charge 取回額度。
 
 原先8次失敗的四類輸入均有修正後兩次回歸。完整26次新版本 eval／source fallback第二次／人工 rubric／真部署旅程仍未驗收；不將分批回歸改稱新的完整26次成功結果。
+
+## 有界來源大小修正後回歸
+
+實測原既定官網頁為1,151,728 bytes；固定下載界線由512 KiB改2 MiB，模型文字仍限2,000 chars，來源安全規則保持原值。合成同大小可讀頁取得行為 RED→GREEN，超界負例仍通過。
+
+`t10_qwen_source_limit_20261001.json` 保留兩次原 source_failure_fallback、fault injection 與全部 hard gates。兩次均通過：第一次阻斷官網後真零售來源成功，第二次阻斷零售頁後真官網成功。共4 attempts／316 Neurons，執行時間9,043／9,113 ms；來源仍是 unreviewed observation，不能自行發布 catalog。
+
+當日累计 **5,955／6,000 retained Neurons**，剩45；不再呼叫模型，也不重置隔離 ledger。原26次結果與分批修正證據均保留。來源兩次回歸已通過，但完整26次同一最終版本、人工 rubric及正式部署旅程仍未驗收。

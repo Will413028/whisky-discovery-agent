@@ -267,6 +267,12 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 正式修正後飲食線索／預算修改／偏好修改各兩次全部 hard gates通過，加上實驗未知口味兩次，原先四類失敗輸入都有兩次回歸。完整26次新版本eval／第二次來源fallback／人工rubric／正式部署仍待驗；保留各分批原始JSON，詳review稿。後續隔離ledger只允許6,000減既有保守reservation餘额，累計5,639 Neurons，不重置／退還unknown charge。
 - 最終完整backend **612／377.64秒**（`/tmp/whisky-t10-output-backend-final.log`）、wheel **4／15.28秒**、mypy89、ruff／format、Python邊界通過。API契約、Web與frozen codecs未變。此為後端相容性修正，不關閉T10。
 
+### T10 有界來源大小與真 fallback 回歸（2026-10-01，未驗收）
+
+- 實測既定 Glenlivet 12 官網回應 1,151,728 bytes，原 512 KiB 上限造成 SOURCE_TOO_LARGE。合成同大小頁先取得 1 RED，再將固定上限改為 2 MiB；超過 2 MiB 仍拒絕，模型 context 仍限 2,000 chars，SSRF／DNS／redirect／content-type／timeout 規則不變。
+- reader／source agent／真 DB observation 定向 **19／14.10 秒**、完整 backend **614／535.29 秒**（`/tmp/whisky-t10-source-size-backend-release.log`）、wheel **4／27.18 秒**、mypy89、ruff、Python boundaries 通過。真官網 reader 成功但公開 eval artifact 不保存原始頁面或全文。
+- 原 corpus／controls 不改，`t10_qwen_source_limit_20261001.json` 的兩次 source_failure_fallback 均全部 hard gates 通過：fault injection 分別阻斷官網／零售頁，真替代來源分別成功；4 provider attempts、316 retained Neurons。原26次含失敗結果仍保留。當日總 reservation **5,955／6,000**，剩45，不再呼叫模型；完整26次新版本、人工 rubric與部署出口仍未驗收。
+
 ## T11 — 比較、探索結論、回訪與資料管理
 
 相依：T10。範圍：library、相關 discovery 用例與 Web。

@@ -117,3 +117,32 @@ async def test_reader_bounds_untrusted_text_added_to_each_model_turn():
         "https://www.drinks.com.tw/product.aspx?Id=1753"
     )
     assert len(page.text) == 2000
+
+
+@pytest.mark.asyncio
+async def test_default_reader_accepts_bounded_large_markup_without_model_text_growth():
+    body = (
+        b"<html><script>"
+        + b"x" * 1_151_728
+        + b"</script><p>synthetic 12-year 40% ABV</p></html>"
+    )
+
+    async def fetch(url: str, byte_limit: int):
+        return 200, {"Content-Type": "text/html"}, body
+
+    page = await SourceReader(fetch=fetch).read(
+        "https://www.theglenlivet.com/zh-tw/whisky/synthetic/"
+    )
+    assert page.text == "synthetic 12-year 40% ABV"
+    assert len(page.text) <= 2000
+
+
+@pytest.mark.asyncio
+async def test_default_reader_still_rejects_content_above_two_mebibytes():
+    async def fetch(url: str, byte_limit: int):
+        return 200, {"Content-Type": "text/html"}, b"x" * (2 * 1024 * 1024 + 1)
+
+    with pytest.raises(SourceReadError, match="SOURCE_TOO_LARGE"):
+        await SourceReader(fetch=fetch).read(
+            "https://www.theglenlivet.com/zh-tw/whisky/synthetic/"
+        )
