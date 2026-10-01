@@ -375,6 +375,20 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 只掃描 cancelled／不可寫／已 scrubbed task，透過 parent public 契約再驗 deleted plan 或已撤銷 actor generation；UUID keyset 每頁最多100。deleted parent targets 兩項 **2 RED／8.35 秒→2 GREEN／6.21 秒**。每輪必須從頭重掃，不能永久停留在尾端 cursor。
 - ruff／format、mypy110、installed wheel **4／13.10 秒**與獨立設計／correctness review 通過。真測試 server 為 SDK local1.32.0，正式1.29.7仍待驗證。adapter／scan 尚未接入 Schedule 或 worker，不宣稱持久清除已可用；全 run／原生非同步刪除依據見 [Temporal 官方 API](https://github.com/temporalio/api/blob/main/temporal/api/workflowservice/v1/service.proto)。
 
+### T11 持久 history 掃描與晚到 starter 防線（2026-10-01，未驗收）
+
+- worker 註冊獨立 maintenance workflow／activities；Temporal Schedule 每分鐘、SKIP overlap、每輪從頭掃描。既有 Schedule 必須核對 queue／workflow／interval／啟用狀態，不默默覆寫。每個 target 清除前再驗 DB scope；單一 pending 或 RPC 故障只作有限嘗試後向後推進，下輪重掃保留的 tombstones，不把 sweep 完成稱為所有 history 已清除。
+- workflow／fresh scope／Schedule 分別取得 **1 RED／8.69 秒、2 RED／6.37 秒、1 RED／2.00 秒**；接線與 bootstrap **7 GREEN／14.56 秒**。独立覆核發現單一 pending 阻塞 SKIP sweep，反例 **1 RED／11.81 秒**，修正後 **3 GREEN／20.80 秒**；失敗重試、Schedule 設定衝突與 scope 回歸 **9／12.96 秒**通過。
+- start lookup 後才刪 parent 的真 DB 反例 **1 RED／8.40 秒**；Temporal start 後重驗，確認 ResearchConflict 才取消剛啟動的 exact run，其他 DB 故障不授權取消。相關 **9／103.61 秒**通過；另驗 native CancelRequested event，dispatch **6／13.27 秒**通過。
+- 首次完整 suite **4 failed／756 passed／752.52 秒**（`/tmp/whisky-t11-history-final-full.log`）：Temporal adapter 引用 store exception 導致 sandbox 載入 SQL／HTTP 相依。把相同 exception 移到純 domain，store 保留公開 alias，不放寬 sandbox；受影響 start／acceptance／dispatch **17／35.57 秒**通過。此 import regression 不計行為 RED；修正後完整 suite 結果見下方 Oracle ARM 驗證。
+- Oracle Temporal **1.29.7** 實测 missing history 的預設 archival fallback 回 `INVALID_ARGUMENT`；不能因此視為不存在。新增 namespace history／visibility archival 皆 disabled 且無 URI 的 gate，才允許 `skip_archival=True`；五項拒絕反例 **5 RED／0.44 秒**，native／Schedule／gate **12 GREEN／41.98 秒**。ruff／format 與 mypy114 通過。
+- 真 Oracle standalone native adapter 驗證：同 ID 兩個合成 BootstrapProbe runs 均 `NOT_FOUND`，另一個 workflow 保持完整，所有本次 fixture 已清除。成功與失敗證據保留於 `backend/evals/t11_native_history_oracle_20261001.json`，成功 adapter SHA256 `f747894cdbb89e8936b0b9710c9f87cb76f9da7795b352d55f44af833a707787`。這只驗證正式 server 上的 adapter，不是新版 worker／Schedule 部署或正式帳號刪除出口。
+- installed wheel **4／61.02 秒**、Python boundary 與 final diff whitespace 通過；獨立設計複查 `NO DESIGN FINDINGS`，前輪公平性與 exact-run cancel 未回退，指令檔對帳無需修改。修正後完整 suite 出現 failure／setup error，為取得診斷提前中止，exit143（`/tmp/whisky-t11-history-final-fixed-full.log`），不能宣稱完整 GREEN。首個失敗的 `test_configured_agent` 錯誤終態案例原樣單項重跑 **1 passed／89.20 秒**；未取得原 traceback，根因尚未確認，後續完整 suite 仍必須通過。
+- configured-control setup error 原樣單項 **1／49.78 秒**通過。遇首個 failure 即停止的本機完整重跑仍極慢，未修改期限／程式／測試。Oracle 盤點4 CPUs、17.8GiB available、load<1後，用無 secrets 的 immutable archive 建獨立 ARM runner（2 CPUs／4GiB）＋loopback-only PostgreSQL（0.5 CPU／512MiB），不掛正式 volume／credentials、不打真模型。全部 **765 passed／834.08 秒**、ARM installed wheel **4／14.55 秒**，exit均0；257個 source／test／migration／dependency 檔 SHA256 與 worktree 相同。image `sha256:c32ee5d25efd7188da27c192f1c061725c31b07ddca827c6fff53bdb60e757ab`，證據 `backend/evals/t11_history_validation_20261001.json`。其後停止本機重複 suite（exit143，非本機完整GREEN），兩端隔離 DB 已停止；runner 都是 `--rm`。
+- 正式 Temporal1.29.7 的獨立合成 namespace Schedule 驗證通過：實際 cleanup Workflow＋空 fixture page 立即觸發、第二輪完成、既有配置接受、paused配置拒絕且不覆寫；合成 Schedule 刪除、兩個 run history／visibility 觀察不存在，namespace另記 delete requested，不混為已清除完成。結果 `backend/evals/t11_native_schedule_oracle_20261001.json`。這不是正式研究 DB／帳號刪除／worker crash 的部署驗收。
+- OpenAPI／TypeScript 重生無 drift，frozen ControlWorkflowV1／V1 codec 無修改，最終 whitespace 通過。新版 worker／Schedule 尚未部署。
+- 備份唯讀 inventory `backend/evals/t11_backup_inventory_20261001.json`：6份full，最近 `20260930-192434F`；既有 service Result=success、timer active。合法私人還原 floor仍以T09已驗的 `20260929-190627F` 為依據，不把較早 preliminary full當合法點。清單不證明WAL連續性、當前還原或到期清除；沒有執行expire／restore／正式設定變更。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。

@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-10-01T11:53:55Z",
+  "environment": "oracle",
+  "scope": "Read-only pgBackRest inventory and existing backup unit status; no expire, restore, configuration or running service changes.",
+  "repository_status_code": 0,
+  "backups": [
+    {
+      "label": "20260929-183223F",
+      "type": "full",
+      "started_at": "2026-09-29T18:32:23+00:00",
+      "finished_at": "2026-09-29T18:32:28+00:00",
+      "repository_bytes": 4135680
+    },
+    {
+      "label": "20260929-190627F",
+      "type": "full",
+      "started_at": "2026-09-29T19:06:27+00:00",
+      "finished_at": "2026-09-29T19:06:34+00:00",
+      "repository_bytes": 6524224
+    },
+    {
+      "label": "20260929-191909F",
+      "type": "full",
+      "started_at": "2026-09-29T19:19:09+00:00",
+      "finished_at": "2026-09-29T19:19:17+00:00",
+      "repository_bytes": 6536160
+    },
+    {
+      "label": "20260929-193229F",
+      "type": "full",
+      "started_at": "2026-09-29T19:32:29+00:00",
+      "finished_at": "2026-09-29T19:32:35+00:00",
+      "repository_bytes": 6538896
+    },
+    {
+      "label": "20260929-193331F",
+      "type": "full",
+      "started_at": "2026-09-29T19:33:31+00:00",
+      "finished_at": "2026-09-29T19:33:38+00:00",
+      "repository_bytes": 6540672
+    },
+    {
+      "label": "20260930-192434F",
+      "type": "full",
+      "started_at": "2026-09-30T19:24:34+00:00",
+      "finished_at": "2026-09-30T19:24:41+00:00",
+      "repository_bytes": 6727840
+    }
+  ],
+  "previously_verified_legal_restore_floor": "20260929-190627F",
+  "legal_floor_evidence": "IMPLEMENTATION_PLAN.md T09 rotated administrator and empty-cluster restore",
+  "backup_unit": {
+    "result": "success",
+    "exit_code": 0,
+    "last_exit_local": "2026-10-01T03:24:43+08:00",
+    "timer_active": true,
+    "next_elapse_local": "2026-10-02T03:17:03+08:00"
+  },
+  "limitations": [
+    "Inventory does not prove WAL continuity, current restore success or expiration.",
+    "The oldest listed preliminary full is not an accepted private-data restore point.",
+    "No raw log or backup expiration was performed."
+  ]
+}

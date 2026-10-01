@@ -3,6 +3,7 @@
 from uuid import uuid4
 
 import pytest
+from temporalio.api.enums.v1 import EventType
 from temporalio.testing import WorkflowEnvironment
 from test_comparison_reports_v4 import comparison_commit as comparison_commit
 from test_library_conclusions import completed_choice as completed_choice
@@ -64,4 +65,40 @@ async def test_lazy_starter_dispatches_and_reuses_the_persisted_execution(versio
             workflow_id_for(task_id), run_id=first
         ).describe()
         assert description.workflow_type == version
-        assert looked_up == [task_id, task_id]
+        assert looked_up == [task_id, task_id, task_id, task_id]
+
+
+async def test_delete_between_lookup_and_start_rejects_late_acceptance(
+    completed_choice,
+):
+    from whisky.modules.research.store import ResearchStore
+
+    engine, actor, report, choice = completed_choice
+    store = ResearchStore(engine)
+    first = True
+
+    def lookup(task_id):
+        nonlocal first
+        executor = store.workflow_type_for_task(task_id)
+        if first:
+            first = False
+            delete(engine, actor, choice, "plan.delete")
+        return executor
+
+    async with await WorkflowEnvironment.start_local() as env:
+        starter = ConnectingTemporalResearchStarter(
+            "unused-fixture-address",
+            "default",
+            f"late-dispatch-{uuid4()}",
+            workflow_type_for_task=lookup,
+        )
+        starter._client = env.client
+        with pytest.raises(ResearchConflict, match="TASK_NOT_WRITABLE"):
+            await starter.start(report.task_id)
+        history = await env.client.get_workflow_handle(
+            workflow_id_for(report.task_id)
+        ).fetch_history()
+        assert any(
+            event.event_type == EventType.EVENT_TYPE_WORKFLOW_EXECUTION_CANCEL_REQUESTED
+            for event in history.events
+        )

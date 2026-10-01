@@ -12,6 +12,7 @@ from sqlalchemy import Connection, Engine, RowMapping, text
 from whisky.modules.discovery.public import locked_plan, owned_plan
 from whisky.modules.identity.public import actor_generation
 from whisky.modules.research.commands import StartTurn
+from whisky.modules.research.domain import ResearchConflict as ResearchConflict
 from whisky.modules.research.domain import workflow_id_for
 from whisky.modules.research.inputs_v4 import StartTurnV4
 from whisky.modules.research.proposal_view_v4 import (
@@ -19,10 +20,6 @@ from whisky.modules.research.proposal_view_v4 import (
     read_preference_proposal_v4,
 )
 from whisky.modules.research.views import ResearchCommandView, TaskHistoryItem, TaskView
-
-
-class ResearchConflict(ValueError):
-    pass
 
 
 @dataclass(frozen=True)
