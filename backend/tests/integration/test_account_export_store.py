@@ -94,6 +94,91 @@ def test_over_limit_export_rejects_instead_of_returning_partial_data(completed_c
         AccountExportStore(engine, max_bytes=200).read(actor.id, actor.generation)
 
 
+def test_preparation_deadline_rejects_and_closes_the_partial_file(
+    completed_choice, monkeypatch
+):
+    import whisky.modules.library.export_store as module
+
+    engine, actor, _ = populate(completed_choice)
+    files = []
+    original = module.ExportFileWriter
+
+    def capture(*args, **kwargs):
+        writer = original(*args, **kwargs)
+        files.append(writer.file)
+        return writer
+
+    monkeypatch.setattr(module, "ExportFileWriter", capture)
+    monkeypatch.setattr(module, "MAX_EXPORT_SECONDS", 0, raising=False)
+    try:
+        with pytest.raises(ExportUnavailable, match="EXPORT_TIMEOUT"):
+            AccountExportStore(engine).prepare(actor.id, actor.generation)
+        assert files and all(file.closed for file in files)
+    finally:
+        for file in files:
+            file.close()
+
+
+def test_deadline_expiring_after_the_last_row_still_rejects_the_export(
+    completed_choice, monkeypatch
+):
+    import whisky.modules.library.export_store as module
+
+    engine, actor, _ = populate(completed_choice)
+    elapsed = 0
+    original = module.export_references
+
+    def references(*args, **kwargs):
+        nonlocal elapsed
+        yield from original(*args, **kwargs)
+        elapsed = module.MAX_EXPORT_SECONDS + 1
+
+    monkeypatch.setattr(module, "monotonic", lambda: elapsed)
+    monkeypatch.setattr(module, "export_references", references)
+    # Remove independent rows, so the remaining queries all return zero rows.
+    with engine.begin() as connection:
+        for table in (
+            "library_commands",
+            "library_conclusions",
+            "library_bottle_feedback",
+            "library_preferences",
+        ):
+            connection.execute(
+                text(f"DELETE FROM {table} WHERE owner_id=:owner"),
+                dict(owner=actor.id),
+            )
+    with pytest.raises(ExportUnavailable, match="EXPORT_TIMEOUT"):
+        AccountExportStore(engine).prepare(actor.id, actor.generation)
+
+
+def test_deadline_expiring_during_finish_closes_the_complete_file(
+    completed_choice, monkeypatch
+):
+    import whisky.modules.library.export_store as module
+
+    engine, actor, _ = populate(completed_choice)
+    elapsed = 0
+    files = []
+    original = module.ExportFileWriter.finish
+
+    def finish(writer):
+        nonlocal elapsed
+        prepared = original(writer)
+        files.append(prepared.file)
+        elapsed = module.MAX_EXPORT_SECONDS + 1
+        return prepared
+
+    monkeypatch.setattr(module, "monotonic", lambda: elapsed)
+    monkeypatch.setattr(module.ExportFileWriter, "finish", finish)
+    try:
+        with pytest.raises(ExportUnavailable, match="EXPORT_TIMEOUT"):
+            AccountExportStore(engine).prepare(actor.id, actor.generation)
+        assert files and all(file.closed for file in files)
+    finally:
+        for file in files:
+            file.close()
+
+
 def test_deleted_plan_does_not_reappear_inside_account_export(completed_choice):
     engine, actor, _ = populate(completed_choice)
     with engine.begin() as connection:

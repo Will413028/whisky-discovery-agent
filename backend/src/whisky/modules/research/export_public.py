@@ -8,7 +8,7 @@ from pydantic import JsonValue
 from sqlalchemy import Connection, text
 from sqlalchemy.engine import ScalarResult
 
-from whisky.platform.export_contracts import ExportRecord
+from whisky.platform.export_contracts import ExportRecord, ExportRelation
 
 
 class TaskExportV1(ExportRecord):
@@ -162,7 +162,7 @@ class ReportSourceObservationExportV1(ExportRecord):
 
 
 def export_research(
-    connection: Connection, owner: UUID, generation: int, plan_ids: tuple[UUID, ...]
+    connection: Connection, scope: ExportRelation
 ) -> Iterator[tuple[str, dict[str, JsonValue]]]:
     queries = (
         (
@@ -172,7 +172,7 @@ def export_research(
                 thread_id,status,stage,question,report_id,error,
                 created_at,updated_at
             FROM research_tasks WHERE owner_id=:owner AND generation=:generation
-                AND plan_id=ANY(:plan_ids)
+                AND plan_id IN (__PLAN_SCOPE__)
             ORDER BY created_at,id
         """,
         ),
@@ -186,7 +186,7 @@ def export_research(
             FROM research_reports WHERE owner_id=:owner AND generation=:generation
                 AND task_id IN (SELECT id FROM research_tasks
                     WHERE owner_id=:owner AND generation=:generation
-                        AND plan_id=ANY(:plan_ids))
+                        AND plan_id IN (__PLAN_SCOPE__))
             ORDER BY created_at,id
         """,
         ),
@@ -198,7 +198,7 @@ def export_research(
             FROM clarifications WHERE owner_id=:owner AND generation=:generation
                 AND task_id IN (SELECT id FROM research_tasks
                     WHERE owner_id=:owner AND generation=:generation
-                        AND plan_id=ANY(:plan_ids))
+                        AND plan_id IN (__PLAN_SCOPE__))
             ORDER BY created_at,id
         """,
         ),
@@ -209,7 +209,7 @@ def export_research(
                 source_text,proposal,prompt_version,created_at
             FROM preference_proposals
             WHERE owner_id=:owner AND generation=:generation
-                AND plan_id=ANY(:plan_ids) ORDER BY task_id
+                AND plan_id IN (__PLAN_SCOPE__) ORDER BY task_id
         """,
         ),
         (
@@ -222,7 +222,7 @@ def export_research(
             WHERE owner_id=:owner AND generation=:generation
                 AND task_id IN (SELECT id FROM research_tasks
                     WHERE owner_id=:owner AND generation=:generation
-                        AND plan_id=ANY(:plan_ids)) ORDER BY observed_at,id
+                        AND plan_id IN (__PLAN_SCOPE__)) ORDER BY observed_at,id
         """,
         ),
         (
@@ -231,7 +231,7 @@ def export_research(
             SELECT i.task_id,i.input,i.source_task_id FROM research_v4_inputs i
             JOIN research_tasks t ON t.id=i.task_id AND t.owner_id=i.owner_id
             WHERE t.owner_id=:owner AND t.generation=:generation
-                AND t.plan_id=ANY(:plan_ids) ORDER BY i.task_id
+                AND t.plan_id IN (__PLAN_SCOPE__) ORDER BY i.task_id
         """,
         ),
         (
@@ -241,7 +241,7 @@ def export_research(
             FROM agent_turns a
             JOIN research_tasks t ON t.id=a.task_id AND t.owner_id=a.owner_id
             WHERE t.owner_id=:owner AND t.generation=:generation
-                AND t.plan_id=ANY(:plan_ids)
+                AND t.plan_id IN (__PLAN_SCOPE__)
             ORDER BY a.created_at,a.run_id
         """,
         ),
@@ -254,7 +254,7 @@ def export_research(
             WHERE r.owner_id=:owner AND r.generation=:generation
                 AND r.task_id IN (SELECT id FROM research_tasks
                     WHERE owner_id=:owner AND generation=:generation
-                        AND plan_id=ANY(:plan_ids)) ORDER BY c.report_id
+                        AND plan_id IN (__PLAN_SCOPE__)) ORDER BY c.report_id
         """,
         ),
     )
@@ -262,8 +262,12 @@ def export_research(
         rows: ScalarResult[dict[str, JsonValue]] = (
             connection.execution_options(stream_results=True)
             .execute(
-                text("SELECT to_jsonb(export_row) FROM (" + query + ") export_row"),
-                dict(owner=owner, generation=generation, plan_ids=list(plan_ids)),
+                text(
+                    "SELECT to_jsonb(export_row) FROM ("
+                    + query.replace("__PLAN_SCOPE__", scope.sql)
+                    + ") export_row"
+                ),
+                scope.parameters,
             )
             .scalars()
         )
@@ -308,16 +312,46 @@ def export_research(
             "WHERE owner_id=:owner AND generation=:generation "
             "AND task_id IN (SELECT id FROM research_tasks "
             "WHERE owner_id=:owner AND generation=:generation "
-            "AND plan_id=ANY(:plan_ids))) "
+            "AND plan_id IN (__PLAN_SCOPE__))) "
             f"ORDER BY {ordering}) export_row"
         )
         related: ScalarResult[dict[str, JsonValue]] = (
             connection.execution_options(stream_results=True)
             .execute(
-                text(query),
-                dict(owner=owner, generation=generation, plan_ids=list(plan_ids)),
+                text(query.replace("__PLAN_SCOPE__", scope.sql)),
+                scope.parameters,
             )
             .scalars()
         )
         for row in related:
             yield section, row
+
+
+def research_catalog_export_scopes(
+    plans: ExportRelation,
+) -> dict[str, ExportRelation]:
+    reports = (
+        "SELECT id FROM research_reports WHERE owner_id=:owner "
+        "AND generation=:generation AND task_id IN ("
+        "SELECT id FROM research_tasks WHERE owner_id=:owner "
+        "AND generation=:generation AND plan_id IN (" + plans.sql + "))"
+    )
+    tasks = (
+        "SELECT id FROM research_tasks WHERE owner_id=:owner "
+        "AND generation=:generation AND plan_id IN (" + plans.sql + ")"
+    )
+    queries = {
+        "catalogItems": "SELECT DISTINCT release_id,item_id AS id "
+        "FROM research_report_candidates WHERE report_id IN (" + reports + ")",
+        "catalogPrices": "SELECT DISTINCT release_id,price_id AS id "
+        "FROM research_report_prices WHERE report_id IN (" + reports + ")",
+        "catalogEvidence": "SELECT release_id,evidence_id AS id "
+        "FROM research_report_citations WHERE report_id IN (" + reports + ") "
+        "UNION SELECT release_id,evidence_id AS id "
+        "FROM research_source_observations WHERE owner_id=:owner "
+        "AND generation=:generation AND task_id IN (" + tasks + ")",
+    }
+    return {
+        section: ExportRelation(sql, plans.owner, plans.generation)
+        for section, sql in queries.items()
+    }

@@ -63,6 +63,9 @@ from whisky.modules.research.export_public import (
     TaskExportV1 as TaskExportV1,
 )
 from whisky.modules.research.export_public import export_research as export_research
+from whisky.modules.research.export_public import (
+    research_catalog_export_scopes as research_catalog_export_scopes,
+)
 from whisky.modules.research.views import QuestionChoiceView
 from whisky.modules.research.views import TaskView as TaskView
 

@@ -7,7 +7,16 @@ from uuid import UUID
 from pydantic import JsonValue
 from sqlalchemy import Connection, text
 
-from whisky.platform.export_contracts import ExportRecord
+from whisky.platform.export_contracts import ExportRecord, ExportRelation
+
+
+def visible_plan_export_scope(owner: UUID, generation: int) -> ExportRelation:
+    return ExportRelation(
+        "SELECT id FROM plans WHERE owner_id=:owner AND generation=:generation "
+        "AND deleted_at IS NULL",
+        owner,
+        generation,
+    )
 
 
 class PlanExportV1(ExportRecord):

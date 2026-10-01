@@ -10,7 +10,7 @@ from sqlalchemy import Connection, text
 from sqlalchemy.engine import ScalarResult
 
 from whisky.modules.discovery.public import ResearchConditionsV1
-from whisky.platform.export_contracts import ExportRecord
+from whisky.platform.export_contracts import ExportRecord, ExportRelation
 
 
 class ConditionChangeExportV1(ExportRecord):
@@ -31,21 +31,23 @@ class ConditionChangeExportV1(ExportRecord):
 
 
 def export_condition_changes(
-    connection: Connection, owner: UUID, generation: int, plan_ids: tuple[UUID, ...]
+    connection: Connection, scope: ExportRelation
 ) -> Iterator[dict[str, JsonValue]]:
     rows: ScalarResult[dict[str, JsonValue]] = (
         connection.execution_options(stream_results=True)
         .execute(
-            text("""
+            text(
+                """
         SELECT to_jsonb(export_row) FROM (
             SELECT id,target_id,expected_revision,status,new_conditions,
                 created_at,updated_at FROM control_commands
             WHERE owner_id=:owner AND generation=:generation
-                AND kind='plan.change_conditions' AND target_id=ANY(:plan_ids)
+                AND kind='plan.change_conditions' AND target_id IN (__PLAN_SCOPE__)
             ORDER BY created_at,id
         ) export_row
-    """),
-            dict(owner=owner, generation=generation, plan_ids=list(plan_ids)),
+    """.replace("__PLAN_SCOPE__", scope.sql)
+            ),
+            scope.parameters,
         )
         .scalars()
     )

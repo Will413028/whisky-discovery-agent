@@ -1,12 +1,14 @@
 import {expect,test,type Page} from "@playwright/test";
 import {readFile} from "node:fs/promises";
 
-test("synthetic account export downloads a validated private JSON file",async({page})=>{
+for(const large of [false,true])test(`synthetic ${large ? "large" : "small"} account export downloads a complete private JSON file`,async({page})=>{
   const owner="00000000-0000-4000-8000-000000000001";
   const sections=["libraryHistory","conditionChanges","identities","plans","tasks","reports","questions","preferenceProposals","sourceObservations","researchInputs","agentTurns","comparisons","conclusions","feedback","preferences","reportCandidates","reportClaims","reportCitations","reportPrices","reportSourceObservations","catalogItems","catalogEvidence","catalogPrices"];
-  const value={schemaVersion:1,ownerId:owner,generation:1,exportedAt:"2026-10-01T00:00:00Z",data:Object.fromEntries(sections.map(key=>[key,[]]))};
+  const data:Record<string,unknown[]>=Object.fromEntries(sections.map(key=>[key,[]]));
+  const value={schemaVersion:1,ownerId:owner,generation:1,exportedAt:"2026-10-01T00:00:00Z",data};
+  if(large)value.data.researchInputs=[{task_id:owner,input:{synthetic:"x".repeat(9*1024*1024)},source_task_id:null}];
   await page.route("**/api/v1/me",route=>route.fulfill({json:{id:owner}}));
-  await page.route("**/api/v1/library/export",route=>route.fulfill({json:value}));
+  await page.route("**/api/v1/library/export",route=>route.fulfill({json:value,headers:{"x-export-owner":owner,"x-export-generation":"1","x-export-schema":"1","x-export-bytes":String(new TextEncoder().encode(JSON.stringify(value)).length)}}));
   await page.route("**/api/v1/library/preferences",route=>route.fulfill({json:{schemaVersion:1,revision:0,preferences:[],updatedAt:null}}));
   await page.route("**/api/v1/library/feedback",route=>route.fulfill({json:{schemaVersion:1,items:[],nextCursor:null}}));
   await page.route("**/api/v1/catalog",route=>route.fulfill({json:{releaseId:null,evaluatedOn:"2026-10-01",pricePolicyVersion:"synthetic",items:[]}}));

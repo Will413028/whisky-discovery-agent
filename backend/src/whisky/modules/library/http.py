@@ -9,7 +9,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import AwareDatetime, Field
-from starlette.responses import JSONResponse, Response
+from starlette.background import BackgroundTask
+from starlette.responses import JSONResponse, Response, StreamingResponse
 
 from whisky.modules.catalog.public import taiwan_date
 from whisky.modules.identity.public import AccessSession, IdentityAccess
@@ -89,20 +90,25 @@ def library_router(identity: IdentityAccess, store: LibraryStore | None) -> APIR
         if store is None:
             raise PublicAPIError(503, "LIBRARY_UNAVAILABLE")
         try:
-            content = AccountExportStore(store.engine).read(
+            prepared = AccountExportStore(store.engine).prepare(
                 session.actor_id, session.generation
             )
         except ExportUnavailable as error:
             code = str(error)
             raise PublicAPIError(
-                409 if code == "IDENTITY_CHANGED" else 422, code
+                409 if code == "IDENTITY_CHANGED" else 503, code
             ) from None
-        return Response(
-            content,
+        return StreamingResponse(
+            prepared.chunks(),
             media_type="application/json",
+            background=BackgroundTask(prepared.file.close),
             headers={
                 "Content-Disposition": 'attachment; filename="whisky-account.json"',
                 "X-Content-Type-Options": "nosniff",
+                "X-Export-Owner": str(prepared.owner),
+                "X-Export-Generation": str(prepared.generation),
+                "X-Export-Schema": "1",
+                "X-Export-Bytes": str(prepared.size),
             },
         )
 

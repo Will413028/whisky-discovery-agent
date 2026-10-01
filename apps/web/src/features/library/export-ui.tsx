@@ -14,7 +14,7 @@ export function AccountExportButton({token}:{token:()=>Promise<string>}){
     try {
       const access=await token();if(current!==epoch.current)return;
       const value=await readAccountExport(access,controller.signal);if(current!==epoch.current)return;
-      const url=URL.createObjectURL(new Blob([JSON.stringify(value)],{type:"application/json"}));
+      const url=URL.createObjectURL(value);
       const anchor=document.createElement("a");anchor.href=url;anchor.download="whisky-account.json";
       const revoke=URL.revokeObjectURL.bind(URL);anchor.click();setTimeout(()=>revoke(url),1000);
       setMessage("匯出檔已準備，瀏覽器會下載。");

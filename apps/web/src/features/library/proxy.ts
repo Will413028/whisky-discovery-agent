@@ -17,5 +17,8 @@ export async function libraryProxy(request:Request,upstream?:PrivateAPI):Promise
     if(!(feedbackCollection ? ["limit","cursor"] : ["planId","limit","cursor"]).includes(key)) return privateFailure(404,"NOT_FOUND");
     if(url.searchParams.getAll(key).length!==1) return privateFailure(422,"INVALID_REQUEST");
   }
-  return forwardPrivate(request,upstream);
+  return forwardPrivate(request,upstream,exportDownload ? {
+    timeoutMilliseconds:120_000,
+    responseHeaders:["x-export-owner","x-export-generation","x-export-schema","x-export-bytes"],
+  } : undefined);
 }

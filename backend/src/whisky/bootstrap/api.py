@@ -46,7 +46,12 @@ def configured_app(
     if settings is None:
         return create_app()
     engine = create_engine(
-        settings.database_url, pool_pre_ping=True, pool_size=5, max_overflow=0
+        settings.database_url,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=0,
+        pool_timeout=5,
+        connect_args={"connect_timeout": 5, "options": "-c statement_timeout=5000"},
     )
     if settings.recovery_required:
         install_recovery_gate(engine)

@@ -13,6 +13,7 @@ x-api: &api
     WHISKY_TEMPORAL_ADDRESS: ${WHISKY_TEMPORAL_ADDRESS:-}
     WHISKY_TEMPORAL_NAMESPACE: ${WHISKY_TEMPORAL_NAMESPACE:-}
     WHISKY_TEMPORAL_TASK_QUEUE: ${WHISKY_TEMPORAL_TASK_QUEUE:-}
+    WHISKY_EXPORT_DIRECTORY: /var/tmp/whisky-export
   read_only: true
   tmpfs: ["/tmp:size=16m,mode=1777"]
   cap_drop: [ALL]
@@ -99,6 +100,7 @@ services:
     restart: "no"
   api:
     <<: *api
+    volumes: [export-scratch:/var/tmp/whisky-export]
     depends_on:
       migrate: {condition: service_completed_successfully}
     restart: unless-stopped
@@ -128,6 +130,7 @@ networks:
   private: {}
 volumes:
   product-db: {}
+  export-scratch: {}
 secrets:
   tunnel_token:
     file: ./secrets/tunnel-token

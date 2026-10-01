@@ -49,6 +49,40 @@ async def test_export_download_contains_own_saved_products_and_report(library_ap
     }
 
 
+async def test_complete_export_download_exceeds_small_json_limit(
+    library_api, completed_choice
+):
+    client, sign, choice, _ = library_api
+    headers = {"Authorization": f"Bearer {sign()}"}
+    saved = await client.post(
+        "/api/v1/library/conclusions",
+        headers=headers,
+        json=choice.model_dump(mode="json", by_alias=True),
+    )
+    assert saved.status_code == 201
+    engine, actor, _, _ = completed_choice
+    with engine.begin() as connection:
+        connection.execute(
+            text("""
+                INSERT INTO library_commands
+                    (id,owner_id,generation,scope,key,payload_hash,target_id,
+                        response,created_at,plan_id)
+                SELECT gen_random_uuid(),owner_id,generation,scope,
+                    'synthetic-large-export-'||n,payload_hash,target_id,
+                    response,created_at,plan_id
+                FROM library_commands CROSS JOIN generate_series(1,12000) n
+                WHERE owner_id=:owner
+            """),
+            dict(owner=actor.id),
+        )
+    response = await client.get("/api/v1/library/export", headers=headers)
+    assert response.status_code == 200
+    assert len(response.content) > 8 * 1024 * 1024
+    assert len(response.json()["data"]["libraryHistory"]) == 12001
+    assert response.headers["x-export-owner"] == str(actor.id)
+    assert int(response.headers["x-export-bytes"]) == len(response.content)
+
+
 async def test_account_preferences_are_explicit_private_and_budget_free(library_api):
     client, sign, _, _ = library_api
     headers = {"Authorization": f"Bearer {sign()}"}

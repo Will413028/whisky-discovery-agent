@@ -12,7 +12,9 @@ export default {
     for (const name of ["connection","upgrade","transfer-encoding"]) headers.delete(name);
     const init: RequestInit & {duplex:"half"} = {
       method:request.method,headers,body:request.body,redirect:"manual",duplex:"half",
-      signal:AbortSignal.any([request.signal,AbortSignal.timeout(75_000)]),
+      signal:AbortSignal.any([request.signal,AbortSignal.timeout(
+        request.method==="GET" && publicURL.pathname==="/api/v1/library/export" ? 130_000 : 75_000,
+      )]),
     };
     try {
       const response=await env.WHISKY_WEB.fetch(new Request(

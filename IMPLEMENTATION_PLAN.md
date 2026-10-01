@@ -338,6 +338,16 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - 最終 purge／migration 定向 **16／23.04 秒**，較大 control 子集 **42／40.59 秒**；ruff／format、mypy106、Python boundaries、installed wheel **4／19.52 秒**（head0021）通過。完整 backend **720 passed、1 Temporal dev server 啟動逾時／766.92 秒**（`/tmp/whisky-t11-library-purge-backend-release.log`）；未改測試或產品後原樣重跑該項 **1 passed／10.63 秒**（`/tmp/whisky-t11-library-purge-temporal-startup-rerun.log`），不冒充同次 721 全綠。
 - 唯讀盤點正式 VM 仍是 schema0012，尚無 library_commands；未部署此增量。這只清除 library 原文並驗真 DB 邏輯還原，研究 DB 原文、Temporal history、traces、備份／控制紀錄保存政策與正式 PITR 仍待完整 T11 驗收。上一匯出提交 `78fba7c` 的 PR run36805217086／push run36805213561 各 backend／web jobs 均 success。
 
+### T11 大型完整匯出增量（2026-10-01，未驗收）
+
+- 取代 HTTP 的 8 MiB 總量拒絕：同一 owner／generation 與 REPEATABLE READ 快照逐筆驗 closed Export V1 DTO，先完成匿名暫存檔，再以 64 KiB chunks 回傳；記憶體 buffer 1 MiB。小型 `read` 相容介面仍保留界線。Web 下載原始 Blob，核對 owner／generation／schema／decoded bytes；小檔另驗完整 schema，避免大型資料重建 JS JSON 陣列。固定檔名與 Bearer／no-store 維持。
+- 大帳號 HTTP 超過 8 MiB 仍應完整回傳、下載 Blob 實際 bytes、edge 在 100 秒仍應等待匯出、準備超時、零列查詢後超時、最後 finish 超時各有可解釋 RED→GREEN。先前 Blob deep-equality 沒有捕捉缺陷，不計 RED；fixture typing／mypy 型別錯誤也不計 RED。
+- DB 查詢透過各模組 public owner-scoped SQL relation 篩選引用，不把所有 plan／catalog IDs 收集成 Python set；移除舊 ANY predicate 翻譯。準備期限 110 秒涵蓋連線取得與最後寫檔，逐查詢 statement timeout 最多 5 秒；API pool／connect／預設 statement timeout 各 5 秒。Web export 120 秒、edge 僅固定 GET export 130 秒；其他路由期限不變。超時／錯誤／下載中斷會關閉檔案，不回傳成功的截斷 JSON。
+- Compose API 專用 export-scratch volume、非 root 0700 目錄，未改 root read-only 或一般 /tmp 16 MiB；唯讀 Oracle 盤點 root 剩 100 GiB、可用 RAM 約 18 GiB，這不是新匯出的 VM 負載驗收。
+- 獨立 final review ledger：A1／B1／edge P2／deadline P3 均 fixed、open 0，NO NEW CONFIRMED DEFECTS；覆核唯讀、不代替測試或正式容量 gate。
+- 最後 backend 定向 **34／60.27 秒**（`/tmp/whisky-t11-export-finish-green.log`）、ruff／format、mypy107 通過。完整 backend **728 passed、1 BootstrapProbe workflow 超時／1255.87 秒**（`/tmp/whisky-t11-large-export-backend-release.log`）；該項未修改重跑 **1／4.14 秒**通過，超時根因未確定，不宣稱同次全綠。完整測試在最後 finish guard 之前；guard 之後由上述定向測試驗證。
+- Web **284**、typecheck、原生 Next build、Python／Web boundaries、scripts11、edge dry-run、最終 installed wheel **4／15.03 秒**通過；Node／workerd Playwright **17／21.6 秒**含小檔與 9 MiB 真下載（`/tmp/whisky-t11-large-export-browser.log`）。生成契約無 drift。尚未部署，不代替正式 Auth0、大帳號 Oracle 負載或 T11 完整資料清除驗收。
+
 ## T12 — 真實資料覆蓋與展示驗收
 
 相依：T11。範圍：catalog、eval corpus、完整產品旅程。
