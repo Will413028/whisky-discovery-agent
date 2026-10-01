@@ -377,6 +377,7 @@ CI 預設不打 live 模型或公網酒款來源。測試資料、DB／namespace
 - Will 明確回覆「同意四款資料與價格處理」。獨立 `data/catalog/t12-expansion.reviewed.json` 保留舊三款所有 item／evidence／price 原值，原 draft 不改為 reviewed。來源與版本覆核見 `T12_REVIEW.md`；既有 reviewed snapshot 未覆寫。
 - 覆核檔通過既有 publication guard；離線擴充盤點六項主要標籤無缺口、21個來源描述比較路徑、格蘭菲迪15／格蘭昆奇兩個价格缺口。此為資料盤點，不是 selector／真模型／UI 或部署驗收；產品 DB 尚未發布，新資料不冒充原 T10 eval 同版本。
 - 真 DB 發布與實際 V4 selector **4／15.77 秒**：預算2500排除無合格價格兩款；格蘭昆奇花香比較僅在明確關閉預算後進入候選；拉弗格海藻／泰斯卡胡椒比較保留兩側引用。不產生煙燻強度結論。這些為資料擴充回歸，不冒充新功能 RED。最後 catalog98／0.15秒、mypy108、ruff、Python boundary 通過。
+- [T12_ACCEPTANCE.md](T12_ACCEPTANCE.md) 對照 PRODUCT_SPEC 全部20個驗收情境，列25個實際 test IDs、資料查核來源與尚待正式出口；以 AST 核對每個 function 存在、A01–A20 完整且本機連結均存在。這是證據路由，不是重新跑過這25項或宣稱產品已驗收；正式 deployment SHA、live model、四條真人旅程與手機／鍵盤檢查保持待補。
 
 ## CI、完成證據與回退
 
