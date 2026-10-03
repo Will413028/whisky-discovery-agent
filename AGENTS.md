@@ -6,6 +6,7 @@
 - 無自有網域；第一版公開入口使用 `workers.dev`，訪客可看公開 catalog，私人紀錄需 Auth0 登入；薄 Worker 經 Workers VPC Service／具名 Tunnel 連 VM 的 Next.js Web，Web 以固定同機內網入口轉送 API。VPC beta 與完整路徑的 AG-UI/SSE 須通過真實部署驗證，不用 Quick Tunnel 當正式入口。
 - 部署預算：現有 Oracle Ampere VM＋Cloudflare 免費服務，最多 Workers Paid US$5 基本費；其他持續付費服務不在範圍，帳單與免費額度的核對方式見 [ARCHITECTURE.md](ARCHITECTURE.md)。新增 stack 容量與還原能力未實測前不可宣稱達標。
 - 進度、部署與驗收出口以 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) 為準；已部署不等於已驗收。實際命令見 README「本機開發與驗證」。改後端跑 pytest、ruff、mypy、Python 邊界與 wheel；改 Web 跑 Vitest、typecheck、Web 邊界、原生 Next build 與 Node／workerd Playwright。契約由 Pydantic→OpenAPI→TypeScript 生成，CI 檢查 drift。
+- 決策紀錄（ADR）見 [docs/adr/](docs/adr/)。
 - 產品互動流程與資料契約須先明確，再實作功能；不要將規劃中的行為寫成已完成。
 - 實作採 TDD：每個行為先取得可解釋的 RED，再以最小實作達成 GREEN，必要時 REFACTOR 並重跑受影響測試。環境錯誤不算行為 RED，mock 通過不代替真 DB／Temporal／部署驗證；依 [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) 執行並保存證據，不事後補測試冒充 TDD。
 - 單一 repo；前端 `apps/web/src/` 依功能組織、app 保持薄路由層，shared 不反向依賴 features。後端保留 `backend/src/whisky/`，採業務模組優先的 Modular Monolith，模組內按需分層；跨模組走公開契約，不直接操作其他模組的 ORM／資料表。API 與 worker 共用套件；不預建空層或以 PYTHONPATH 修補打包問題。結構與驗證見 [ARCHITECTURE.md](ARCHITECTURE.md) 和 [VERTICAL_SLICE.md](VERTICAL_SLICE.md)。
